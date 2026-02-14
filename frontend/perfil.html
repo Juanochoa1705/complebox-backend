@@ -1,0 +1,53 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+  <meta charset="UTF-8" />
+  <title>Perfil</title>
+</head>
+<body>
+  <h2>Perfil de usuario</h2>
+
+  <div id="perfil"></div>
+
+  <button onclick="logout()">Cerrar sesión</button>
+
+  <script>
+    const token = localStorage.getItem('token');
+
+    // 🚫 Si no hay token, fuera
+    if (!token) {
+      alert('No estás autenticado');
+      window.location.href = 'login.html';
+    }
+
+    // 📡 Llamada al backend
+    fetch('http://localhost:3000/auth/profile', {
+      method: 'GET',
+      headers: {
+        'Authorization': 'Bearer ' + token,
+        'Content-Type': 'application/json'
+      }
+    })
+    .then(res => {
+      if (!res.ok) throw new Error('Token inválido');
+      return res.json();
+    })
+    .then(data => {
+      document.getElementById('perfil').innerHTML = `
+        <p><strong>Usuario:</strong> ${data.usuario}</p>
+        <p><strong>Rol:</strong> ${data.rol}</p>
+      `;
+    })
+    .catch(err => {
+      alert('Sesión expirada');
+      localStorage.removeItem('token');
+      window.location.href = 'login.html';
+    });
+
+    function logout() {
+      localStorage.removeItem('token');
+      window.location.href = 'login.html';
+    }
+  </script>
+</body>
+</html>

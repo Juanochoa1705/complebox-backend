@@ -1,0 +1,185 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+  <meta charset="UTF-8">
+  <title>Complebox | Login</title>
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+
+  <style>
+    * {
+      box-sizing: border-box;
+      font-family: 'Segoe UI', sans-serif;
+    }
+
+    body {
+      margin: 0;
+      height: 100vh;
+      background: linear-gradient(180deg, #0d47a1, #1976d2);
+      display: flex;
+      justify-content: center;
+      align-items: center;
+    }
+
+    /* CONTENEDOR TIPO APP */
+    .mobile {
+      width: 100%;
+      max-width: 390px;
+      height: 100vh;
+      background: #fff;
+      border-radius: 20px 20px 0 0;
+      padding: 25px;
+      display: flex;
+      flex-direction: column;
+      justify-content: center;
+    }
+
+    .logo {
+      width: 130px;
+      margin: 0 auto 15px;
+      display: block;
+    }
+
+    h2 {
+      text-align: center;
+      color: #0d47a1;
+      margin-bottom: 25px;
+    }
+
+    .form-group {
+      margin-bottom: 16px;
+    }
+
+    label {
+      font-size: 13px;
+      color: #555;
+      margin-bottom: 4px;
+      display: block;
+    }
+
+    input {
+      width: 100%;
+      padding: 14px;
+      border-radius: 12px;
+      border: 1px solid #ccc;
+      font-size: 15px;
+    }
+
+    input:focus {
+      outline: none;
+      border-color: #1976d2;
+      box-shadow: 0 0 0 2px rgba(25,118,210,0.2);
+    }
+
+    button {
+      width: 100%;
+      padding: 16px;
+      background: #1976d2;
+      color: white;
+      border: none;
+      border-radius: 14px;
+      font-size: 16px;
+      font-weight: bold;
+      margin-top: 10px;
+      cursor: pointer;
+    }
+
+    button:active {
+      transform: scale(0.98);
+    }
+
+    .link {
+      text-align: center;
+      margin-top: 15px;
+      font-size: 14px;
+    }
+
+    .link a {
+      color: #1976d2;
+      text-decoration: none;
+      font-weight: 600;
+    }
+
+    .message {
+      text-align: center;
+      margin-top: 15px;
+      font-size: 14px;
+    }
+
+    .error { color: red; }
+  </style>
+</head>
+
+<body>
+
+  <div class="mobile">
+    <img src="assets/logo.png" class="logo" alt="Complebox">
+    <h2>Iniciar sesión</h2>
+
+    <form id="loginForm">
+
+      <div class="form-group">
+        <label>Usuario</label>
+        <input id="usuario" required>
+      </div>
+
+      <div class="form-group">
+        <label>Contraseña</label>
+        <input type="password" id="password" required>
+      </div>
+
+      <button type="submit">Entrar</button>
+    </form>
+
+    <div class="link">
+      ¿No tienes cuenta?
+      <a href="register.html">Regístrate</a>
+    </div>
+
+    <div id="message" class="message"></div>
+  </div>
+
+<script>
+  const form = document.getElementById('loginForm');
+  const message = document.getElementById('message');
+
+  form.addEventListener('submit', async (e) => {
+    e.preventDefault();
+
+    const data = {
+      usuario: document.getElementById('usuario').value,
+      password: document.getElementById('password').value
+    };
+
+    try {
+      const res = await fetch('http://localhost:3000/auth/login', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify(data)
+      });
+
+      const result = await res.json();
+
+      if (!res.ok) throw new Error(result.message);
+
+      // 🔐 Guardar token y usuario
+localStorage.setItem('token', result.token);
+localStorage.setItem('user', JSON.stringify(result.user));
+
+// 👉 Redirección por rol
+if (result.user.rol === 'Administrador') {
+  window.location.href = '../frontend/admin/admin.html';
+} else {
+  message.textContent = 'Rol no habilitado por ahora';
+  message.className = 'message error';
+}
+
+    } catch (err) {
+      message.textContent = err.message || 'Error al iniciar sesión';
+      message.className = 'message error';
+    }
+  });
+</script>
+
+</body>
+</html>
+

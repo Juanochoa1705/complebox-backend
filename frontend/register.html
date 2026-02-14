@@ -1,0 +1,254 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+  <meta charset="UTF-8">
+  <title>Complebox | Registro</title>
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+
+  <style>
+    * {
+      box-sizing: border-box;
+      font-family: 'Segoe UI', sans-serif;
+    }
+
+    body {
+      margin: 0;
+      height: 100vh;
+      background: linear-gradient(180deg, #0d47a1, #1976d2);
+      display: flex;
+      justify-content: center;
+      align-items: center;
+    }
+
+    input,
+select {
+  width: 100%;
+  padding: 12px;
+  border-radius: 10px;
+  border: 1px solid #ccc;
+  font-size: 15px;
+  background-color: #fff;
+  appearance: none;        /* quita estilo nativo */
+  -webkit-appearance: none;
+  -moz-appearance: none;
+}
+
+input:focus,
+select:focus {
+  outline: none;
+  border-color: #1976d2;
+  box-shadow: 0 0 0 2px rgba(25,118,210,0.2);
+}
+
+.select-wrapper {
+  position: relative;
+}
+
+.select-wrapper::after {
+  content: "▾";
+  position: absolute;
+  right: 14px;
+  top: 50%;
+  transform: translateY(-50%);
+  color: #1976d2;
+  pointer-events: none;
+  font-size: 14px;
+}
+
+
+    /* CONTENEDOR TIPO CELULAR */
+    .mobile {
+      width: 100%;
+      max-width: 390px;
+      height: 100vh;
+      background: #fff;
+      border-radius: 20px 20px 0 0;
+      padding: 25px;
+      overflow-y: auto;
+    }
+
+    .logo {
+      display: block;
+      margin: 20px auto 10px;
+      width: 120px;
+    }
+
+    h2 {
+      text-align: center;
+      color: #0d47a1;
+      margin-bottom: 25px;
+    }
+
+    .form-group {
+      margin-bottom: 14px;
+    }
+
+    label {
+      font-size: 13px;
+      color: #555;
+      display: block;
+      margin-bottom: 4px;
+    }
+
+    input {
+      width: 100%;
+      padding: 14px;
+      border-radius: 12px;
+      border: 1px solid #ccc;
+      font-size: 15px;
+    }
+
+    input:focus {
+      outline: none;
+      border-color: #1976d2;
+      box-shadow: 0 0 0 2px rgba(25,118,210,0.2);
+    }
+
+    button {
+      width: 100%;
+      padding: 16px;
+      background: #1976d2;
+      color: white;
+      border: none;
+      border-radius: 14px;
+      font-size: 16px;
+      font-weight: bold;
+      margin-top: 10px;
+      cursor: pointer;
+    }
+
+    button:active {
+      transform: scale(0.98);
+    }
+
+    .message {
+      text-align: center;
+      margin-top: 15px;
+      font-size: 14px;
+    }
+
+    .success { color: green; }
+    .error { color: red; }
+  </style>
+</head>
+
+<body>
+
+  <div class="mobile">
+    <img src="assets/logo.png" class="logo" alt="Complebox">
+    <h2>Crear cuenta</h2>
+
+    <form id="registerForm">
+
+      <div class="form-group">
+        <label>Nombres</label>
+        <input id="nombres" required>
+      </div>
+
+      <div class="form-group">
+        <label>Apellidos</label>
+        <input id="apellidos" required>
+      </div>
+
+
+      <div class="form-group">
+  <label>Tipo de documento</label>
+  <div class="select-wrapper">
+  <select id="fk_tipo_doc" required>
+    <option value="">Seleccione tipo de documento</option>
+    <option value="1">CC</option>
+    <option value="2">CE</option>
+    <option value="3">TI</option>
+    <option value="4">PE</option>
+  </select>
+</div>
+</div>
+
+      <div class="form-group">
+        <label>Cédula</label>
+        <input id="cedula" required>
+      </div>
+
+     <div class="form-group">
+  <label>Rol</label>
+  <div class="select-wrapper">
+    <select id="fk_rol" required>
+      <option value="">Seleccione su rol</option>
+      <option value="1">Administrador</option>
+      <option value="2">Vigilante</option>
+      <option value="3">Residente</option>
+      <option value="4">Propietario</option>
+      <option value="5">Mensajero</option>
+    </select>
+  </div>
+</div>
+
+      <div class="form-group">
+        <label>Correo</label>
+        <input type="email" id="correo" required>
+      </div>
+
+      <div class="form-group">
+        <label>Teléfono</label>
+        <input id="telefono" required>
+      </div>
+
+      <div class="form-group">
+        <label>Usuario</label>
+        <input id="usuario" required>
+      </div>
+
+      <div class="form-group">
+        <label>Contraseña</label>
+        <input type="password" id="password" required>
+      </div>
+
+      <button type="submit">Registrarme</button>
+    </form>
+
+    <div id="message" class="message"></div>
+  </div>
+
+<script>
+  const form = document.getElementById('registerForm');
+  const message = document.getElementById('message');
+
+  form.addEventListener('submit', async (e) => {
+    e.preventDefault();
+
+   const data = {
+  nombres: document.getElementById('nombres').value,
+  apellidos: document.getElementById('apellidos').value,
+  cedula: document.getElementById('cedula').value,
+  correo: document.getElementById('correo').value,
+  telefono: document.getElementById('telefono').value,
+  usuario: document.getElementById('usuario').value,
+  password: document.getElementById('password').value,
+  fk_rol: Number(document.getElementById('fk_rol').value),
+  fk_tipo_doc: Number(document.getElementById('fk_tipo_doc').value)
+};
+
+    try {
+      const res = await fetch('http://localhost:3000/auth/register', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify(data)
+      });
+
+      const result = await res.json();
+
+      if (!res.ok) throw new Error(result.message);
+
+      message.textContent = '✅ Registro exitoso';
+      message.className = 'message success';
+      form.reset();
+
+    } catch (err) {
+      message.textContent = err.message || 'Error de conexión';
+      message.className = 'message error';
+    }
+  });
+</script>
+
+</body>
+</html>

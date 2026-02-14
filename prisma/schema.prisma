@@ -1,0 +1,219 @@
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "mysql"
+  url      = env("DATABASE_URL")
+}
+
+model apto {
+  cod_apto         Int                @id @default(autoincrement())
+  numero_apto      Int
+  fk_cod_torre     Int?
+  torre            torre?             @relation(fields: [fk_cod_torre], references: [cod_torre], onDelete: Restrict, onUpdate: Restrict, map: "apto_ibfk_1")
+  apto_propietario apto_propietario[]
+  apto_residente   apto_residente[]
+
+  @@index([fk_cod_torre], map: "fk_cod_torre")
+}
+
+model apto_propietario {
+  cod_apto_propietario       Int      @id @default(autoincrement())
+  fk_cod_apto                Int?
+  fk_cod_propietario         Int?
+  fk_estado_apto_propietario Int      @default(1)
+  apto                       apto?    @relation(fields: [fk_cod_apto], references: [cod_apto], onDelete: Restrict, onUpdate: Restrict, map: "apto_propietario_ibfk_1")
+  persona                    persona? @relation(fields: [fk_cod_propietario], references: [cod_user], onDelete: Restrict, onUpdate: Restrict, map: "apto_propietario_ibfk_2")
+  estado                     estado   @relation(fields: [fk_estado_apto_propietario], references: [cod_estado], onUpdate: Restrict, map: "apto_propietario_ibfk_3")
+
+  @@unique([fk_cod_apto, fk_cod_propietario], map: "uq_apto_propietario")
+  @@index([fk_cod_propietario], map: "fk_cod_propietario")
+  @@index([fk_estado_apto_propietario], map: "fk_estado_apto_propietario")
+}
+
+model apto_residente {
+  cod_apto_residente       Int      @id @default(autoincrement())
+  fk_cod_apto              Int?
+  fk_cod_residente         Int?
+  fk_estado_apto_residente Int      @default(1)
+  apto                     apto?    @relation(fields: [fk_cod_apto], references: [cod_apto], onDelete: Restrict, onUpdate: Restrict, map: "apto_residente_ibfk_1")
+  persona                  persona? @relation(fields: [fk_cod_residente], references: [cod_user], onDelete: Restrict, onUpdate: Restrict, map: "apto_residente_ibfk_2")
+  estado                   estado   @relation(fields: [fk_estado_apto_residente], references: [cod_estado], onUpdate: Restrict, map: "apto_residente_ibfk_3")
+
+  @@unique([fk_cod_apto, fk_cod_residente], map: "uq_apto_residente")
+  @@index([fk_cod_residente], map: "fk_cod_residente")
+  @@index([fk_estado_apto_residente], map: "fk_estado_apto_residente")
+}
+
+model conjunto {
+  cod_conjunto               Int                          @id @default(autoincrement())
+  nombre_conjunto            String?                      @db.VarChar(100)
+  telefono_conjunto          String?                      @db.VarChar(20)
+  empresa_seguridad_conjunto empresa_seguridad_conjunto[]
+  torre                      torre[]
+  adminConjuntos             AdminConjunto[]
+}
+
+model empresa {
+  cod_empresa                Int                          @id @default(autoincrement())
+  nit_empresa                String                       @unique(map: "nit_empresa") @db.VarChar(20)
+  nombre_empresa             String?                      @db.VarChar(100)
+  direccion_empresa          String?                      @db.VarChar(100)
+  telefono_empresa           String?                      @db.VarChar(20)
+  correo_empresa             String?                      @db.VarChar(100)
+  fk_estado_empresa          Int
+  estado                     estado                       @relation(fields: [fk_estado_empresa], references: [cod_estado], onUpdate: Restrict, map: "empresa_ibfk_1")
+  empresa_mensajero          empresa_mensajero[]
+  empresa_seguridad_conjunto empresa_seguridad_conjunto[]
+
+  @@index([fk_estado_empresa], map: "fk_estado_empresa")
+}
+
+model empresa_mensajero {
+  cod_empresa_mensajero Int      @id @default(autoincrement())
+  fk_persona_mensajero  Int?
+  fk_empresa_mensajero  Int?
+  persona               persona? @relation(fields: [fk_persona_mensajero], references: [cod_user], onDelete: Restrict, onUpdate: Restrict, map: "empresa_mensajero_ibfk_1")
+  empresa               empresa? @relation(fields: [fk_empresa_mensajero], references: [cod_empresa], onDelete: Restrict, onUpdate: Restrict, map: "empresa_mensajero_ibfk_2")
+
+  @@index([fk_empresa_mensajero], map: "fk_empresa_mensajero")
+  @@index([fk_persona_mensajero], map: "fk_persona_mensajero")
+}
+
+model empresa_seguridad_conjunto {
+  cod_empresa_vig_conjunto             Int                          @id @default(autoincrement())
+  fecha_registro                       DateTime?                    @db.Date
+  fk_cod_conjunto                      Int?
+  fk_empresa_vig                       Int?
+  fk_estado_empresa_seguridad_conjunto Int                          @default(1)
+  conjunto                             conjunto?                    @relation(fields: [fk_cod_conjunto], references: [cod_conjunto], onDelete: Restrict, onUpdate: Restrict, map: "empresa_seguridad_conjunto_ibfk_1")
+  empresa                              empresa?                     @relation(fields: [fk_empresa_vig], references: [cod_empresa], onDelete: Restrict, onUpdate: Restrict, map: "empresa_seguridad_conjunto_ibfk_2")
+  estado                               estado                       @relation(fields: [fk_estado_empresa_seguridad_conjunto], references: [cod_estado], onUpdate: Restrict, map: "empresa_seguridad_conjunto_ibfk_3")
+  empresa_vigilante_conjunto           empresa_vigilante_conjunto[]
+
+  @@index([fk_cod_conjunto], map: "fk_cod_conjunto")
+  @@index([fk_empresa_vig], map: "fk_empresa_vig")
+  @@index([fk_estado_empresa_seguridad_conjunto], map: "fk_estado_empresa_seguridad_conjunto")
+}
+
+model empresa_vigilante_conjunto {
+  cod_empresa_vigilante       Int                         @id @default(autoincrement())
+  fk_persona_vigilante        Int?
+  fk_cod_empresa_vig_conjunto Int?
+  fk_estado_vigilante_empresa Int                         @default(1)
+  persona                     persona?                    @relation(fields: [fk_persona_vigilante], references: [cod_user], onDelete: Restrict, onUpdate: Restrict, map: "empresa_vigilante_conjunto_ibfk_1")
+  empresa_seguridad_conjunto  empresa_seguridad_conjunto? @relation(fields: [fk_cod_empresa_vig_conjunto], references: [cod_empresa_vig_conjunto], onDelete: Restrict, onUpdate: Restrict, map: "empresa_vigilante_conjunto_ibfk_2")
+  estado                      estado                      @relation(fields: [fk_estado_vigilante_empresa], references: [cod_estado], onUpdate: Restrict, map: "empresa_vigilante_conjunto_ibfk_3")
+
+  @@index([fk_cod_empresa_vig_conjunto], map: "fk_cod_empresa_vig_conjunto")
+  @@index([fk_estado_vigilante_empresa], map: "fk_estado_vigilante_empresa")
+  @@index([fk_persona_vigilante], map: "fk_persona_vigilante")
+}
+
+model estado {
+  cod_estado                 Int                          @id @default(autoincrement())
+  nombre_estado              String                       @db.VarChar(50)
+  apto_propietario           apto_propietario[]
+  apto_residente             apto_residente[]
+  empresa                    empresa[]
+  empresa_seguridad_conjunto empresa_seguridad_conjunto[]
+  empresa_vigilante_conjunto empresa_vigilante_conjunto[]
+  persona                    persona[]
+}
+
+model estado_pedido {
+  cod_estado_pedido               Int                               @id @default(autoincrement())
+  nombre_pedido                   String?                           @db.VarChar(50)
+  pedido_estado_entrega_residente pedido_estado_entrega_residente[]
+}
+
+model pedido_estado_entrega_residente {
+  cod_pedido_estado_entrega                                                 Int            @id @default(autoincrement())
+  fecha_recibido                                                            DateTime?      @db.DateTime(0)
+  fecha_entregado                                                           DateTime?      @db.DateTime(0)
+  numero_guia                                                               String?        @db.VarChar(50)
+  nombre_pedido                                                             String?        @db.VarChar(100)
+  descripcion_pedido                                                        String?        @db.Text
+  fk_estado_pedido                                                          Int?
+  fk_cod_vigilante_recibe                                                   Int?
+  fk_cod_vigilante_entrega                                                  Int?
+  fk_residente                                                              Int?
+  fk_mensajero                                                              Int?
+  firma_residente                                                           String?        @db.LongText
+  fk_apto_entrega                                                           Int?
+  estado_pedido                                                             estado_pedido? @relation(fields: [fk_estado_pedido], references: [cod_estado_pedido], onDelete: Restrict, onUpdate: Restrict, map: "pedido_estado_entrega_residente_ibfk_1")
+  persona_pedido_estado_entrega_residente_fk_cod_vigilante_recibeTopersona  persona?       @relation("pedido_estado_entrega_residente_fk_cod_vigilante_recibeTopersona", fields: [fk_cod_vigilante_recibe], references: [cod_user], onDelete: Restrict, onUpdate: Restrict, map: "pedido_estado_entrega_residente_ibfk_2")
+  persona_pedido_estado_entrega_residente_fk_cod_vigilante_entregaTopersona persona?       @relation("pedido_estado_entrega_residente_fk_cod_vigilante_entregaTopersona", fields: [fk_cod_vigilante_entrega], references: [cod_user], onDelete: Restrict, onUpdate: Restrict, map: "pedido_estado_entrega_residente_ibfk_3")
+  persona_pedido_estado_entrega_residente_fk_residenteTopersona             persona?       @relation("pedido_estado_entrega_residente_fk_residenteTopersona", fields: [fk_residente], references: [cod_user], onDelete: Restrict, onUpdate: Restrict, map: "pedido_estado_entrega_residente_ibfk_4")
+  persona_pedido_estado_entrega_residente_fk_mensajeroTopersona             persona?       @relation("pedido_estado_entrega_residente_fk_mensajeroTopersona", fields: [fk_mensajero], references: [cod_user], onDelete: Restrict, onUpdate: Restrict, map: "pedido_estado_entrega_residente_ibfk_5")
+
+  @@index([fk_cod_vigilante_entrega], map: "fk_cod_vigilante_entrega")
+  @@index([fk_cod_vigilante_recibe], map: "fk_cod_vigilante_recibe")
+  @@index([fk_estado_pedido], map: "fk_estado_pedido")
+  @@index([fk_mensajero], map: "fk_mensajero")
+  @@index([fk_residente], map: "fk_residente")
+}
+
+model persona {
+  cod_user                                                                                          Int                               @id @default(autoincrement())
+  nombres                                                                                           String                            @db.VarChar(60)
+  apellidos                                                                                         String                            @db.VarChar(60)
+  cedula                                                                                            String?                           @unique(map: "unique_cedula") @db.VarChar(15)
+  correo                                                                                            String?                           @db.VarChar(90)
+  telefono                                                                                          String                            @db.VarChar(50)
+  usuario                                                                                           String                            @db.VarChar(50)
+  contrase_a                                                                                        String                            @map("contraseña") @db.VarChar(100)
+  fk_estado_user                                                                                    Int
+  fk_tipo_doc                                                                                       Int
+  fk_rol                                                                                            Int
+  apto_propietario                                                                                  apto_propietario[]
+  apto_residente                                                                                    apto_residente[]
+  empresa_mensajero                                                                                 empresa_mensajero[]
+  empresa_vigilante_conjunto                                                                        empresa_vigilante_conjunto[]
+  pedido_estado_entrega_residente_pedido_estado_entrega_residente_fk_cod_vigilante_recibeTopersona  pedido_estado_entrega_residente[] @relation("pedido_estado_entrega_residente_fk_cod_vigilante_recibeTopersona")
+  pedido_estado_entrega_residente_pedido_estado_entrega_residente_fk_cod_vigilante_entregaTopersona pedido_estado_entrega_residente[] @relation("pedido_estado_entrega_residente_fk_cod_vigilante_entregaTopersona")
+  pedido_estado_entrega_residente_pedido_estado_entrega_residente_fk_residenteTopersona             pedido_estado_entrega_residente[] @relation("pedido_estado_entrega_residente_fk_residenteTopersona")
+  pedido_estado_entrega_residente_pedido_estado_entrega_residente_fk_mensajeroTopersona             pedido_estado_entrega_residente[] @relation("pedido_estado_entrega_residente_fk_mensajeroTopersona")
+  estado                                                                                            estado                            @relation(fields: [fk_estado_user], references: [cod_estado], onUpdate: Restrict, map: "persona_ibfk_1")
+  tipo_doc                                                                                          tipo_doc                          @relation(fields: [fk_tipo_doc], references: [cod_tipo_doc], onUpdate: Restrict, map: "persona_ibfk_2")
+  rol                                                                                               rol                               @relation(fields: [fk_rol], references: [cod_rol], onUpdate: Restrict, map: "persona_ibfk_3")
+  adminConjuntos                                                                                    AdminConjunto[]
+
+  @@index([fk_estado_user], map: "fk_estado_user")
+  @@index([fk_rol], map: "fk_rol")
+  @@index([fk_tipo_doc], map: "fk_tipo_doc")
+}
+
+model rol {
+  cod_rol    Int       @id @default(autoincrement())
+  nombre_rol String    @db.VarChar(20)
+  persona    persona[]
+}
+
+model tipo_doc {
+  cod_tipo_doc    Int       @id @default(autoincrement())
+  nombre_tipo_doc String    @db.VarChar(50)
+  persona         persona[]
+}
+
+model torre {
+  cod_torre       Int       @id @default(autoincrement())
+  numero_torre    Int
+  fk_cod_conjunto Int?
+  apto            apto[]
+  conjunto        conjunto? @relation(fields: [fk_cod_conjunto], references: [cod_conjunto], onDelete: Restrict, onUpdate: Restrict, map: "torre_ibfk_1")
+
+  @@index([fk_cod_conjunto], map: "fk_cod_conjunto")
+}
+
+model AdminConjunto {
+  cod_admin_conjunto   Int  @id @default(autoincrement())
+  fk_cod_conjunto      Int?
+  fk_cod_administrador Int?
+
+  conjunto conjunto? @relation(fields: [fk_cod_conjunto], references: [cod_conjunto])
+  admin    persona?  @relation(fields: [fk_cod_administrador], references: [cod_user])
+
+  @@map("admin_conjunto")
+}
