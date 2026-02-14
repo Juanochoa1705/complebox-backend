@@ -35,10 +35,12 @@ async function obtenerConjunto() {
   }
 }
 
-function mostrarConjunto(conjunto) {
+async function mostrarConjunto(conjunto) {
   document.getElementById('infoSection').classList.remove('d-none');
   document.getElementById('infoNombre').textContent = conjunto.nombre_conjunto;
   document.getElementById('infoTelefono').textContent = conjunto.telefono_conjunto;
+
+  await cargarCantidadTorres();
 }
 
 async function crearConjunto() {
@@ -68,8 +70,72 @@ async function crearConjunto() {
   }
 }
 
+async function cargarCantidadTorres() {
+  const res = await fetch(`${API_URL}/admin/torres`, {
+    headers: {
+      Authorization: `Bearer ${token}`,
+    },
+  });
+
+  const torres = await res.json();
+  document.getElementById('cantidadTorres').textContent = torres.length;
+}
+
+
+
 function cerrarSesion() {
   localStorage.removeItem('token');
   localStorage.removeItem('user');
   window.location.href = '../login.html';
+}
+
+
+async function verTorres() {
+  const res = await fetch(`${API_URL}/admin/torres`, {
+    headers: {
+      Authorization: `Bearer ${token}`,
+    },
+  });
+
+  const torres = await res.json();
+
+  const lista = document.getElementById('listaTorres');
+  lista.innerHTML = '';
+
+  torres.forEach(t => {
+    lista.innerHTML += `
+      <div class="card p-2 mb-2">
+        Torre ${t.numero_torre}
+      </div>
+    `;
+  });
+}
+
+async function agregarTorre() {
+  const numero = Number(document.getElementById('nuevaTorre').value);
+
+  if (!numero) {
+    alert('Ingresa un número válido');
+    return;
+  }
+
+  const res = await fetch(`${API_URL}/admin/torres`, {
+    method: 'POST',
+    headers: {
+      'Content-Type': 'application/json',
+      Authorization: `Bearer ${token}`,
+    },
+    body: JSON.stringify({ numero_torre: numero }),
+  });
+
+  if (!res.ok) {
+    alert('Error agregando torre');
+    return;
+  }
+
+  alert('Torre agregada correctamente');
+
+  document.getElementById('nuevaTorre').value = '';
+  await cargarCantidadTorres();
+  await verTorres();
 }

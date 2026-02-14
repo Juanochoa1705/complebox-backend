@@ -48,6 +48,29 @@
     <p><strong>Nombre:</strong> <span id="infoNombre"></span></p>
     <p><strong>Teléfono:</strong> <span id="infoTelefono"></span></p>
 
+    <hr>
+
+<p><strong>Cantidad de torres:</strong> 
+  <span id="cantidadTorres">0</span>
+</p>
+
+<button onclick="verTorres()" class="btn btn-outline-primary w-100 mb-2">
+  Ver torres
+</button>
+
+<div id="listaTorres" class="mt-3"></div>
+
+<hr>
+
+<h6>Agregar nueva torre</h6>
+
+<div class="input-group mb-3">
+  <input type="number" id="nuevaTorre" class="form-control" placeholder="Número de torre">
+  <button onclick="agregarTorre()" class="btn btn-success">
+    Agregar
+  </button>
+</div>
+
     <button onclick="cerrarSesion()" class="btn btn-danger w-100 mt-3">
       Cerrar sesión
     </button>

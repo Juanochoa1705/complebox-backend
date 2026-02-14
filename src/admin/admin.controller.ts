@@ -15,20 +15,33 @@ import { JwtAuthGuard } from '../auth/jwt-auth.guard';
 export class AdminController {
   constructor(private readonly adminService: AdminService) {}
 
-@Post('conjunto')
-async crearConjunto(
-  @Req() req: any,
-  @Body() dto: CreateConjuntoDto,
-) {
-  const codAdmin = req.user.userId; // 👈 CORRECTO
-  return this.adminService.crearConjunto(codAdmin, dto);
-}
+  @Post('conjunto')
+  async crearConjunto(
+    @Req() req: any,
+    @Body() dto: CreateConjuntoDto,
+  ) {
+    const codAdmin = req.user.userId; // usa el mismo que tu JWT imprime
+    return this.adminService.crearConjunto(codAdmin, dto);
+  }
 
   @Get('conjunto')
   async obtenerConjunto(@Req() req: any) {
-    const codAdmin = req.user.sub;
+    const codAdmin = req.user.userId;
     return this.adminService.obtenerConjuntoAdmin(codAdmin);
   }
+
+  @Get('torres')
+  async obtenerTorres(@Req() req: any) {
+    const codAdmin = req.user.userId;
+    return this.adminService.obtenerTorresAdmin(codAdmin);
+  }
+
+  @Post('torres')
+  async crearTorre(
+    @Req() req: any,
+    @Body() body: { numero_torre: number },
+  ) {
+    const codAdmin = req.user.userId;
+    return this.adminService.crearTorre(codAdmin, body.numero_torre);
+  }
 }
-
-

@@ -15,7 +15,9 @@ model apto {
   apto_propietario apto_propietario[]
   apto_residente   apto_residente[]
 
+   @@unique([numero_apto, fk_cod_torre], map: "uq_apto_torre")
   @@index([fk_cod_torre], map: "fk_cod_torre")
+
 }
 
 model apto_propietario {
@@ -162,7 +164,7 @@ model persona {
   cedula                                                                                            String?                           @unique(map: "unique_cedula") @db.VarChar(15)
   correo                                                                                            String?                           @db.VarChar(90)
   telefono                                                                                          String                            @db.VarChar(50)
-  usuario                                                                                           String                            @db.VarChar(50)
+ usuario String @unique(map: "unique_usuario") @db.VarChar(50)
   contrase_a                                                                                        String                            @map("contraseña") @db.VarChar(100)
   fk_estado_user                                                                                    Int
   fk_tipo_doc                                                                                       Int
@@ -179,6 +181,7 @@ model persona {
   tipo_doc                                                                                          tipo_doc                          @relation(fields: [fk_tipo_doc], references: [cod_tipo_doc], onUpdate: Restrict, map: "persona_ibfk_2")
   rol                                                                                               rol                               @relation(fields: [fk_rol], references: [cod_rol], onUpdate: Restrict, map: "persona_ibfk_3")
   adminConjuntos                                                                                    AdminConjunto[]
+
 
   @@index([fk_estado_user], map: "fk_estado_user")
   @@index([fk_rol], map: "fk_rol")
@@ -216,4 +219,5 @@ model AdminConjunto {
   admin    persona?  @relation(fields: [fk_cod_administrador], references: [cod_user])
 
   @@map("admin_conjunto")
+  @@unique([fk_cod_conjunto, fk_cod_administrador], map: "uq_admin_conjunto")
 }
