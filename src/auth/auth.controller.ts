@@ -34,4 +34,14 @@ export class AuthController {
   profile(@Request() req) {
     return req.user;
   }
+
+  @Post('primer-login')
+async primerLogin(
+  @Body() body: { userId: number; nuevaPassword: string },
+) {
+  return this.authService.cambiarPasswordPrimerLogin(
+    body.userId,
+    body.nuevaPassword,
+  );
+}
 }

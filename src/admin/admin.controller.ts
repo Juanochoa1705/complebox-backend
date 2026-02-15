@@ -9,6 +9,8 @@ import {
 import { AdminService } from './admin.service';
 import { CreateConjuntoDto } from './dto/create-conjunto.dto';
 import { JwtAuthGuard } from '../auth/jwt-auth.guard';
+import { UseInterceptors, UploadedFile } from '@nestjs/common';
+import { FileInterceptor } from '@nestjs/platform-express';
 
 @Controller('admin')
 @UseGuards(JwtAuthGuard)
@@ -44,4 +46,18 @@ export class AdminController {
     const codAdmin = req.user.userId;
     return this.adminService.crearTorre(codAdmin, body.numero_torre);
   }
+
+  @Post('upload-propietarios')
+@UseInterceptors(
+  FileInterceptor('file', {
+    storage: require('multer').memoryStorage(),
+  }),
+)
+
+async uploadPropietarios(@UploadedFile() file: Express.Multer.File) {
+  return this.adminService.processExcel(file);
+}
+
+
+
 }

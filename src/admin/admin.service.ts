@@ -1,6 +1,8 @@
 import { Injectable, NotFoundException } from '@nestjs/common';
 import { PrismaService } from '../prisma/prisma.service';
 import { CreateConjuntoDto } from './dto/create-conjunto.dto';
+import * as XLSX from 'xlsx';
+import * as bcrypt from 'bcrypt';
 
 @Injectable()
 export class AdminService {
@@ -81,4 +83,137 @@ export class AdminService {
       },
     });
   }
+
+  // ✅ MÉTODO CORREGIDO Y DENTRO DE LA CLASE
+async processExcel(file: Express.Multer.File) {
+  const workbook = XLSX.read(file.buffer, { type: 'buffer' });
+  const sheet = workbook.Sheets[workbook.SheetNames[0]];
+  const data = XLSX.utils.sheet_to_json(sheet);
+
+  for (const row of data as any[]) {
+
+    // 🔹 1️⃣ VALIDAR TORRE
+    const numeroTorre = Number(row.numero_torre);
+
+    if (isNaN(numeroTorre)) {
+      console.log('Número de torre inválido:', row);
+      continue;
+    }
+
+    const torreDB = await this.prisma.torre.findFirst({
+      where: { numero_torre: numeroTorre },
+    });
+
+    if (!torreDB) {
+      console.log(`La torre ${numeroTorre} no existe`);
+      continue;
+    }
+
+    // 🔹 2️⃣ CREAR O BUSCAR PERSONA
+    const cedulaStr = String(row.cedula).trim();
+    const telefonoStr = String(row.telefono).trim();
+    const usuarioStr = cedulaStr;
+
+    if (!cedulaStr) {
+      console.log('Cédula inválida:', row);
+      continue;
+    }
+
+    let persona = await this.prisma.persona.findUnique({
+      where: { cedula: cedulaStr },
+    });
+
+    if (!persona) {
+
+const hash = await bcrypt.hash('123456', 10);
+
+persona = await this.prisma.persona.create({
+  data: {
+    nombres: row.nombres,
+    apellidos: row.apellidos,
+    cedula: cedulaStr,
+    correo: row.correo,
+    telefono: telefonoStr,
+    usuario: usuarioStr,
+    contrase_a: hash,
+
+    estado: {
+      connect: { cod_estado: 2 } // 👈 INACTIVO
+    },
+
+    rol: {
+      connect: { cod_rol: 2 }
+    },
+
+    tipo_doc: {
+      connect: { cod_tipo_doc: Number(row.fk_tipo_doc) }
+    },
+  },
+});
+}
+    // 🔹 3️⃣ CREAR O BUSCAR APTO
+    const numeroApto = Number(row.numero_apto);
+
+    if (isNaN(numeroApto)) {
+      console.log('Número de apto inválido:', row);
+      continue;
+    }
+
+    let aptoDB = await this.prisma.apto.findFirst({
+      where: {
+        fk_cod_torre: torreDB.cod_torre,
+        numero_apto: numeroApto,
+      },
+    });
+
+    if (!aptoDB) {
+      aptoDB = await this.prisma.apto.create({
+        data: {
+          numero_apto: numeroApto,
+          fk_cod_torre: torreDB.cod_torre,
+        },
+      });
+    }
+
+    // 🔹 4️⃣ CREAR O ACTUALIZAR RELACIÓN
+    const estadoNuevo = Number(row.fk_estado_apto_propietario);
+
+    if (isNaN(estadoNuevo)) {
+      console.log('Estado inválido:', row);
+      continue;
+    }
+
+    const relacion = await this.prisma.apto_propietario.findFirst({
+      where: {
+        fk_cod_apto: aptoDB.cod_apto,
+        fk_cod_propietario: persona.cod_user,
+      },
+    });
+
+    if (!relacion) {
+      // Crear relación
+      await this.prisma.apto_propietario.create({
+        data: {
+          fk_cod_apto: aptoDB.cod_apto,
+          fk_cod_propietario: persona.cod_user,
+          fk_estado_apto_propietario: estadoNuevo,
+        },
+      });
+    } else if (relacion.fk_estado_apto_propietario !== estadoNuevo) {
+      // Actualizar solo si cambió el estado
+      await this.prisma.apto_propietario.update({
+        where: {
+          cod_apto_propietario: relacion.cod_apto_propietario, // 👈 usa tu PK real
+        },
+        data: {
+          fk_estado_apto_propietario: estadoNuevo,
+        },
+      });
+    }
+  }
+
+  return { message: 'Carga masiva completada correctamente' };
+}
+
+
 }

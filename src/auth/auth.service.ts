@@ -67,38 +67,62 @@ export class AuthService {
   // =========================
   // LOGIN
   // =========================
-  async login(dto: LoginDto) {
-    const user = await this.prisma.persona.findFirst({
-      where: { usuario: dto.usuario },
-      include: { rol: true },
-    });
+async login(dto: LoginDto) {
+  const user = await this.prisma.persona.findFirst({
+    where: { usuario: dto.usuario },
+    include: { rol: true, estado: true },
+  });
 
-    if (!user) {
-      throw new UnauthorizedException('Credenciales inválidas');
-    }
+  if (!user) {
+    throw new UnauthorizedException('Credenciales inválidas');
+  }
 
-    const isValid = await bcrypt.compare(dto.password, user.contrase_a);
+  const isValid = await bcrypt.compare(dto.password, user.contrase_a);
 
-    if (!isValid) {
-      throw new UnauthorizedException('Credenciales inválidas');
-    }
+  if (!isValid) {
+    throw new UnauthorizedException('Credenciales inválidas');
+  }
 
-    const payload = {
-      sub: user.cod_user,
-      usuario: user.usuario,
-      rol: user.rol.nombre_rol,
-    };
-
-    const token = this.jwtService.sign(payload);
-
+  // 🔥 SI ES PRIMER LOGIN
+  if (user.estado.cod_estado === 2) {
     return {
-      token,
-      user: {
-        id: user.cod_user,
-        usuario: user.usuario,
-        rol: user.rol.nombre_rol,
-      },
+      primerLogin: true,
+      userId: user.cod_user,
+      message: 'Debe cambiar la contraseña antes de continuar',
     };
   }
+
+  const payload = {
+    sub: user.cod_user,
+    usuario: user.usuario,
+    rol: user.rol.nombre_rol,
+  };
+
+  const token = this.jwtService.sign(payload);
+
+  return {
+    token,
+    user: {
+      id: user.cod_user,
+      usuario: user.usuario,
+      rol: user.rol.nombre_rol,
+    },
+  };
+}
+
+async cambiarPasswordPrimerLogin(userId: number, nuevaPassword: string) {
+
+  const hash = await bcrypt.hash(nuevaPassword, 10);
+
+  return this.prisma.persona.update({
+    where: { cod_user: userId },
+    data: {
+      contrase_a: hash,
+      estado: {
+        connect: { cod_estado: 1 }, // 🔥 activar usuario
+      },
+    },
+  });
+}
 }
 
