@@ -1,4 +1,3 @@
-
 import { Injectable, ConflictException, UnauthorizedException } from '@nestjs/common';
 import { JwtService } from '@nestjs/jwt';
 import { PrismaService } from '../prisma/prisma.service';
@@ -65,8 +64,8 @@ export class AuthService {
   }
 
   // =========================
-  // LOGIN
-  // =========================
+// LOGIN
+// =========================
 async login(dto: LoginDto) {
   const user = await this.prisma.persona.findFirst({
     where: { usuario: dto.usuario },
@@ -83,11 +82,15 @@ async login(dto: LoginDto) {
     throw new UnauthorizedException('Credenciales inválidas');
   }
 
-  // 🔥 SI ES PRIMER LOGIN
+  // 🔥 PRIMER LOGIN
   if (user.estado.cod_estado === 2) {
     return {
       primerLogin: true,
-      userId: user.cod_user,
+      user: {
+        id: user.cod_user,
+        usuario: user.usuario,
+        rol: user.rol.nombre_rol,
+      },
       message: 'Debe cambiar la contraseña antes de continuar',
     };
   }
@@ -108,21 +111,27 @@ async login(dto: LoginDto) {
       rol: user.rol.nombre_rol,
     },
   };
-}
+} // 👈 CERRAR LOGIN AQUÍ
 
+
+// =========================
+// PRIMER LOGIN (CAMBIO CLAVE)
+// =========================
 async cambiarPasswordPrimerLogin(userId: number, nuevaPassword: string) {
 
   const hash = await bcrypt.hash(nuevaPassword, 10);
 
-  return this.prisma.persona.update({
+  await this.prisma.persona.update({
     where: { cod_user: userId },
     data: {
       contrase_a: hash,
       estado: {
-        connect: { cod_estado: 1 }, // 🔥 activar usuario
-      },
-    },
+        connect: { cod_estado: 1 } // 🔥 ACTIVO
+      }
+    }
   });
+
+  return { message: 'Contraseña actualizada correctamente' };
 }
 }
 

@@ -139,46 +139,66 @@
   </div>
 
 <script>
-  const form = document.getElementById('loginForm');
-  const message = document.getElementById('message');
+const form = document.getElementById('loginForm');
+const message = document.getElementById('message');
 
-  form.addEventListener('submit', async (e) => {
-    e.preventDefault();
+form.addEventListener('submit', async (e) => {
+  e.preventDefault();
 
-    const data = {
-      usuario: document.getElementById('usuario').value,
-      password: document.getElementById('password').value
-    };
+  const data = {
+    usuario: document.getElementById('usuario').value,
+    password: document.getElementById('password').value
+  };
 
-    try {
-      const res = await fetch('http://localhost:3000/auth/login', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify(data)
-      });
+  try {
+    const res = await fetch('http://localhost:3000/auth/login', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify(data)
+    });
 
-      const result = await res.json();
+    const result = await res.json();
 
-      if (!res.ok) throw new Error(result.message);
+    if (!res.ok) throw new Error(result.message);
 
-      // 🔐 Guardar token y usuario
-localStorage.setItem('token', result.token);
-localStorage.setItem('user', JSON.stringify(result.user));
+    // 🔥 PRIMER LOGIN
+    if (result.primerLogin) {
 
-// 👉 Redirección por rol
-if (result.user.rol === 'Administrador') {
-  window.location.href = '../frontend/admin/admin.html';
-} else {
-  message.textContent = 'Rol no habilitado por ahora';
-  message.className = 'message error';
-}
+      message.textContent = result.message;
+      message.className = 'message error';
 
-    } catch (err) {
-      message.textContent = err.message || 'Error al iniciar sesión';
+      localStorage.setItem('primerLoginUserId', result.user.id);
+
+      setTimeout(() => {
+        window.location.href = 'primer-login.html';
+      }, 1500);
+
+      return;
+    }
+
+    // 🔐 LOGIN NORMAL (solo si no es primer login)
+    localStorage.setItem('token', result.token);
+    localStorage.setItem('user', JSON.stringify(result.user));
+
+    // 👉 Redirección por rol
+    if (result.user.rol === 'Administrador') {
+      window.location.href = '../frontend/admin/admin.html';
+    } 
+    else if (result.user.rol === 'Propietario') {
+      window.location.href = '../frontend/propietario/dashboard.html';
+    }
+    else {
+      message.textContent = 'Rol no habilitado por ahora';
       message.className = 'message error';
     }
-  });
+
+  } catch (err) {
+    message.textContent = err.message || 'Error al iniciar sesión';
+    message.className = 'message error';
+  }
+});
 </script>
+
 
 </body>
 </html>
