@@ -1,6 +1,7 @@
 import { Injectable, NotFoundException } from '@nestjs/common';
 import { PrismaService } from '../prisma/prisma.service';
 import { CreateConjuntoDto } from './dto/create-conjunto.dto';
+import { CrearEmpresaDto } from './dto/crear-empresa.dto';
 import * as XLSX from 'xlsx';
 import * as bcrypt from 'bcrypt';
 
@@ -214,6 +215,38 @@ persona = await this.prisma.persona.create({
 
   return { message: 'Carga masiva completada correctamente' };
 }
+
+async crearEmpresaSeguridad(dto: CrearEmpresaDto) {
+
+  // 1️⃣ Crear empresa
+  const empresa = await this.prisma.empresa.create({
+    data: {
+      nit_empresa: dto.nit,
+      nombre_empresa: dto.nombre,
+      direccion_empresa: dto.direccion,
+      telefono_empresa: dto.telefono,
+      correo_empresa: dto.correo,
+      fk_estado_empresa: 1 // activo
+    }
+  });
+
+  // 2️⃣ Relacionar con conjunto
+  await this.prisma.empresa_seguridad_conjunto.create({
+    data: {
+      fecha_registro: new Date(),
+      fk_cod_conjunto: dto.fk_conjunto,
+      fk_empresa_vig: empresa.cod_empresa,
+      fk_estado_empresa_seguridad_conjunto: 1
+    }
+  });
+
+  return {
+    message: 'Empresa de seguridad creada correctamente'
+  };
+  
+}
+
+
 
 
 }

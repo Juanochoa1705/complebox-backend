@@ -139,3 +139,42 @@ async function agregarTorre() {
   await cargarCantidadTorres();
   await verTorres();
 }
+
+const empresaForm = document.getElementById("empresaForm");
+const empresaMessage = document.getElementById("empresaMessage");
+
+empresaForm.addEventListener("submit", async (e) => {
+  e.preventDefault();
+
+  const token = localStorage.getItem("token");
+
+const data = {
+  nombre: document.getElementById("empresaNombre").value,
+  nit: document.getElementById("empresaNit").value,
+  telefono: document.getElementById("empresaTelefono").value,
+  correo: document.getElementById("empresaCorreo").value,
+  direccion: document.getElementById("empresaDireccion").value,
+  fk_conjunto: 1
+};
+
+  try {
+    const res = await fetch("http://localhost:3000/admin/crear-empresa-seguridad", {
+      method: "POST",
+      headers: {
+        "Content-Type": "application/json",
+        "Authorization": "Bearer " + token
+      },
+      body: JSON.stringify(data)
+    });
+
+    const result = await res.json();
+
+    if (!res.ok) throw new Error(result.message);
+
+    empresaMessage.textContent = "✅ Empresa creada correctamente";
+    empresaForm.reset();
+
+  } catch (err) {
+    empresaMessage.textContent = err.message;
+  }
+});

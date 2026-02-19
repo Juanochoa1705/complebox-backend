@@ -11,6 +11,7 @@ import { CreateConjuntoDto } from './dto/create-conjunto.dto';
 import { JwtAuthGuard } from '../auth/jwt-auth.guard';
 import { UseInterceptors, UploadedFile } from '@nestjs/common';
 import { FileInterceptor } from '@nestjs/platform-express';
+import { CrearEmpresaDto } from './dto/crear-empresa.dto';
 
 @Controller('admin')
 @UseGuards(JwtAuthGuard)
@@ -58,6 +59,9 @@ async uploadPropietarios(@UploadedFile() file: Express.Multer.File) {
   return this.adminService.processExcel(file);
 }
 
-
+@Post('crear-empresa-seguridad')
+crearEmpresaSeguridad(@Body() dto: CrearEmpresaDto) {
+  return this.adminService.crearEmpresaSeguridad(dto);
+}
 
 }
