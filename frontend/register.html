@@ -177,7 +177,6 @@ select:focus {
       <option value="1">Administrador</option>
       <option value="2">Vigilante</option>
       <option value="3">Residente</option>
-      <option value="4">Propietario</option>
       <option value="5">Mensajero</option>
     </select>
   </div>
@@ -203,6 +202,11 @@ select:focus {
         <input type="password" id="password" required>
       </div>
 
+      <div class="form-group" id="aptoGroup" style="display:none;">
+  <label>Seleccione su apartamento</label>
+  <select id="aptoSelect"></select>
+</div>
+
       <button type="submit">Registrarme</button>
     </form>
 
@@ -212,24 +216,75 @@ select:focus {
 <script>
   const form = document.getElementById('registerForm');
   const message = document.getElementById('message');
+  const rolSelect = document.getElementById("fk_rol");
+  const aptoGroup = document.getElementById("aptoGroup");
+  const aptoSelect = document.getElementById("aptoSelect");
 
+  // ==============================
+  // MOSTRAR APTOS SI ES RESIDENTE
+  // ==============================
+  rolSelect.addEventListener("change", async function () {
+
+    const rol = Number(this.value);
+
+    if (rol === 3) { // Residente
+      aptoGroup.style.display = "block";
+
+      try {
+        const res = await fetch("http://localhost:3000/auth/aptos");
+        const aptos = await res.json();
+
+        aptoSelect.innerHTML = "";
+
+        aptos.forEach(apto => {
+          const option = document.createElement("option");
+          option.value = apto.cod_apto;
+          option.textContent = `Torre ${apto.fk_cod_torre} - Apto ${apto.numero_apto}`;
+          aptoSelect.appendChild(option);
+        });
+
+      } catch (error) {
+        console.error("Error cargando apartamentos:", error);
+      }
+
+    } else {
+      aptoGroup.style.display = "none";
+      aptoSelect.innerHTML = "";
+    }
+  });
+
+  // ==============================
+  // ENVÍO DEL FORMULARIO
+  // ==============================
   form.addEventListener('submit', async (e) => {
     e.preventDefault();
 
-   const data = {
-  nombres: document.getElementById('nombres').value,
-  apellidos: document.getElementById('apellidos').value,
-  cedula: document.getElementById('cedula').value,
-  correo: document.getElementById('correo').value,
-  telefono: document.getElementById('telefono').value,
-  usuario: document.getElementById('usuario').value,
-  password: document.getElementById('password').value,
-  fk_rol: Number(document.getElementById('fk_rol').value),
-  fk_tipo_doc: Number(document.getElementById('fk_tipo_doc').value)
-};
+    const rolValue = Number(rolSelect.value);
+
+    const data = {
+      nombres: document.getElementById('nombres').value,
+      apellidos: document.getElementById('apellidos').value,
+      cedula: document.getElementById('cedula').value,
+      correo: document.getElementById('correo').value,
+      telefono: document.getElementById('telefono').value,
+      usuario: document.getElementById('usuario').value,
+      password: document.getElementById('password').value,
+      fk_rol: rolValue,
+      fk_tipo_doc: Number(document.getElementById('fk_tipo_doc').value)
+    };
+
+    // 🔥 SI ES RESIDENTE AGREGAMOS fk_apto
+    if (rolValue === 3) {
+      data.fk_apto = Number(aptoSelect.value);
+    }
+
+    // 🔥 ENDPOINT DINÁMICO
+    const endpoint = rolValue === 3
+      ? 'http://localhost:3000/auth/register-residente'
+      : 'http://localhost:3000/auth/register';
 
     try {
-      const res = await fetch('http://localhost:3000/auth/register', {
+      const res = await fetch(endpoint, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify(data)
@@ -242,6 +297,7 @@ select:focus {
       message.textContent = '✅ Registro exitoso';
       message.className = 'message success';
       form.reset();
+      aptoGroup.style.display = "none";
 
     } catch (err) {
       message.textContent = err.message || 'Error de conexión';
@@ -249,6 +305,7 @@ select:focus {
     }
   });
 </script>
+
 
 </body>
 </html>

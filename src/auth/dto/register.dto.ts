@@ -8,6 +8,7 @@ export class RegisterDto {
   cedula?: string;
   fk_tipo_doc: number;
   fk_rol: number;
+  fk_apto: number;
 }
 
 

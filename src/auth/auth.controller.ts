@@ -11,10 +11,17 @@ import { AuthService } from './auth.service';
 import { LoginDto } from './dto/login.dto';
 import { RegisterDto } from './dto/register.dto';
 import { JwtAuthGuard } from './jwt-auth.guard';
+import { PrismaService } from '../prisma/prisma.service';
 
 @Controller('auth')
 export class AuthController {
-  constructor(private authService: AuthService) {}
+  constructor(private authService: AuthService,
+              private prisma: PrismaService,) {}
+
+  @Post('register-residente')
+registerResidente(@Body() dto: RegisterDto) {
+  return this.authService.registerResidente(dto);
+}
 
   // 👉 REGISTRO
   @Post('register')
@@ -44,4 +51,11 @@ async primerLogin(
     body.nuevaPassword,
   );
 }
+
+@Get('aptos')
+findAllAptos() {
+  return this.authService.findAllAptos();
+}
+
+
 }
