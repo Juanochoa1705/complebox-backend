@@ -59,9 +59,16 @@ async uploadPropietarios(@UploadedFile() file: Express.Multer.File) {
   return this.adminService.processExcel(file);
 }
 
+
 @Post('crear-empresa-seguridad')
-crearEmpresaSeguridad(@Body() dto: CrearEmpresaDto) {
-  return this.adminService.crearEmpresaSeguridad(dto);
+@UseGuards(JwtAuthGuard)
+async crearEmpresa(
+  @Req() req,
+  @Body() dto: CrearEmpresaDto
+) {
+  const adminId = req.user.id;
+
+  return this.adminService.crearEmpresaSeguridad(req.user.id, dto);
 }
 
 }

@@ -12,11 +12,11 @@ export class JwtStrategy extends PassportStrategy(Strategy) {
     });
   }
 
-  async validate(payload: any) {
-    return {
-      userId: payload.sub,
-      usuario: payload.usuario,
-      rol: payload.rol,
-    };
-  }
+async validate(payload: any) {
+  return {
+    id: payload.sub, // 👈 AQUÍ ESTÁ EL FIX REAL
+    usuario: payload.usuario,
+    rol: payload.rol,
+  };
+}
 }

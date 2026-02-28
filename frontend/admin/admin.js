@@ -1,3 +1,5 @@
+
+
 const API_URL = 'http://localhost:3000';
 const token = localStorage.getItem('token');
 
@@ -45,8 +47,8 @@ async function mostrarConjunto(conjunto) {
 
 async function crearConjunto() {
   const body = {
-    nombre_conjunto: document.getElementById('nombre').value,
-    telefono_conjunto: document.getElementById('telefono').value,
+    nombre_conjunto: document.getElementById('conjuntoNombre').value,
+    telefono_conjunto: document.getElementById('conjuntoTelefono').value,
     cantidad_torres: Number(document.getElementById('torres').value),
   };
 
@@ -146,35 +148,44 @@ const empresaMessage = document.getElementById("empresaMessage");
 empresaForm.addEventListener("submit", async (e) => {
   e.preventDefault();
 
-  const token = localStorage.getItem("token");
-
-const data = {
-  nombre: document.getElementById("empresaNombre").value,
-  nit: document.getElementById("empresaNit").value,
-  telefono: document.getElementById("empresaTelefono").value,
-  correo: document.getElementById("empresaCorreo").value,
-  direccion: document.getElementById("empresaDireccion").value,
-  fk_conjunto: 1
-};
+  const data = {
+    nombre: document.getElementById("empresaNombre").value,
+    nit: document.getElementById("empresaNit").value,
+    telefono: document.getElementById("empresaTelefono").value,
+    correo: document.getElementById("empresaCorreo").value,
+    direccion: document.getElementById("empresaDireccion").value
+  };
 
   try {
-    const res = await fetch("http://localhost:3000/admin/crear-empresa-seguridad", {
+    const res = await fetch(`${API_URL}/admin/crear-empresa-seguridad`, {
       method: "POST",
       headers: {
         "Content-Type": "application/json",
-        "Authorization": "Bearer " + token
+        Authorization: `Bearer ${token}`
       },
       body: JSON.stringify(data)
     });
 
     const result = await res.json();
 
-    if (!res.ok) throw new Error(result.message);
+    // 🔴 Si hay error
+    if (!res.ok) {
+      empresaMessage.classList.remove("d-none", "alert-success");
+      empresaMessage.classList.add("alert", "alert-danger");
+      empresaMessage.textContent = result.message;
+      return;
+    }
 
-    empresaMessage.textContent = "✅ Empresa creada correctamente";
+    // 🟢 Si todo sale bien
+    empresaMessage.classList.remove("d-none", "alert-danger");
+    empresaMessage.classList.add("alert", "alert-success");
+    empresaMessage.textContent = "Empresa creada correctamente ✅";
+
     empresaForm.reset();
 
   } catch (err) {
-    empresaMessage.textContent = err.message;
+    empresaMessage.classList.remove("d-none", "alert-success");
+    empresaMessage.classList.add("alert", "alert-danger");
+    empresaMessage.textContent = "Error de conexión con el servidor";
   }
 });

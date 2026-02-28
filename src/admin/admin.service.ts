@@ -4,6 +4,7 @@ import { CreateConjuntoDto } from './dto/create-conjunto.dto';
 import { CrearEmpresaDto } from './dto/crear-empresa.dto';
 import * as XLSX from 'xlsx';
 import * as bcrypt from 'bcrypt';
+import { BadRequestException } from '@nestjs/common';
 
 @Injectable()
 export class AdminService {
@@ -216,37 +217,56 @@ persona = await this.prisma.persona.create({
   return { message: 'Carga masiva completada correctamente' };
 }
 
-async crearEmpresaSeguridad(dto: CrearEmpresaDto) {
+async crearEmpresaSeguridad(adminId: number, dto: CrearEmpresaDto) {
 
-  // 1️⃣ Crear empresa
-  const empresa = await this.prisma.empresa.create({
-    data: {
-      nit_empresa: dto.nit,
-      nombre_empresa: dto.nombre,
-      direccion_empresa: dto.direccion,
-      telefono_empresa: dto.telefono,
-      correo_empresa: dto.correo,
-      fk_estado_empresa: 1 // activo
-    }
+  // 🔹 1️⃣ Buscar el admin correctamente
+  const adminConjunto = await this.prisma.adminConjunto.findFirst({
+    where: { fk_cod_administrador: adminId },
   });
 
-  // 2️⃣ Relacionar con conjunto
+  if (!adminConjunto) {
+    throw new NotFoundException('Administrador no tiene conjunto asignado');
+  }
+
+  // 🔹 2️⃣ Validar si ya existe empresa activa en su conjunto
+  const empresaActiva = await this.prisma.empresa_seguridad_conjunto.findFirst({
+    where: {
+      fk_cod_conjunto: adminConjunto.fk_cod_conjunto,
+      fk_estado_empresa_seguridad_conjunto: 1, // Activo
+    },
+  });
+
+  if (empresaActiva) {
+    throw new BadRequestException(
+      'Ya existe una empresa de seguridad activa para este conjunto.'
+    );
+  }
+
+  // 🔹 3️⃣ Crear empresa
+  const empresa = await this.prisma.empresa.create({
+  data: {
+    nit_empresa: dto.nit,
+    nombre_empresa: dto.nombre,
+    direccion_empresa: dto.direccion,
+    telefono_empresa: dto.telefono,
+    correo_empresa: dto.correo,
+    fk_estado_empresa: 1, // 🔥 Activa por defecto
+  },
+})
+
+  // 🔹 4️⃣ Relacionarla con el conjunto
   await this.prisma.empresa_seguridad_conjunto.create({
     data: {
-      fecha_registro: new Date(),
-      fk_cod_conjunto: dto.fk_conjunto,
+      fk_cod_conjunto: adminConjunto.fk_cod_conjunto,
       fk_empresa_vig: empresa.cod_empresa,
-      fk_estado_empresa_seguridad_conjunto: 1
-    }
+      fk_estado_empresa_seguridad_conjunto: 1,
+      fecha_registro: new Date(),
+    },
   });
 
   return {
-    message: 'Empresa de seguridad creada correctamente'
+    message: 'Empresa de seguridad creada correctamente',
   };
-  
 }
-
-
-
 
 }
