@@ -8,6 +8,7 @@ import { PrismaService } from '../prisma/prisma.service';
 import { RegisterDto } from './dto/register.dto';
 import { LoginDto } from './dto/login.dto';
 import * as bcrypt from 'bcrypt';
+import { CrearVigilanteDto } from './dto/crear-vigilante.dto';
 
 @Injectable()
 export class AuthService {
@@ -192,4 +193,43 @@ export class AuthService {
       },
     });
   }
+
+  async registrarVigilante(dto: CrearVigilanteDto) {
+
+  // 1️⃣ Crear persona INACTIVA
+  const persona = await this.prisma.persona.create({
+    data: {
+      nombres: dto.nombres,
+      apellidos: dto.apellidos,
+      cedula: dto.cedula,
+      correo: dto.correo,
+      telefono: dto.telefono,
+      usuario: dto.cedula,
+      contrase_a: await bcrypt.hash(dto.password, 10),
+
+      estado: {
+        connect: { cod_estado: 2 } // 🔥 INACTIVO
+      },
+
+      rol: {
+        connect: { cod_rol: 5 } // Rol vigilante
+      },
+
+      tipo_doc: {
+        connect: { cod_tipo_doc: dto.tipo_doc }
+      },
+    },
+  });
+
+  // 2️⃣ Crear relación empresa-vigilante INACTIVA
+  await this.prisma.empresa_vigilante_conjunto.create({
+    data: {
+      fk_persona_vigilante: persona.cod_user,
+      fk_cod_empresa_vig_conjunto: dto.fk_empresa_vig_conjunto,
+      fk_estado_vigilante_empresa: 2, // 🔥 INACTIVO
+    },
+  });
+
+  return { message: "Vigilante registrado. Pendiente aprobación." };
+}
 }

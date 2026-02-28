@@ -180,6 +180,13 @@ select:focus {
       <option value="5">Mensajero</option>
     </select>
   </div>
+</div>  
+
+      <div class="form-group" id="empresaGroup" style="display:none;">
+  <label>Seleccione empresa de seguridad</label>
+  <select id="empresaSelect">
+    <option value="">Seleccione empresa</option>
+  </select>
 </div>
 
       <div class="form-group">
@@ -207,6 +214,8 @@ select:focus {
   <select id="aptoSelect"></select>
 </div>
 
+
+
       <button type="submit">Registrarme</button>
     </form>
 
@@ -225,85 +234,130 @@ select:focus {
   // ==============================
   rolSelect.addEventListener("change", async function () {
 
-    const rol = Number(this.value);
+  const rol = Number(this.value);
 
-    if (rol === 3) { // Residente
-      aptoGroup.style.display = "block";
+  // ======================
+  // RESIDENTE
+  // ======================
+  if (rol === 3) {
 
-      try {
-        const res = await fetch("http://localhost:3000/auth/aptos");
-        const aptos = await res.json();
+    aptoGroup.style.display = "block";
+    empresaGroup.style.display = "none";
 
-        aptoSelect.innerHTML = "";
+    try {
+      const res = await fetch("http://localhost:3000/auth/aptos");
+      const aptos = await res.json();
 
-        aptos.forEach(apto => {
-          const option = document.createElement("option");
-          option.value = apto.cod_apto;
-          option.textContent = `Torre ${apto.fk_cod_torre} - Apto ${apto.numero_apto}`;
-          aptoSelect.appendChild(option);
-        });
-
-      } catch (error) {
-        console.error("Error cargando apartamentos:", error);
-      }
-
-    } else {
-      aptoGroup.style.display = "none";
       aptoSelect.innerHTML = "";
+
+      aptos.forEach(apto => {
+        const option = document.createElement("option");
+        option.value = apto.cod_apto;
+        option.textContent = `Torre ${apto.fk_cod_torre} - Apto ${apto.numero_apto}`;
+        aptoSelect.appendChild(option);
+      });
+
+    } catch (error) {
+      console.error("Error cargando apartamentos:", error);
     }
-  });
+
+  }
+
+  // ======================
+  // VIGILANTE
+  // ======================
+  else if (rol === 2) {
+
+    aptoGroup.style.display = "none";
+    empresaGroup.style.display = "block";
+
+    try {
+      const res = await fetch("http://localhost:3000/auth/empresas-seguridad");
+      const empresas = await res.json();
+
+      empresaSelect.innerHTML = "";
+
+      empresas.forEach(emp => {
+        const option = document.createElement("option");
+        option.value = emp.cod_empresa_vig_conjunto;
+        option.textContent = emp.empresa.nombre_empresa;
+        empresaSelect.appendChild(option);
+      });
+
+    } catch (error) {
+      console.error("Error cargando empresas:", error);
+    }
+
+  }
+
+  // ======================
+  // OTROS ROLES
+  // ======================
+  else {
+    aptoGroup.style.display = "none";
+    empresaGroup.style.display = "none";
+  }
+});
 
   // ==============================
   // ENVÍO DEL FORMULARIO
   // ==============================
   form.addEventListener('submit', async (e) => {
-    e.preventDefault();
+  e.preventDefault();
 
-    const rolValue = Number(rolSelect.value);
+  const rolValue = Number(rolSelect.value);
 
-    const data = {
-      nombres: document.getElementById('nombres').value,
-      apellidos: document.getElementById('apellidos').value,
-      cedula: document.getElementById('cedula').value,
-      correo: document.getElementById('correo').value,
-      telefono: document.getElementById('telefono').value,
-      usuario: document.getElementById('usuario').value,
-      password: document.getElementById('password').value,
-      fk_rol: rolValue,
-      fk_tipo_doc: Number(document.getElementById('fk_tipo_doc').value)
-    };
+  const data = {
+    nombres: document.getElementById('nombres').value,
+    apellidos: document.getElementById('apellidos').value,
+    cedula: document.getElementById('cedula').value,
+    correo: document.getElementById('correo').value,
+    telefono: document.getElementById('telefono').value,
+    usuario: document.getElementById('usuario').value,
+    password: document.getElementById('password').value,
+    fk_rol: rolValue,
+    fk_tipo_doc: Number(document.getElementById('fk_tipo_doc').value)
+  };
 
-    // 🔥 SI ES RESIDENTE AGREGAMOS fk_apto
-    if (rolValue === 3) {
-      data.fk_apto = Number(aptoSelect.value);
-    }
+  // 🔵 Residente
+  if (rolValue === 3) {
+    data.fk_apto = Number(aptoSelect.value);
+  }
 
-    // 🔥 ENDPOINT DINÁMICO
-    const endpoint = rolValue === 3
+  // 🟢 Vigilante
+  if (rolValue === 2) {
+    data.fk_empresa_vig_conjunto = Number(empresaSelect.value);
+  }
+
+  // 🔥 ENDPOINT DINÁMICO
+  const endpoint =
+    rolValue === 3
       ? 'http://localhost:3000/auth/register-residente'
+      : rolValue === 2
+      ? 'http://localhost:3000/auth/register-vigilante'
       : 'http://localhost:3000/auth/register';
 
-    try {
-      const res = await fetch(endpoint, {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify(data)
-      });
+  try {
+    const res = await fetch(endpoint, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify(data)
+    });
 
-      const result = await res.json();
+    const result = await res.json();
 
-      if (!res.ok) throw new Error(result.message);
+    if (!res.ok) throw new Error(result.message);
 
-      message.textContent = '✅ Registro exitoso';
-      message.className = 'message success';
-      form.reset();
-      aptoGroup.style.display = "none";
+    message.textContent = '✅ Registro exitoso';
+    message.className = 'message success';
+    form.reset();
 
-    } catch (err) {
-      message.textContent = err.message || 'Error de conexión';
-      message.className = 'message error';
-    }
-  });
+  } catch (err) {
+    message.textContent = err.message || 'Error de conexión';
+    message.className = 'message error';
+  }
+});
+
 </script>
 
 

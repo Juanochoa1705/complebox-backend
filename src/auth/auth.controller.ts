@@ -57,5 +57,17 @@ findAllAptos() {
   return this.authService.findAllAptos();
 }
 
+@Get('empresas-seguridad')
+async obtenerEmpresasSeguridad() {
+  return this.prisma.empresa_seguridad_conjunto.findMany({
+    where: {
+      fk_estado_empresa_seguridad_conjunto: 1, // 🔥 solo activas
+    },
+    include: {
+      empresa: true,
+    },
+  });
+}
+
 
 }
