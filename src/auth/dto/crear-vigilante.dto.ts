@@ -4,7 +4,8 @@ export class CrearVigilanteDto {
   cedula: string;
   correo: string;
   telefono: string;
+  usuario: string;
   password: string;
-  tipo_doc: number;
+  fk_tipo_doc: number;
   fk_empresa_vig_conjunto: number;
 }

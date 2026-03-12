@@ -12,6 +12,7 @@ import { LoginDto } from './dto/login.dto';
 import { RegisterDto } from './dto/register.dto';
 import { JwtAuthGuard } from './jwt-auth.guard';
 import { PrismaService } from '../prisma/prisma.service';
+import { CrearVigilanteDto } from './dto/crear-vigilante.dto';
 
 @Controller('auth')
 export class AuthController {
@@ -67,6 +68,11 @@ async obtenerEmpresasSeguridad() {
       empresa: true,
     },
   });
+}
+
+@Post('register-vigilante')
+async registerVigilante(@Body() dto: CrearVigilanteDto) {
+  return this.authService.registrarVigilante(dto);
 }
 
 

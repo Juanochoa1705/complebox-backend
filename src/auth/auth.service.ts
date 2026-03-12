@@ -91,7 +91,7 @@ export class AuthService {
         contrase_a: hashedPassword,
 
         rol: { connect: { cod_rol: 3 } }, // Residente
-        estado: { connect: { cod_estado: 2 } }, // Inactivo
+        estado: { connect: { cod_estado: 1 } }, // activo
         tipo_doc: { connect: { cod_tipo_doc: dto.fk_tipo_doc } },
       },
     });
@@ -100,6 +100,7 @@ export class AuthService {
       data: {
         fk_cod_residente: persona.cod_user,
         fk_cod_apto: dto.fk_apto,
+        fk_estado_apto_residente: 2,
       },
     });
 
@@ -204,20 +205,20 @@ export class AuthService {
       cedula: dto.cedula,
       correo: dto.correo,
       telefono: dto.telefono,
-      usuario: dto.cedula,
+      usuario: dto.usuario,
       contrase_a: await bcrypt.hash(dto.password, 10),
 
       estado: {
-        connect: { cod_estado: 2 } // 🔥 INACTIVO
+        connect: { cod_estado: 1 } // 🔥 ACTIVO
       },
 
       rol: {
         connect: { cod_rol: 5 } // Rol vigilante
       },
 
-      tipo_doc: {
-        connect: { cod_tipo_doc: dto.tipo_doc }
-      },
+     tipo_doc: {
+  connect: { cod_tipo_doc: dto.fk_tipo_doc }
+},
     },
   });
 
