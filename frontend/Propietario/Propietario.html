@@ -1,0 +1,228 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+<meta charset="UTF-8">
+<title>Panel Propietario</title>
+
+<style>
+*{
+  box-sizing:border-box;
+  font-family:'Segoe UI', sans-serif;
+}
+
+body{
+  margin:0;
+  height:100vh;
+  background:linear-gradient(180deg,#0d47a1,#1976d2);
+  display:flex;
+  justify-content:center;
+  align-items:center;
+}
+
+/* CONTENEDOR TIPO APP */
+.mobile{
+  width:100%;
+  max-width:390px;
+  height:100vh;
+  background:#fff;
+  border-radius:20px 20px 0 0;
+  padding:25px;
+  overflow-y:auto;
+}
+
+h2{
+  text-align:center;
+  color:#0d47a1;
+  margin-bottom:25px;
+}
+
+h3{
+  color:#1976d2;
+  margin-top:10px;
+}
+
+/* TABLA */
+
+table{
+  width:100%;
+  border-collapse:collapse;
+  margin-top:15px;
+}
+
+th{
+  text-align:left;
+  font-size:13px;
+  color:#555;
+  padding:10px 5px;
+  border-bottom:1px solid #ddd;
+}
+
+td{
+  padding:12px 5px;
+  border-bottom:1px solid #eee;
+  font-size:14px;
+}
+
+/* BOTON */
+
+button{
+  padding:8px 14px;
+  background:#1976d2;
+  color:white;
+  border:none;
+  border-radius:10px;
+  font-size:13px;
+  cursor:pointer;
+}
+
+button:hover{
+  background:#0d47a1;
+}
+
+button:active{
+  transform:scale(0.95);
+}
+
+.empty{
+  text-align:center;
+  color:#777;
+  margin-top:20px;
+}
+</style>
+</head>
+
+<body>
+
+<div class="mobile">
+
+<h2 id="titulo"></h2>
+<p id="ubicacion"></p>
+
+<h3>Residentes pendientes por aprobar</h3>
+
+<table id="tablaResidentes">
+<thead>
+<tr>
+<th>Nombre</th>
+<th>Cédula</th>
+<th></th>
+</tr>
+</thead>
+
+<tbody></tbody>
+
+</table>
+
+<p class="empty" id="mensajeVacio" style="display:none;">
+No hay residentes pendientes
+</p>
+
+</div>
+
+<script>
+
+const tabla = document.querySelector("#tablaResidentes tbody");
+const mensaje = document.getElementById("mensajeVacio");
+
+async function cargarResidentesPendientes(){
+
+  try{
+
+    const token = localStorage.getItem("token");
+
+    const res = await fetch("http://localhost:3000/propietario/residentes-pendientes",{
+      headers:{
+        Authorization:`Bearer ${token}`
+      }
+    });
+
+    const residentes = await res.json();
+
+    tabla.innerHTML="";
+
+    if(residentes.length===0){
+      mensaje.style.display="block";
+      return;
+    }
+
+    mensaje.style.display="none";
+
+    residentes.forEach(residente=>{
+
+      const fila=document.createElement("tr");
+
+      fila.innerHTML=`
+        <td>${residente.nombres} ${residente.apellidos}</td>
+        <td>${residente.cedula}</td>
+        <td>
+          <button onclick="aprobarResidente(${residente.cod_user})">
+          Aprobar
+          </button>
+        </td>
+      `;
+
+      tabla.appendChild(fila);
+
+    });
+
+  }catch(error){
+    console.error("Error cargando residentes:",error);
+  }
+
+}
+
+async function aprobarResidente(codUser){
+
+  try{
+
+    const token=localStorage.getItem("token");
+
+    await fetch("http://localhost:3000/propietario/aprobar-residente",{
+      method:"POST",
+      headers:{
+        "Content-Type":"application/json",
+        Authorization:`Bearer ${token}`
+      },
+      body:JSON.stringify({
+        cod_user:codUser
+      })
+    });
+
+    alert("Residente aprobado");
+
+    cargarResidentesPendientes();
+
+  }catch(error){
+    console.error("Error aprobando residente:",error);
+  }
+
+}
+
+async function cargarPerfil(){
+
+  const token = localStorage.getItem("token");
+
+  const res = await fetch("http://localhost:3000/propietario/perfil",{
+    headers:{
+      Authorization:`Bearer ${token}`
+    }
+  });
+
+  const data = await res.json();
+
+ document.getElementById("titulo").innerText =
+`Bienvenido propietari@ ${data.nombres} ${data.apellidos}`;
+
+document.getElementById("ubicacion").innerText =
+`Torre ${data.torre} - Apto ${data.apto}`;
+
+}
+
+cargarPerfil();
+
+cargarResidentesPendientes();
+
+</script>
+
+</body>
+</html>
