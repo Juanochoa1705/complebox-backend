@@ -188,4 +188,88 @@ empresaForm.addEventListener("submit", async (e) => {
     empresaMessage.classList.add("alert", "alert-danger");
     empresaMessage.textContent = "Error de conexión con el servidor";
   }
+
+}); 
+const tabla = document.querySelector("#tablaVigilantes tbody");
+const mensaje = document.getElementById("mensajeVacio");
+
+async function cargarVigilantesPendientes(){
+
+  try{
+
+      console.log("Cargando vigilantes...");
+
+    const token = localStorage.getItem("token");
+
+    const res = await fetch("http://localhost:3000/admin/vigilantes-pendientes",{
+      headers:{
+        Authorization:`Bearer ${token}`
+      }
+    });
+
+    const vigilantes = await res.json();
+
+    tabla.innerHTML="";
+
+    if(vigilantes.length === 0){
+      mensaje.style.display="block";
+      return;
+    }
+
+    mensaje.style.display="none";
+
+    vigilantes.forEach(vigilante=>{
+
+      const fila=document.createElement("tr");
+
+      fila.innerHTML=`
+        <td>${vigilante.nombres} ${vigilante.apellidos}</td>
+        <td>${vigilante.cedula}</td>
+        <td>
+          <button onclick="aprobarVigilante(${vigilante.cod_user})">
+          Aprobar
+          </button>
+        </td>
+      `;
+
+      tabla.appendChild(fila);
+
+    });
+
+  }catch(error){
+    console.error("Error cargando vigilantes:",error);
+  }
+
+}
+
+async function aprobarVigilante(codUser){
+
+  try{
+
+    const token=localStorage.getItem("token");
+
+    await fetch("http://localhost:3000/admin/aprobar-vigilante",{
+      method:"POST",
+      headers:{
+        "Content-Type":"application/json",
+        Authorization:`Bearer ${token}`
+      },
+      body:JSON.stringify({
+        cod_user:codUser
+      })
+    });
+     console.log("Respuesta backend:", res);
+
+    alert("Vigilante aprobado");
+
+    cargarVigilantesPendientes();
+
+  }catch(error){
+    console.error("Error aprobando vigilante:",error);
+  }
+
+}
+document.addEventListener("DOMContentLoaded", () => {
+  obtenerConjunto();
+  cargarVigilantesPendientes();
 });

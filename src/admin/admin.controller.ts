@@ -5,6 +5,7 @@ import {
   Body,
   Req,
   UseGuards,
+  Request,
 } from '@nestjs/common';
 import { AdminService } from './admin.service';
 import { CreateConjuntoDto } from './dto/create-conjunto.dto';
@@ -12,6 +13,8 @@ import { JwtAuthGuard } from '../auth/jwt-auth.guard';
 import { UseInterceptors, UploadedFile } from '@nestjs/common';
 import { FileInterceptor } from '@nestjs/platform-express';
 import { CrearEmpresaDto } from './dto/crear-empresa.dto';
+
+
 
 @Controller('admin')
 @UseGuards(JwtAuthGuard)
@@ -27,11 +30,11 @@ export class AdminController {
     return this.adminService.crearConjunto(codAdmin, dto);
   }
 
-  @Get('conjunto')
-  async obtenerConjunto(@Req() req: any) {
-    const codAdmin = req.user.userId;
-    return this.adminService.obtenerConjuntoAdmin(codAdmin);
-  }
+ @UseGuards(JwtAuthGuard)
+@Get('conjunto')
+async obtenerConjuntoAdmin(@Request() req){
+  return this.adminService.obtenerConjuntoAdmin(req.user.id);
+}
 
   @Get('torres')
   async obtenerTorres(@Req() req: any) {
@@ -70,5 +73,19 @@ async crearEmpresa(
 
   return this.adminService.crearEmpresaSeguridad(req.user.id, dto);
 }
+
+  @UseGuards(JwtAuthGuard)
+  @Get('vigilantes-pendientes')
+  async vigilantesPendientes(@Request() req) {
+
+      console.log("USUARIO TOKEN:", req.user);
+    return this.adminService.vigilantesPendientes(req.user.id);
+  }
+
+  @UseGuards(JwtAuthGuard)
+  @Post('aprobar-vigilante')
+  async aprobarVigilante(@Body() body) {
+    return this.adminService.aprobarVigilante(body.cod_user);
+  }
 
 }
