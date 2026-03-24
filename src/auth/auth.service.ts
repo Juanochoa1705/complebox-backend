@@ -213,7 +213,7 @@ export class AuthService {
       },
 
       rol: {
-        connect: { cod_rol: 5 } // Rol vigilante
+        connect: { cod_rol: 4 } // Rol vigilante
       },
 
      tipo_doc: {
