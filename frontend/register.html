@@ -180,7 +180,38 @@ select:focus {
       <option value="5">Mensajero</option>
     </select>
   </div>
-</div>  
+</div> 
+
+      <div id="empresaMensajeroGroup" style="display:none;">
+
+  <h4>Empresa de mensajería</h4>
+
+  <div class="form-group">
+    <label>NIT</label>
+    <input id="nit_empresa">
+  </div>
+
+  <div class="form-group">
+    <label>Nombre</label>
+    <input id="nombre_empresa">
+  </div>
+
+  <div class="form-group">
+    <label>Dirección</label>
+    <input id="direccion_empresa">
+  </div>
+
+  <div class="form-group">
+    <label>Teléfono</label>
+    <input id="telefono_empresa">
+  </div>
+
+  <div class="form-group">
+    <label>Correo</label>
+    <input id="correo_empresa">
+  </div>
+
+</div> 
 
       <div class="form-group" id="empresaGroup" style="display:none;">
   <label>Seleccione empresa de seguridad</label>
@@ -232,11 +263,17 @@ select:focus {
   const rolSelect = document.getElementById("fk_rol");
   const aptoGroup = document.getElementById("aptoGroup");
   const aptoSelect = document.getElementById("aptoSelect");
+  const empresaMensajeroGroup = document.getElementById("empresaMensajeroGroup");
 
   // ==============================
   // MOSTRAR APTOS SI ES RESIDENTE
   // ==============================
   rolSelect.addEventListener("change", async function () {
+
+    // 🔥 RESET (oculta todo primero)
+empresaMensajeroGroup.style.display = "none";
+aptoGroup.style.display = "none";
+empresaGroup.style.display = "none";
 
   const rol = Number(this.value);
 
@@ -295,6 +332,17 @@ select:focus {
   }
 
   // ======================
+  // Mensajero
+  // ======================
+  else if (rol === 5) {
+
+  aptoGroup.style.display = "none";
+  empresaGroup.style.display = "none";
+  empresaMensajeroGroup.style.display = "block";
+
+}
+
+  // ======================
   // OTROS ROLES
   // ======================
   else {
@@ -333,12 +381,23 @@ select:focus {
     data.fk_empresa_vig_conjunto = Number(empresaSelect.value);
   }
 
+  // 🟡 MENSAJERO
+if (rolValue === 5) {
+  data.nit_empresa = document.getElementById("nit_empresa").value;
+  data.nombre_empresa = document.getElementById("nombre_empresa").value;
+  data.direccion_empresa = document.getElementById("direccion_empresa").value;
+  data.telefono_empresa = document.getElementById("telefono_empresa").value;
+  data.correo_empresa = document.getElementById("correo_empresa").value;
+}
+
   // 🔥 ENDPOINT DINÁMICO
   const endpoint =
-    rolValue === 3
-      ? 'http://localhost:3000/auth/register-residente'
-      : rolValue === 2
-      ? 'http://localhost:3000/auth/register-vigilante'
+  rolValue === 3
+    ? 'http://localhost:3000/auth/register-residente'
+    : rolValue === 2
+    ? 'http://localhost:3000/auth/register-vigilante'
+    : rolValue === 5
+    ? 'http://localhost:3000/auth/register-mensajero'
       : 'http://localhost:3000/auth/register';
 
   try {
@@ -361,6 +420,48 @@ select:focus {
     message.className = 'message error';
   }
 });
+
+
+
+const nitInput = document.getElementById("nit_empresa");
+
+nitInput.addEventListener("blur", async () => {
+
+  const nit = nitInput.value.trim();
+  if (!nit) return;
+
+  const res = await fetch(`http://localhost:3000/auth/empresa/${nit}`);
+
+  if (!res.ok) {
+  habilitarCamposEmpresa();
+  return;
+}
+
+const empresa = await res.json();
+
+  // 🔥 AUTOCOMPLETE
+  document.getElementById("nombre_empresa").value = empresa.nombre_empresa;
+  document.getElementById("direccion_empresa").value = empresa.direccion_empresa;
+  document.getElementById("telefono_empresa").value = empresa.telefono_empresa;
+  document.getElementById("correo_empresa").value = empresa.correo_empresa;
+
+  bloquearCamposEmpresa();
+
+});
+
+function bloquearCamposEmpresa() {
+  ["nombre_empresa","direccion_empresa","telefono_empresa","correo_empresa"]
+  .forEach(id => document.getElementById(id).disabled = true);
+}
+
+function habilitarCamposEmpresa() {
+  ["nombre_empresa","direccion_empresa","telefono_empresa","correo_empresa"]
+  .forEach(id => {
+    const input = document.getElementById(id);
+    input.disabled = false;
+    input.value = ""; // 🔥 limpia
+  });
+}
 
 </script>
 

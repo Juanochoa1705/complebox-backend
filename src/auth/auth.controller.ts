@@ -5,6 +5,7 @@ import {
   Get,
   UseGuards,
   Request,
+  Param,
 } from '@nestjs/common';
 
 import { AuthService } from './auth.service';
@@ -75,5 +76,13 @@ async registerVigilante(@Body() dto: CrearVigilanteDto) {
   return this.authService.registrarVigilante(dto);
 }
 
+@Get('empresa/:nit')
+buscarEmpresa(@Param('nit') nit: string) {
+  return this.authService.buscarEmpresaPorNit(nit);
+}
 
+@Post('register-mensajero')
+async registerMensajero(@Body() dto: any) {
+  return this.authService.registerMensajero(dto);
+}
 }

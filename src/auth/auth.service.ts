@@ -233,4 +233,64 @@ export class AuthService {
 
   return { message: "Vigilante registrado. Pendiente aprobación." };
 }
+
+  // =========================
+// BUSCAR EMPRESA POR NIT
+// =========================
+async buscarEmpresaPorNit(nit: string) {
+
+  const empresa = await this.prisma.empresa.findUnique({
+    where: { nit_empresa: nit }
+  });
+
+  return empresa || null;
+}
+
+// =========================
+// REGISTER MENSAJERO
+// =========================
+async registerMensajero(dto: any) {
+
+  let empresa = await this.prisma.empresa.findUnique({
+    where: { nit_empresa: dto.nit_empresa }
+  });
+
+  if (!empresa) {
+    empresa = await this.prisma.empresa.create({
+      data: {
+        nit_empresa: dto.nit_empresa,
+        nombre_empresa: dto.nombre_empresa,
+        direccion_empresa: dto.direccion_empresa,
+        telefono_empresa: dto.telefono_empresa,
+        correo_empresa: dto.correo_empresa,
+        fk_estado_empresa: 1
+      }
+    });
+  }
+
+  const persona = await this.prisma.persona.create({
+    data: {
+      nombres: dto.nombres,
+      apellidos: dto.apellidos,
+      cedula: dto.cedula,
+      correo: dto.correo,
+      telefono: dto.telefono,
+      usuario: dto.usuario,
+      contrase_a: await bcrypt.hash(dto.password, 10),
+
+      estado: { connect: { cod_estado: 1 } },
+      rol: { connect: { cod_rol: 5 } },
+      tipo_doc: { connect: { cod_tipo_doc: dto.fk_tipo_doc } }
+    }
+  });
+
+  await this.prisma.empresa_mensajero.create({
+    data: {
+      fk_persona_mensajero: persona.cod_user,
+      fk_empresa_mensajero: empresa.cod_empresa
+    }
+  });
+
+  return { message: "Mensajero registrado correctamente" };
+}
 }
