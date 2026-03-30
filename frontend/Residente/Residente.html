@@ -1,0 +1,284 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+  <meta charset="UTF-8">
+  <title>Panel Residente</title>
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+
+  <style>
+    * {
+      box-sizing: border-box;
+      font-family: 'Segoe UI', sans-serif;
+    }
+
+    body {
+      margin: 0;
+      height: 100vh;
+      background: linear-gradient(180deg, #0d47a1, #1976d2);
+      display: flex;
+      justify-content: center;
+      align-items: center;
+    }
+
+    .mobile {
+      width: 100%;
+      max-width: 390px;
+      height: 100vh;
+      background: #fff;
+      border-radius: 20px 20px 0 0;
+      padding: 20px;
+      overflow-y: auto;
+    }
+
+    h3 {
+      text-align: center;
+      color: #0d47a1;
+    }
+
+    .card {
+      border: 1px solid #ccc;
+      border-radius: 10px;
+      padding: 10px;
+      margin-bottom: 10px;
+    }
+
+    button {
+      width: 100%;
+      padding: 12px;
+      background: #1976d2;
+      color: white;
+      border: none;
+      border-radius: 10px;
+      margin-top: 5px;
+      cursor: pointer;
+    }
+
+    /* MODAL FIRMA */
+    #firmaContainer {
+      display: none;
+      position: fixed;
+      top: 0;
+      left: 0;
+      width: 100%;
+      height: 100%;
+      background: rgba(0,0,0,0.6);
+      justify-content: center;
+      align-items: center;
+    }
+
+    #firmaBox {
+      background: #fff;
+      padding: 20px;
+      border-radius: 15px;
+      text-align: center;
+    }
+
+    canvas {
+      border: 2px solid #1976d2;
+      border-radius: 10px;
+    }
+  </style>
+</head>
+
+<body>
+
+<div class="mobile">
+
+  <h3>📦 Mis pedidos</h3>
+
+  <div id="listaPedidos"></div>
+
+  <!-- MODAL FIRMA -->
+  <div id="firmaContainer">
+    <div id="firmaBox">
+      <h4>✍️ Firma aquí</h4>
+      <canvas id="canvasFirma" width="300" height="200"></canvas>
+      <br><br>
+      <button onclick="guardarFirma()">Guardar firma</button>
+      <button onclick="limpiarFirma()">Limpiar</button>
+      <button onclick="cerrarFirma()">Cancelar</button>
+    </div>
+  </div>
+
+  <button onclick="cerrarSesion()">Cerrar sesión</button>
+
+</div>
+
+<script>
+
+const contenedor = document.getElementById("listaPedidos");
+let pedidoSeleccionado = null;
+
+// =======================
+// CARGAR PEDIDOS
+// =======================
+async function cargarPedidos() {
+
+  const res = await fetch("http://localhost:3000/residente/mis-pedidos", {
+    headers: {
+      "Authorization": "Bearer " + localStorage.getItem("token")
+    }
+  });
+
+  const pedidos = await res.json();
+
+  console.log("PEDIDOS:", pedidos); // 🔥 DEBUG
+
+  // 🔥 VALIDACIÓN CLAVE
+  if (!Array.isArray(pedidos)) {
+    alert("Error cargando pedidos");
+    return;
+  }
+
+  contenedor.innerHTML = "";
+
+pedidos.forEach(p => {
+    const div = document.createElement("div");
+    div.className = "card";
+
+    // Lógica para decidir qué botón mostrar según el estado
+    let botones = "";
+    if (p.fk_estado_pedido === 2) { // Si está "Recibido"
+        botones = `<button onclick="confirmarRecogida(${p.cod_pedido_estado_entrega})">Confirmar Recogida</button>`;
+    } else if (p.fk_estado_pedido === 3 || p.fk_estado_pedido === 4) { // Si está "Confirmado" o "Pendiente firma"
+        botones = `<button onclick="abrirFirma(${p.cod_pedido_estado_entrega})">✍️ Firmar Entrega</button>`;
+    }
+
+    div.innerHTML = `
+      <b>${p.nombre_pedido}</b><br>
+      Guía: ${p.numero_guia}<br>
+      Estado: ${getEstado(p.fk_estado_pedido)}<br><br>
+      ${botones}
+    `;
+
+    contenedor.appendChild(div);
+});
+}
+// =======================
+// ESTADOS
+// =======================
+function getEstado(e) {
+  switch(e) {
+    case 2: return "📥 Recibido";
+    case 3: return "✅ Confirmado";
+    case 4: return "✍️ Pendiente firma";
+    case 5: return "📬 Entregado";
+    default: return "⏳";
+  }
+}
+
+// =======================
+// CONFIRMAR
+// =======================
+async function confirmarRecogida(id) {
+
+  await fetch(`http://localhost:3000/residente/confirmar/${id}`, {
+    method: "POST",
+    headers: {
+      "Authorization": "Bearer " + localStorage.getItem("token")
+    }
+  });
+
+  alert("✅ Pedido confirmado");
+  cargarPedidos();
+}
+
+// =======================
+// FIRMA
+// =======================
+const canvas = document.getElementById("canvasFirma");
+const ctx = canvas.getContext("2d");
+
+let dibujando = false;
+
+canvas.addEventListener("mousedown", () => dibujando = true);
+canvas.addEventListener("mouseup", () => {
+  dibujando = false;
+  ctx.beginPath();
+});
+canvas.addEventListener("mouseleave", () => dibujando = false);
+canvas.addEventListener("mousemove", dibujar);
+
+function dibujar(e) {
+  if (!dibujando) return;
+  ctx.lineWidth = 2;
+  ctx.lineCap = "round";
+  ctx.lineTo(e.offsetX, e.offsetY);
+  ctx.stroke();
+  ctx.beginPath();
+  ctx.moveTo(e.offsetX, e.offsetY);
+}
+
+// =======================
+function abrirFirma(id) {
+  pedidoSeleccionado = id;
+  document.getElementById("firmaContainer").style.display = "flex";
+}
+
+function cerrarFirma() {
+  document.getElementById("firmaContainer").style.display = "none";
+  limpiarFirma();
+}
+
+function limpiarFirma() {
+  ctx.clearRect(0, 0, canvas.width, canvas.height);
+}
+
+// =======================
+async function guardarFirma() {
+
+  const firma = canvas.toDataURL();
+
+  await fetch(`http://localhost:3000/residente/firma/${pedidoSeleccionado}`, {
+    method: "POST",
+    headers: {
+      "Content-Type": "application/json",
+      "Authorization": "Bearer " + localStorage.getItem("token")
+    },
+    body: JSON.stringify({ firma })
+  });
+
+  alert("✅ Pedido entregado");
+  cerrarFirma();
+  cargarPedidos();
+}
+// Eventos para Celular
+canvas.addEventListener("touchstart", (e) => {
+    e.preventDefault();
+    dibujando = true;
+}, { passive: false });
+
+canvas.addEventListener("touchend", () => {
+    dibujando = false;
+    ctx.beginPath();
+});
+
+canvas.addEventListener("touchmove", (e) => {
+    if (!dibujando) return;
+    e.preventDefault();
+    const touch = e.touches[0];
+    const rect = canvas.getBoundingClientRect();
+    const x = touch.clientX - rect.left;
+    const y = touch.clientY - rect.top;
+    
+    ctx.lineWidth = 2;
+    ctx.lineCap = "round";
+    ctx.lineTo(x, y);
+    ctx.stroke();
+    ctx.beginPath();
+    ctx.moveTo(x, y);
+}, { passive: false });
+
+// =======================
+function cerrarSesion() {
+  localStorage.clear();
+  window.location.href = '../login.html';
+}
+
+// =======================
+cargarPedidos();
+
+</script>
+
+</body>
+</html>

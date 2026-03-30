@@ -5,6 +5,7 @@ import { AdminModule } from './admin/admin.module'; // 👈 IMPORTANTE
 import { PropietarioModule } from './propietario/propietario.module';
 import { MensajeroModule } from './mensajero/mensajero.module';
 import { VigilanteModule } from './vigilante/vigilante.module';
+import { ResidenteModule } from './residente/residente.module';
 
 @Module({
   imports: [
@@ -13,7 +14,8 @@ import { VigilanteModule } from './vigilante/vigilante.module';
     AdminModule,
     PropietarioModule,
     MensajeroModule,
-    VigilanteModule, 
+    VigilanteModule,
+    ResidenteModule, 
   ],
 })
 export class AppModule {}

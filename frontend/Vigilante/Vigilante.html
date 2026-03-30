@@ -2,7 +2,7 @@
 <html lang="es">
 <head>
   <meta charset="UTF-8">
-  <title>Panel Mensajero</title>
+  <title>Panel Vigilante</title>
   <meta name="viewport" content="width=device-width, initial-scale=1">
 
   <style>
@@ -239,7 +239,7 @@ async function entregarPedido(id) {
 
     if (!res.ok) throw new Error(result.message);
 
-    alert("✅ Pedido entregado");
+    alert("📝 Pendiente firma");
 
     inputBusqueda.dispatchEvent(new Event("input")); // 🔄 refresca lista
 
