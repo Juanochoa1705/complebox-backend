@@ -127,6 +127,8 @@ No hay residentes pendientes
 
 </div>
 
+   <button onclick="cerrarSesion()">Cerrar sesión</button>
+
 <script>
 
 const tabla = document.querySelector("#tablaResidentes tbody");
@@ -229,6 +231,11 @@ document.getElementById("ubicacion").innerText =
 cargarPerfil();
 
 cargarResidentesPendientes();
+
+function cerrarSesion() {
+  localStorage.clear();
+  window.location.href = '../login.html';
+}
 
 </script>
 

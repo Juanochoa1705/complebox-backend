@@ -1,0 +1,160 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+  <meta charset="UTF-8">
+  <title>Panel Mensajero</title>
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+
+  <style>
+    
+    * {
+  box-sizing: border-box;
+  font-family: 'Segoe UI', sans-serif;
+}
+
+body {
+  margin: 0;
+  height: 100vh;
+  background: linear-gradient(180deg, #0d47a1, #1976d2);
+  display: flex;
+  justify-content: center;
+  align-items: center;
+}
+
+.mobile {
+  width: 100%;
+  max-width: 390px;
+  height: 100vh;
+  background: #fff;
+  border-radius: 20px 20px 0 0;
+  padding: 25px;
+  overflow-y: auto;
+}
+
+.logo {
+      width: 130px;
+      margin: 0 auto 15px;
+      display: block;
+    }
+
+h2 {
+  text-align: center;
+  color: #0d47a1;
+  margin-bottom: 20px;
+}
+
+.form-group {
+  margin-bottom: 12px;
+}
+
+input {
+  width: 100%;
+  padding: 12px;
+  border-radius: 12px;
+  border: 1px solid #ccc;
+}
+
+button {
+  width: 100%;
+  padding: 14px;
+  background: #1976d2;
+  color: white;
+  border: none;
+  border-radius: 12px;
+  margin-top: 10px;
+  cursor: pointer;
+}
+
+button:active {
+  transform: scale(0.98);
+}
+
+.message {
+  text-align: center;
+  margin-top: 10px;
+}
+
+.d-none {
+  display: none;
+}
+  </style>
+</head>
+
+<body>
+
+
+
+<div class="mobile">
+<img src="../assets/logo.png" class="logo" alt="Complebox">
+<h2 >Panel mensajero</h2>
+
+
+
+<h3>Registrar Pedido</h3>
+
+<div class="form-group">
+  <label>Número de guía</label>
+  <input id="numero_guia" required>
+</div>
+
+<div class="form-group">
+  <label>Nombre del pedido</label>
+  <input id="nombre_pedido" required>
+</div>
+
+<div class="form-group">
+  <label>Descripción</label>
+  <input id="descripcion_pedido" required>
+</div>
+
+<div class="form-group">
+  <label>Cédula del residente</label>
+  <input id="cedula_residente" required>
+</div>
+
+<button onclick="crearPedido()">Registrar Pedido</button>
+<button onclick="cerrarSesion()">Cerrar sesión</button>
+
+<script >
+
+
+  
+async function crearPedido() {
+
+  const data = {
+    numero_guia: document.getElementById("numero_guia").value,
+    nombre_pedido: document.getElementById("nombre_pedido").value,
+    descripcion_pedido: document.getElementById("descripcion_pedido").value,
+    cedula_residente: document.getElementById("cedula_residente").value,
+
+    // 🔥 este lo debes tener del login
+    fk_mensajero: localStorage.getItem("userId")
+  };
+
+  try {
+    const res = await fetch("http://localhost:3000/mensajero/crear-pedido", {
+  method: "POST",
+  headers: {
+    "Content-Type": "application/json",
+    "Authorization": "Bearer " + localStorage.getItem("token") // 🔥 CLAVE
+  },
+  body: JSON.stringify(data)
+});
+
+    const result = await res.json();
+
+    if (!res.ok) throw new Error(result.message);
+
+    alert("✅ Pedido registrado");
+  } catch (err) {
+    alert(err.message);
+  }
+}
+
+function cerrarSesion() {
+  localStorage.clear();
+  window.location.href = '../login.html';
+}
+
+</script>
+</body>

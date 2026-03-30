@@ -187,6 +187,10 @@ form.addEventListener('submit', async (e) => {
     else if (result.user.rol === 'Propietario') {
       window.location.href = '../frontend/propietario/propietario.html';
     }
+
+    else if (result.user.rol === 'Mensajero') {
+      window.location.href = '../frontend/mensajero/mensajero.html';
+    }
     else {
       message.textContent = 'Rol no habilitado por ahora';
       message.className = 'message error';
