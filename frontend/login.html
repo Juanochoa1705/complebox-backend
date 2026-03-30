@@ -191,6 +191,10 @@ form.addEventListener('submit', async (e) => {
     else if (result.user.rol === 'Mensajero') {
       window.location.href = '../frontend/mensajero/mensajero.html';
     }
+
+    else if (result.user.rol === 'Vigilante') {
+      window.location.href = '../frontend/vigilante/Vigilante.html';
+    }
     else {
       message.textContent = 'Rol no habilitado por ahora';
       message.className = 'message error';

@@ -10,28 +10,44 @@ export class MensajeroService {
 
 async crearPedido(dto: any, mensajeroId: number) {
 
-  // 🔎 buscar residente
+  // 🔥 VALIDAR QUE EXISTA
   const residente = await this.prisma.persona.findUnique({
-    where: { cedula: dto.cedula_residente }
+    where: { cod_user: dto.fk_residente }
   });
 
   if (!residente) {
-    throw new NotFoundException("La cédula del residente no existe");
+    throw new NotFoundException("Residente no existe");
   }
 
-  // 🔥 crear pedido
   return this.prisma.pedido_estado_entrega_residente.create({
     data: {
       numero_guia: dto.numero_guia,
       nombre_pedido: dto.nombre_pedido,
       descripcion_pedido: dto.descripcion_pedido,
 
-      fk_estado_pedido: 1, // Registrado
+      fk_estado_pedido: 1,
       fk_residente: residente.cod_user,
-
-      // 🔥 ESTE ES EL IMPORTANTE
       fk_mensajero: mensajeroId
     }
+  });
+}
+
+async buscarResidente(query: string) {
+
+  return this.prisma.persona.findMany({
+    where: {
+      AND: [
+        { fk_rol: 3 }, // 🔥 SOLO residentes
+        {
+          OR: [
+            { nombres: { contains: query } },
+            { apellidos: { contains: query } },
+            { cedula: { contains: query } }
+          ]
+        }
+      ]
+    },
+    take: 5 // 🔥 limita resultados
   });
 }
 }

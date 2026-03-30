@@ -108,8 +108,17 @@ button:active {
 </div>
 
 <div class="form-group">
-  <label>Cédula del residente</label>
-  <input id="cedula_residente" required>
+  <label>Buscar residente</label>
+  <input id="buscar_residente" placeholder="Nombre o cédula">
+
+  <div id="resultados" style="
+    background:#fff;
+    border:1px solid #ccc;
+    border-radius:10px;
+    margin-top:5px;
+    max-height:150px;
+    overflow-y:auto;
+  "></div>
 </div>
 
 <button onclick="crearPedido()">Registrar Pedido</button>
@@ -121,11 +130,16 @@ button:active {
   
 async function crearPedido() {
 
+    if (!residenteSeleccionado) {
+    alert("Selecciona un residente");
+    return;
+  }
+
   const data = {
     numero_guia: document.getElementById("numero_guia").value,
     nombre_pedido: document.getElementById("nombre_pedido").value,
     descripcion_pedido: document.getElementById("descripcion_pedido").value,
-    cedula_residente: document.getElementById("cedula_residente").value,
+    fk_residente: residenteSeleccionado,
 
     // 🔥 este lo debes tener del login
     fk_mensajero: localStorage.getItem("userId")
@@ -145,16 +159,68 @@ async function crearPedido() {
 
     if (!res.ok) throw new Error(result.message);
 
+    document.getElementById("numero_guia").value = "";
+document.getElementById("nombre_pedido").value = "";
+document.getElementById("descripcion_pedido").value = "";
+document.getElementById("buscar_residente").value = "";
+
+residenteSeleccionado = null;
+document.getElementById("resultados").innerHTML = "";
+
     alert("✅ Pedido registrado");
   } catch (err) {
     alert(err.message);
   }
+
+
 }
 
 function cerrarSesion() {
   localStorage.clear();
   window.location.href = '../login.html';
 }
+
+const inputBuscar = document.getElementById("buscar_residente");
+const resultados = document.getElementById("resultados");
+
+let residenteSeleccionado = null;
+
+inputBuscar.addEventListener("input", async () => {
+
+  const query = inputBuscar.value.trim();
+
+  if (query.length < 2) {
+    resultados.innerHTML = "";
+    return;
+  }
+
+
+
+  const res = await fetch(`http://localhost:3000/mensajero/buscar-residente?q=${query}`);
+  const data = await res.json();
+
+  resultados.innerHTML = "";
+
+  data.forEach(persona => {
+    const div = document.createElement("div");
+
+    div.style.padding = "10px";
+    div.style.cursor = "pointer";
+
+    div.textContent = `${persona.nombres} ${persona.apellidos} - ${persona.cedula}`;
+
+    div.onclick = () => {
+      inputBuscar.value = div.textContent;
+      resultados.innerHTML = "";
+
+      // 🔥 guardamos el ID REAL
+      residenteSeleccionado = persona.cod_user;
+    };
+
+    resultados.appendChild(div);
+  });
+
+});
 
 </script>
 </body>

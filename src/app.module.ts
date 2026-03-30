@@ -4,6 +4,7 @@ import { PrismaModule } from './prisma/prisma.module';
 import { AdminModule } from './admin/admin.module'; // 👈 IMPORTANTE
 import { PropietarioModule } from './propietario/propietario.module';
 import { MensajeroModule } from './mensajero/mensajero.module';
+import { VigilanteModule } from './vigilante/vigilante.module';
 
 @Module({
   imports: [
@@ -11,7 +12,8 @@ import { MensajeroModule } from './mensajero/mensajero.module';
     AuthModule,
     AdminModule,
     PropietarioModule,
-    MensajeroModule, 
+    MensajeroModule,
+    VigilanteModule, 
   ],
 })
 export class AppModule {}

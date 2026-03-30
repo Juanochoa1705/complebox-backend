@@ -1,0 +1,260 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+  <meta charset="UTF-8">
+  <title>Panel Mensajero</title>
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+
+  <style>
+    
+    * {
+  box-sizing: border-box;
+  font-family: 'Segoe UI', sans-serif;
+}
+
+body {
+  margin: 0;
+  height: 100vh;
+  background: linear-gradient(180deg, #0d47a1, #1976d2);
+  display: flex;
+  justify-content: center;
+  align-items: center;
+}
+
+.mobile {
+  width: 100%;
+  max-width: 390px;
+  height: 100vh;
+  background: #fff;
+  border-radius: 20px 20px 0 0;
+  padding: 25px;
+  overflow-y: auto;
+}
+
+.logo {
+      width: 130px;
+      margin: 0 auto 15px;
+      display: block;
+    }
+
+h2 {
+  text-align: center;
+  color: #0d47a1;
+  margin-bottom: 20px;
+}
+
+.form-group {
+  margin-bottom: 12px;
+}
+
+input {
+  width: 100%;
+  padding: 12px;
+  border-radius: 12px;
+  border: 1px solid #ccc;
+}
+
+button {
+  width: 100%;
+  padding: 14px;
+  background: #1976d2;
+  color: white;
+  border: none;
+  border-radius: 12px;
+  margin-top: 10px;
+  cursor: pointer;
+}
+
+button:active {
+  transform: scale(0.98);
+}
+
+.message {
+  text-align: center;
+  margin-top: 10px;
+}
+
+.d-none {
+  display: none;
+}
+  </style>
+</head>
+
+<body>
+
+<div class="mobile">
+<img src="../assets/logo.png" class="logo" alt="Complebox">
+<h2 >Panel Vigilante</h2>
+
+<div id="listaPedidos"></div>
+<h3>Buscar pedidos de residente</h3>
+
+<input 
+  type="text" 
+  id="buscarResidente" 
+  placeholder="Buscar por cédula o nombre..."
+  style="margin-bottom:10px;"
+>
+
+<div id="resultadosPedidos"></div>
+<button onclick="cerrarSesion()">Cerrar sesión</button>
+</div>
+
+<script >
+
+
+  
+async function cargarPedidos() {
+
+  const res = await fetch("http://localhost:3000/vigilante/pedidos", {
+    headers: {
+      "Authorization": "Bearer " + localStorage.getItem("token")
+    }
+  });
+
+  const pedidos = await res.json();
+
+  const contenedor = document.getElementById("listaPedidos");
+  contenedor.innerHTML = "";
+
+
+  if (!Array.isArray(pedidos)) {
+  console.error("No es array:", pedidos);
+  return;
+}
+
+console.log("PEDIDOS:", pedidos);
+  pedidos.forEach(p => {
+
+    const div = document.createElement("div");
+
+    div.innerHTML = `
+      <b>Guía:</b> ${p.numero_guia}<br>
+      <b>Pedido:</b> ${p.nombre_pedido}<br>
+      <b>Residente:</b> ${p.persona_pedido_estado_entrega_residente_fk_residenteTopersona.nombres}<br><br>
+
+      <button onclick="aprobar(${p.cod_pedido_estado_entrega})">
+        Aprobar
+      </button>
+      <hr>
+    `;
+
+    contenedor.appendChild(div);
+  });
+}
+
+async function aprobar(id) {
+
+  const res = await fetch(`http://localhost:3000/vigilante/aprobar/${id}`, {
+    method: "POST",
+    headers: {
+      "Authorization": "Bearer " + localStorage.getItem("token")
+    }
+  });
+
+  const data = await res.json();
+
+  if (!res.ok) {
+    alert(data.message);
+    return;
+  }
+
+  alert("✅ Pedido recibido");
+
+  cargarPedidos(); // 🔥 recargar lista
+}
+
+
+cargarPedidos();
+
+
+const inputBusqueda = document.getElementById("buscarResidente");
+const contenedor = document.getElementById("resultadosPedidos");
+
+inputBusqueda.addEventListener("input", async () => {
+
+  const texto = inputBusqueda.value.trim();
+
+  if (texto.length < 2) {
+    contenedor.innerHTML = "";
+    return;
+  }
+
+  try {
+
+    const res = await fetch(`http://localhost:3000/vigilante/buscar-pedidos?query=${texto}`, {
+      headers: {
+        "Authorization": "Bearer " + localStorage.getItem("token")
+      }
+    });
+
+    const pedidos = await res.json();
+
+    contenedor.innerHTML = "";
+
+    pedidos.forEach(p => {
+
+      const div = document.createElement("div");
+      div.style.border = "1px solid #ccc";
+      div.style.padding = "10px";
+      div.style.marginBottom = "10px";
+      div.style.borderRadius = "10px";
+
+      div.innerHTML = `
+        <b>${p.nombre_pedido}</b><br>
+        Guía: ${p.numero_guia}<br>
+        Residente: ${p.residente}<br>
+        Estado: ${p.estado}
+        <br><br>
+        ${
+          p.fk_estado_pedido == 3
+          ? `<button onclick="entregarPedido(${p.id})">Entregar</button>`
+          : ''
+        }
+      `;
+
+      contenedor.appendChild(div);
+    });
+
+  } catch (error) {
+    console.error(error);
+  }
+
+});
+
+
+// 🔥 ENTREGAR PEDIDO
+async function entregarPedido(id) {
+
+  try {
+
+    const res = await fetch(`http://localhost:3000/vigilante/entregar/${id}`, {
+      method: "POST",
+      headers: {
+        "Authorization": "Bearer " + localStorage.getItem("token")
+      }
+    });
+
+    const result = await res.json();
+
+    if (!res.ok) throw new Error(result.message);
+
+    alert("✅ Pedido entregado");
+
+    inputBusqueda.dispatchEvent(new Event("input")); // 🔄 refresca lista
+
+  } catch (err) {
+    alert(err.message);
+  }
+
+}
+
+
+
+function cerrarSesion() {
+  localStorage.clear();
+  window.location.href = '../login.html';
+}
+
+</script>
+</body>
