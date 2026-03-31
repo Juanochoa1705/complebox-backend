@@ -2,210 +2,222 @@
 <html lang="es">
 <head>
 <meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
 <title>Panel Propietario</title>
 
 <style>
-*{
-  box-sizing:border-box;
-  font-family:'Segoe UI', sans-serif;
-}
-
-body{
-  margin:0;
-  height:100vh;
-  background:linear-gradient(180deg,#0d47a1,#1976d2);
-  display:flex;
-  justify-content:center;
-  align-items:center;
-}
-
-/* CONTENEDOR TIPO APP */
-.mobile{
-  width:100%;
-  max-width:390px;
-  height:100vh;
-  background:#fff;
-  border-radius:20px 20px 0 0;
-  padding:25px;
-  overflow-y:auto;
-}
-
-.logo {
-      width: 130px;
-      margin: 0 auto 15px;
-      display: block;
+    
+<style>
+    * {
+        box-sizing: border-box;
+        font-family: 'Segoe UI', sans-serif;
     }
 
-h2{
-  text-align:center;
-  color:#0d47a1;
-  margin-bottom:25px;
-}
+    body {
+        margin: 0;
+        padding: 0;
+        min-height: 100vh;
+        background: linear-gradient(180deg, #0d47a1, #1976d2);
+        display: flex;
+        justify-content: center;
+        align-items: flex-start; /* Cambiado para que en móviles largos se pueda scrollear */
+    }
 
-h3{
-  color:#1976d2;
-  margin-top:10px;
-}
+    .mobile {
+        width: 80%;
+        max-width: 500px; /* Un ancho máximo realista para apps móviles */
+        min-height: 100vh;
+        background: #fff;
+        padding: 30px 20px;
+        display: flex;
+        flex-direction: column;
+        box-shadow: 0 10px 25px rgba(0,0,0,0.2);
+    }
 
-/* TABLA */
+    /* Ajustes para pantallas grandes (Escritorio) */
+    @media (min-width: 768px) {
+        body {
+            align-items: center;
+            padding: 20px;
+        }
+        .mobile {
+            min-height: auto;
+            height: 90vh;
+            border-radius: 30px;
+        }
+    }
 
-table{
-  width:100%;
-  border-collapse:collapse;
-  margin-top:15px;
-}
+    .logo {
+        width: 150px; /* Tamaño más equilibrado */
+        margin: 0 auto 20px;
+        display: block;
+    }
 
-th{
-  text-align:left;
-  font-size:13px;
-  color:#555;
-  padding:10px 5px;
-  border-bottom:1px solid #ddd;
-}
+    h2 {
+        text-align: center;
+        color: #0d47a1;
+        font-size: 24px;
+        margin: 10px 0;
+        font-family: 'Segoe UI', sans-serif;
+    }
 
-td{
-  padding:12px 5px;
-  border-bottom:1px solid #eee;
-  font-size:14px;
-}
+    #ubicacion {
+        text-align: center;
+        font-size: 16px;
+        color: #666;
+        margin-bottom: 20px;
+    }
 
-/* BOTON */
+    .card {
+        background: #f5f7fa;
+        padding: 20px;
+        border-radius: 15px;
+        margin-bottom: 15px;
+        border: 1px solid #eee;
+    }
 
-button{
-  padding:8px 14px;
-  background:#1976d2;
-  color:white;
-  border:none;
-  border-radius:10px;
-  font-size:13px;
-  cursor:pointer;
-}
+    .nombre {
+        font-size: 18px;
+        font-weight: bold;
+        color: #333;
+        font-family: 'Segoe UI', sans-serif;
+    }
 
-button:hover{
-  background:#0d47a1;
-}
+    .cedula {
+        font-size: 14px;
+        color: #777;
+        margin: 5px 0 15px;
+        font-family: 'Segoe UI', sans-serif;
+    }
 
+    button {
+        width: 100%;
+        padding: 15px;
+        background: #1976d2;
+        color: white;
+        border: none;
+        border-radius: 12px;
+        font-size: 16px;
+        font-weight: bold;
+        font-family: 'Segoe UI', sans-serif;
+        cursor: pointer;
+        transition: background 0.3s;
+    }
 
+    button:active {
+        transform: scale(0.98);
+    }
 
-button:active{
-  transform:scale(0.95);
-}
+    .logout {
+        background: #fdeded;
+        color: #e53935;
+        font-size: 16px;
+        margin-top: auto; /* Empuja el botón al final */
+        border: 1px solid #f8d7da;
+    }
 
-.empty{
-  text-align:center;
-  color:#777;
-  margin-top:20px;
-}
+    .empty {
+        text-align: center;
+        color: #999;
+        font-size: 16px;
+        padding: 40px 20px;
+    }
+    </style>
 </style>
 </head>
 
 <body>
 
+
+
 <div class="mobile">
-<img src="../assets/logo.png" class="logo" alt="Complebox">
-<h2 id="titulo"></h2>
-<p id="ubicacion"></p>
 
-<h3>Residentes pendientes por aprobar</h3>
+    <img src="../assets/logo.png" class="logo">
+    <h2 id="titulo"></h2>
+    <p id="ubicacion"></p>
 
-<table id="tablaResidentes">
-<thead>
-<tr>
-<th>Nombre</th>
-<th>Cédula</th>
-<th></th>
-</tr>
-</thead>
+    <div style="text-align:center; margin:10px 0;">
+      <span style="background:#e3f2fd; color:#1976d2; padding:6px 12px; border-radius:20px; font-size:14px;">
+        🏢 Propietario activo
+      </span>
+    </div>
 
-<tbody></tbody>
+    <div class="lista" id="listaResidentes"></div>
 
-</table>
+    <p class="empty" id="mensajeVacio" style="display:none;">
+      📭 No tienes residentes pendientes
+    </p>
 
-<p class="empty" id="mensajeVacio" style="display:none;">
-No hay residentes pendientes
-</p>
+    <div class="footer">
+      <button class="logout" onclick="cerrarSesion()">Cerrar sesión</button>
+    </div>
 
-</div>
-
-   <button onclick="cerrarSesion()">Cerrar sesión</button>
+  </div>
 
 <script>
 
-const tabla = document.querySelector("#tablaResidentes tbody");
+const lista = document.getElementById("listaResidentes");
 const mensaje = document.getElementById("mensajeVacio");
 
 async function cargarResidentesPendientes(){
 
-  try{
+  const token = localStorage.getItem("token");
 
-    const token = localStorage.getItem("token");
-
-    const res = await fetch("http://localhost:3000/propietario/residentes-pendientes",{
-      headers:{
-        Authorization:`Bearer ${token}`
-      }
-    });
-
-    const residentes = await res.json();
-
-    tabla.innerHTML="";
-
-    if(residentes.length===0){
-      mensaje.style.display="block";
-      return;
+  const res = await fetch("http://localhost:3000/propietario/residentes-pendientes",{
+    headers:{
+      Authorization:`Bearer ${token}`
     }
+  });
 
-    mensaje.style.display="none";
+  const residentes = await res.json();
 
-    residentes.forEach(residente=>{
+  lista.innerHTML="";
 
-      const fila=document.createElement("tr");
-
-      fila.innerHTML=`
-        <td>${residente.nombres} ${residente.apellidos}</td>
-        <td>${residente.cedula}</td>
-        <td>
-          <button onclick="aprobarResidente(${residente.cod_user})">
-          Aprobar
-          </button>
-        </td>
-      `;
-
-      tabla.appendChild(fila);
-
-    });
-
-  }catch(error){
-    console.error("Error cargando residentes:",error);
+  if(!Array.isArray(residentes) || residentes.length===0){
+    mensaje.style.display="block";
+    return;
   }
+
+  mensaje.style.display="none";
+
+  residentes.forEach(r=>{
+
+    const card=document.createElement("div");
+    card.className="card";
+
+    card.innerHTML=`
+      <div class="nombre">${r.nombres} ${r.apellidos}</div>
+      <div class="cedula">Cédula: ${r.cedula}</div>
+
+      <button class="btn" onclick="aprobarResidente(${r.cod_user})">
+        ✔ Aprobar residente
+      </button>
+    `;
+
+    lista.appendChild(card);
+
+  });
 
 }
 
 async function aprobarResidente(codUser){
 
-  try{
+  const token=localStorage.getItem("token");
 
-    const token=localStorage.getItem("token");
+  await fetch("http://localhost:3000/propietario/aprobar-residente",{
+    method:"POST",
+    headers:{
+      "Content-Type":"application/json",
+      Authorization:`Bearer ${token}`
+    },
+    body:JSON.stringify({
+      cod_user:codUser
+    })
+  });
 
-    await fetch("http://localhost:3000/propietario/aprobar-residente",{
-      method:"POST",
-      headers:{
-        "Content-Type":"application/json",
-        Authorization:`Bearer ${token}`
-      },
-      body:JSON.stringify({
-        cod_user:codUser
-      })
-    });
+  alert("✅ Residente aprobado");
 
-    alert("Residente aprobado");
-
-    cargarResidentesPendientes();
-
-  }catch(error){
-    console.error("Error aprobando residente:",error);
-  }
-
+  cargarResidentesPendientes();
 }
 
 async function cargarPerfil(){
@@ -221,21 +233,19 @@ async function cargarPerfil(){
   const data = await res.json();
 
  document.getElementById("titulo").innerText =
-`Bienvenido propietari@ ${data.nombres} ${data.apellidos}`;
+  `👋 Hola, ${data.nombres}`;
 
-document.getElementById("ubicacion").innerText =
-`Torre ${data.torre} - Apto ${data.apto}`;
-
+  document.getElementById("ubicacion").innerText =
+    `🏢 Torre ${data.torre} • Apto ${data.apto}`;
 }
 
-cargarPerfil();
-
-cargarResidentesPendientes();
-
-function cerrarSesion() {
+function cerrarSesion(){
   localStorage.clear();
   window.location.href = '../login.html';
 }
+
+cargarPerfil();
+cargarResidentesPendientes();
 
 </script>
 

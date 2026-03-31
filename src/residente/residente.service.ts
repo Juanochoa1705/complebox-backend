@@ -26,19 +26,32 @@ export class ResidenteService {
   }
 }
 
-  async firmarPedido(id: number, firma: string) {
-    if (!firma) {
-      throw new BadRequestException('La firma es obligatoria para finalizar la entrega');
-    }
+async firmarPedido(id: number, firma: string, residenteId: number) {
 
-    // Usar la fecha actual del servidor (Prisma maneja UTC por defecto)
-    return this.prisma.pedido_estado_entrega_residente.update({
-      where: { cod_pedido_estado_entrega: id },
-      data: {
-        fk_estado_pedido: 5, // Estado: Entregado
-        firma_residente: firma,
-        fecha_entregado: new Date(),
-      },
-    });
+  if (!firma) {
+    throw new BadRequestException('La firma es obligatoria');
   }
+
+  // 🔎 buscar el apartamento del residente
+  const apto = await this.prisma.apto_residente.findFirst({
+    where: {
+      fk_cod_residente: residenteId,
+      fk_estado_apto_residente: 1 // activo
+    }
+  });
+
+  if (!apto) {
+    throw new BadRequestException('Residente sin apartamento');
+  }
+
+  return this.prisma.pedido_estado_entrega_residente.update({
+    where: { cod_pedido_estado_entrega: id },
+    data: {
+      fk_estado_pedido: 5,
+      firma_residente: firma,
+      fecha_entregado: new Date(),
+      fk_apto_entrega: apto.fk_cod_apto // 🔥 AQUÍ
+    }
+  });
+}
 }

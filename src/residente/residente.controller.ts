@@ -22,10 +22,15 @@ export class ResidenteController {
 
   @UseGuards(JwtAuthGuard)
   @Post('firma/:id')
-  firmar(
-    @Param('id', ParseIntPipe) id: number, 
-    @Body('firma') firma: string // Extraemos directamente la propiedad 'firma' del body
-  ) {
-    return this.residenteService.firmarPedido(id, firma);
-  }
+firmar(
+  @Param('id') id: number,
+  @Body() body: any,
+  @Req() req
+) {
+  return this.residenteService.firmarPedido(
+    Number(id),
+    body.firma,
+    req.user.id // 🔥 ESTE ES EL RESIDENTE
+  );
+}
 }
