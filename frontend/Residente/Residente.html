@@ -136,19 +136,25 @@ pedidos.forEach(p => {
     const div = document.createElement("div");
     div.className = "card";
 
-    // Lógica para decidir qué botón mostrar según el estado
-    let botones = "";
-    if (p.fk_estado_pedido === 2) { // Si está "Recibido"
-        botones = `<button onclick="confirmarRecogida(${p.cod_pedido_estado_entrega})">Confirmar Recogida</button>`;
-    } else if (p.fk_estado_pedido === 3 || p.fk_estado_pedido === 4) { // Si está "Confirmado" o "Pendiente firma"
-        botones = `<button onclick="abrirFirma(${p.cod_pedido_estado_entrega})">✍️ Firmar Entrega</button>`;
+    // 1. Creamos una variable vacía para el botón
+    let botonFirma = "";
+
+    // 2. Solo si el estado es exactamente 4, llenamos la variable con el botón
+    if (p.fk_estado_pedido === 4) {
+        botonFirma = `
+            <button 
+                onclick="abrirFirma(${p.cod_pedido_estado_entrega})" 
+                style="background-color: #4caf50;">
+                ✍️ Firmar Entrega
+            </button>`;
     }
 
+    // 3. Inyectamos el contenido en la tarjeta
     div.innerHTML = `
       <b>${p.nombre_pedido}</b><br>
-      Guía: ${p.numero_guia}<br>
-      Estado: ${getEstado(p.fk_estado_pedido)}<br><br>
-      ${botones}
+      <small>Guía: ${p.numero_guia}</small><br>
+      Estado: ${getEstado(p.fk_estado_pedido)}<br>
+      ${botonFirma} 
     `;
 
     contenedor.appendChild(div);
