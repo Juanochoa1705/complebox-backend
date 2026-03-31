@@ -231,10 +231,10 @@ async function cargarPerfil(){
   const data = await res.json();
 
  document.getElementById("titulo").innerText =
-  `👋 Hola, ${data.nombres}`;
+  `👋 Hola, ${data.nombres} ${data.apellidos}`;
 
   document.getElementById("ubicacion").innerText =
-    `🏢 Torre ${data.torre} • Apto ${data.apto}`;
+    `🏢 Torre ${data.torre} • Apto ${data.apto}-Propietari@`;
 }
 
 function cerrarSesion(){
