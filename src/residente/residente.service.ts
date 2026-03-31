@@ -54,4 +54,38 @@ async firmarPedido(id: number, firma: string, residenteId: number) {
     }
   });
 }
+
+ async obtenerPerfilres(codUser: number) {
+
+  const persona = await this.prisma.persona.findUnique({
+    where: {
+      cod_user: codUser
+    },
+    select: {
+      nombres: true,
+      apellidos: true
+    }
+  });
+
+ const aptoResidente = await this.prisma.apto_residente.findFirst({
+  where: {
+    fk_cod_residente: codUser
+  },
+  include: {
+    apto: {
+      include: {
+        torre: true
+      }
+    }
+  }
+});
+
+  return {
+  nombres: persona?.nombres,
+  apellidos: persona?.apellidos,
+  torre: aptoResidente?.apto?.torre?.numero_torre,
+  apto: aptoResidente?.apto?.numero_apto
+};
+
+}
 }

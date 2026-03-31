@@ -1,4 +1,4 @@
-import { Controller, Get, Post, Param, UseGuards, Req, Body, ParseIntPipe } from '@nestjs/common';
+import { Controller, Get, Post, Param, UseGuards, Req, Body, ParseIntPipe, Request } from '@nestjs/common';
 import { JwtAuthGuard } from '../auth/jwt-auth.guard';
 import { ResidenteService } from './residente.service';
 
@@ -32,5 +32,11 @@ firmar(
     body.firma,
     req.user.id // 🔥 ESTE ES EL RESIDENTE
   );
+}
+
+  @Get('perfilres')
+@UseGuards(JwtAuthGuard)
+async perfilres(@Request() req) {
+  return this.residenteService.obtenerPerfilres(req.user.id);
 }
 }

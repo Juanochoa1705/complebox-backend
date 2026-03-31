@@ -122,11 +122,38 @@
       width: 100%;
       height: auto;
     }
+
+
+    .logo {
+        width: 150px; /* Tamaño más equilibrado */
+        margin: 0 auto 20px;
+        display: block;
+    }
+
+    h2 {
+        text-align: center;
+        color: #0d47a1;
+        font-size: 24px;
+        margin: 10px 0;
+        font-family: 'Segoe UI', sans-serif;
+    }
+
+    #ubicacion {
+        text-align: center;
+        font-size: 16px;
+        color: #666;
+        margin-bottom: 20px;
+    }
   </style>
 </head>
 <body>
 
 <div class="mobile">
+
+  <img src="../assets/logo.png" class="logo">
+    <h2 id="titulores"></h2>
+    <p id="ubicacionres"></p>
+
   <h3>📦 Mis pedidos</h3>
   <div id="listaPedidos"></div>
   <button class="btn btn-logout" onclick="cerrarSesion()">Cerrar sesión</button>
@@ -146,6 +173,36 @@
 <script>
 const contenedor = document.getElementById("listaPedidos");
 let pedidoSeleccionado = null;
+
+async function cargarPerfilres() {
+  const token = localStorage.getItem("token");
+
+  try {
+    const res = await fetch("http://localhost:3000/residente/perfilres", {
+      headers: {
+        Authorization: `Bearer ${token}`
+      }
+    });
+
+    if (!res.ok) {
+        throw new Error("No se pudo obtener el perfil. Status: " + res.status);
+    }
+
+    const data = await res.json();
+
+    // Verificamos en consola qué está llegando realmente
+    console.log("Datos recibidos:", data);
+
+    const titulores = document.getElementById("titulores");
+    const ubicacionres = document.getElementById("ubicacionres");
+
+    if (titulores) titulores.innerText = `👋 Hola, ${data.nombres || 'Residente' } ${data.apellidos  || 'Residente'}`;
+    if (ubicacionres) ubicacionres.innerText = `🏢 Torre ${data.torre || '?'} • Apto ${data.apto || '?'} -Residente`;
+
+  } catch (error) {
+    console.error("Error al cargar perfil:", error);
+  }
+}
 
 // 1. CARGAR PEDIDOS
 async function cargarPedidos() {
@@ -181,7 +238,7 @@ async function cargarPedidos() {
 
 function getEstado(e) {
   const estados = { 2: "📥 Recibido", 3: "✅ En proceso", 4: "✍️ Pendiente firma", 5: "📬 Entregado" };
-  return estados[e] || "⏳";
+  return estados[e] || "⏳ Esta llegando...";
 }
 
 // 2. ACCIÓN: RECOGER (Pasar de 2 a 3)
@@ -243,8 +300,12 @@ async function guardarFirma() {
   if(res.ok) { alert("¡Entregado con éxito!"); cerrarFirma(); cargarPedidos(); }
 }
 
+
+
+
 function cerrarSesion() { localStorage.clear(); window.location.href = '../login.html'; }
 
+cargarPerfilres();
 cargarPedidos();
 </script>
 </body>
