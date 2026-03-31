@@ -14,15 +14,17 @@ export class ResidenteService {
   }
 
   async confirmarPedido(id: number) {
-    try {
-      return await this.prisma.pedido_estado_entrega_residente.update({
-        where: { cod_pedido_estado_entrega: id },
-        data: { fk_estado_pedido: 3 }, // Estado: Confirmado
-      });
-    } catch (error) {
-      throw new NotFoundException(`No se encontró el pedido con ID ${id}`);
-    }
+  try {
+    return await this.prisma.pedido_estado_entrega_residente.update({
+      where: { cod_pedido_estado_entrega: id },
+      data: {
+        fk_estado_pedido: 3 // <-- AQUÍ: Cambia el estado a 3 (Confirmado/Recogido)
+      },
+    });
+  } catch (error) {
+    throw new NotFoundException(`No se pudo encontrar el pedido con ID ${id}`);
   }
+}
 
   async firmarPedido(id: number, firma: string) {
     if (!firma) {

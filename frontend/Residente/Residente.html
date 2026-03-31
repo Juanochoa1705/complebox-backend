@@ -4,7 +4,6 @@
   <meta charset="UTF-8">
   <title>Panel Residente</title>
   <meta name="viewport" content="width=device-width, initial-scale=1">
-
   <style>
     * {
       box-sizing: border-box;
@@ -26,31 +25,69 @@
       height: 100vh;
       background: #fff;
       border-radius: 20px 20px 0 0;
-      padding: 20px;
+      padding: 25px;
       overflow-y: auto;
     }
 
-    h3 {
+    h2 {
       text-align: center;
       color: #0d47a1;
+      margin-bottom: 20px;
     }
 
+    /* Tarjetas de pedidos estilo limpio */
     .card {
-      border: 1px solid #ccc;
-      border-radius: 10px;
-      padding: 10px;
-      margin-bottom: 10px;
+      border: 1px solid #eee;
+      border-radius: 15px;
+      padding: 15px;
+      margin-bottom: 15px;
+      box-shadow: 0 2px 8px rgba(0,0,0,0.05);
+      background: #f9f9f9;
     }
 
+    .card b {
+      color: #0d47a1;
+      font-size: 1.1rem;
+    }
+
+    .info-guia {
+      color: #666;
+      font-size: 0.9rem;
+      margin: 5px 0;
+    }
+
+    /* Botones con el estilo solicitado */
     button {
       width: 100%;
-      padding: 12px;
+      padding: 14px;
       background: #1976d2;
       color: white;
       border: none;
-      border-radius: 10px;
-      margin-top: 5px;
+      border-radius: 12px;
+      margin-top: 10px;
       cursor: pointer;
+      font-weight: 600;
+      transition: background 0.3s;
+    }
+
+    button:active {
+      transform: scale(0.98);
+    }
+
+    /* Colores específicos para acciones */
+    .btn-recoger {
+      background: #f39c12; /* Naranja para llamar la atención */
+    }
+
+    .btn-firmar {
+      background: #27ae60; /* Verde para confirmar */
+    }
+
+    .btn-logout {
+      background: transparent;
+      color: #e74c3c;
+      border: 1px solid #e74c3c;
+      margin-top: 25px;
     }
 
     /* MODAL FIRMA */
@@ -61,181 +98,141 @@
       left: 0;
       width: 100%;
       height: 100%;
-      background: rgba(0,0,0,0.6);
+      background: rgba(0,0,0,0.7);
       justify-content: center;
       align-items: center;
+      z-index: 1000;
+      padding: 20px;
     }
 
     #firmaBox {
       background: #fff;
       padding: 20px;
-      border-radius: 15px;
+      border-radius: 20px;
       text-align: center;
+      width: 100%;
+      max-width: 350px;
     }
 
     canvas {
       border: 2px solid #1976d2;
-      border-radius: 10px;
+      border-radius: 12px;
+      background: #fafafa;
+      touch-action: none; /* Importante para firmas en móvil */
+      width: 100%;
+      height: auto;
     }
   </style>
 </head>
-
 <body>
 
 <div class="mobile">
-
   <h3>📦 Mis pedidos</h3>
-
   <div id="listaPedidos"></div>
+  <button class="btn btn-logout" onclick="cerrarSesion()">Cerrar sesión</button>
+</div>
 
-  <!-- MODAL FIRMA -->
-  <div id="firmaContainer">
-    <div id="firmaBox">
-      <h4>✍️ Firma aquí</h4>
-      <canvas id="canvasFirma" width="300" height="200"></canvas>
-      <br><br>
-      <button onclick="guardarFirma()">Guardar firma</button>
-      <button onclick="limpiarFirma()">Limpiar</button>
-      <button onclick="cerrarFirma()">Cancelar</button>
-    </div>
+<div id="firmaContainer">
+  <div id="firmaBox">
+    <h4>✍️ Firme aquí para recibir</h4>
+    <canvas id="canvasFirma" width="300" height="200"></canvas>
+    <br><br>
+    <button class="btn btn-firmar" onclick="guardarFirma()">Confirmar Entrega</button>
+    <button class="btn" style="background:#95a5a6" onclick="limpiarFirma()">Limpiar</button>
+    <button class="btn" style="background:#7f8c8d" onclick="cerrarFirma()">Cancelar</button>
   </div>
-
-  <button onclick="cerrarSesion()">Cerrar sesión</button>
-
 </div>
 
 <script>
-
 const contenedor = document.getElementById("listaPedidos");
 let pedidoSeleccionado = null;
 
-// =======================
-// CARGAR PEDIDOS
-// =======================
+// 1. CARGAR PEDIDOS
 async function cargarPedidos() {
-
   const res = await fetch("http://localhost:3000/residente/mis-pedidos", {
-    headers: {
-      "Authorization": "Bearer " + localStorage.getItem("token")
-    }
+    headers: { "Authorization": "Bearer " + localStorage.getItem("token") }
   });
-
   const pedidos = await res.json();
 
-  console.log("PEDIDOS:", pedidos); // 🔥 DEBUG
-
-  // 🔥 VALIDACIÓN CLAVE
-  if (!Array.isArray(pedidos)) {
-    alert("Error cargando pedidos");
-    return;
-  }
+  if (!Array.isArray(pedidos)) return;
 
   contenedor.innerHTML = "";
-
-pedidos.forEach(p => {
+  pedidos.forEach(p => {
     const div = document.createElement("div");
     div.className = "card";
 
-    // 1. Creamos una variable vacía para el botón
-    let botonFirma = "";
-
-    // 2. Solo si el estado es exactamente 4, llenamos la variable con el botón
-    if (p.fk_estado_pedido === 4) {
-        botonFirma = `
-            <button 
-                onclick="abrirFirma(${p.cod_pedido_estado_entrega})" 
-                style="background-color: #4caf50;">
-                ✍️ Firmar Entrega
-            </button>`;
+    // Lógica de botones por estado
+    let htmlBotones = "";
+    if (p.fk_estado_pedido === 2) {
+        htmlBotones = `<button class="btn btn-recoger" onclick="recogerPedido(${p.cod_pedido_estado_entrega})">📦 Marcar como Recogido</button>`;
+    } else if (p.fk_estado_pedido === 4) {
+        htmlBotones = `<button class="btn btn-firmar" onclick="abrirFirma(${p.cod_pedido_estado_entrega})">✍️ Firmar Entrega</button>`;
     }
 
-    // 3. Inyectamos el contenido en la tarjeta
     div.innerHTML = `
-      <b>${p.nombre_pedido}</b><br>
+      <strong>${p.nombre_pedido}</strong><br>
       <small>Guía: ${p.numero_guia}</small><br>
-      Estado: ${getEstado(p.fk_estado_pedido)}<br>
-      ${botonFirma} 
+      <span>Estado: ${getEstado(p.fk_estado_pedido)}</span>
+      ${htmlBotones}
     `;
-
     contenedor.appendChild(div);
-});
-}
-// =======================
-// ESTADOS
-// =======================
-function getEstado(e) {
-  switch(e) {
-    case 2: return "📥 Recibido";
-    case 3: return "✅ Confirmado";
-    case 4: return "✍️ Pendiente firma";
-    case 5: return "📬 Entregado";
-    default: return "⏳";
-  }
-}
-
-// =======================
-// CONFIRMAR
-// =======================
-async function confirmarRecogida(id) {
-
-  await fetch(`http://localhost:3000/residente/confirmar/${id}`, {
-    method: "POST",
-    headers: {
-      "Authorization": "Bearer " + localStorage.getItem("token")
-    }
   });
-
-  alert("✅ Pedido confirmado");
-  cargarPedidos();
 }
 
-// =======================
-// FIRMA
-// =======================
+function getEstado(e) {
+  const estados = { 2: "📥 Recibido", 3: "✅ En proceso", 4: "✍️ Pendiente firma", 5: "📬 Entregado" };
+  return estados[e] || "⏳";
+}
+
+// 2. ACCIÓN: RECOGER (Pasar de 2 a 3)
+async function recogerPedido(id) {
+  const res = await fetch(`http://localhost:3000/residente/confirmar/${id}`, {
+    method: "POST",
+    headers: { "Authorization": "Bearer " + localStorage.getItem("token") }
+  });
+  if(res.ok) { alert("Estado actualizado"); cargarPedidos(); }
+}
+
+// 3. LÓGICA DEL CANVAS (Mouse y Touch)
 const canvas = document.getElementById("canvasFirma");
 const ctx = canvas.getContext("2d");
-
 let dibujando = false;
 
-canvas.addEventListener("mousedown", () => dibujando = true);
-canvas.addEventListener("mouseup", () => {
-  dibujando = false;
-  ctx.beginPath();
-});
-canvas.addEventListener("mouseleave", () => dibujando = false);
-canvas.addEventListener("mousemove", dibujar);
+const obtenerPos = (e) => {
+  const rect = canvas.getBoundingClientRect();
+  const clientX = e.touches ? e.touches[0].clientX : e.clientX;
+  const clientY = e.touches ? e.touches[0].clientY : e.clientY;
+  return { x: clientX - rect.left, y: clientY - rect.top };
+};
 
-function dibujar(e) {
+const iniciar = (e) => { dibujando = true; const pos = obtenerPos(e); ctx.moveTo(pos.x, pos.y); };
+const mover = (e) => {
   if (!dibujando) return;
-  ctx.lineWidth = 2;
-  ctx.lineCap = "round";
-  ctx.lineTo(e.offsetX, e.offsetY);
+  e.preventDefault();
+  const pos = obtenerPos(e);
+  ctx.lineTo(pos.x, pos.y);
   ctx.stroke();
-  ctx.beginPath();
-  ctx.moveTo(e.offsetX, e.offsetY);
-}
+};
+const detener = () => { dibujando = false; ctx.beginPath(); };
 
-// =======================
+canvas.addEventListener("mousedown", iniciar);
+canvas.addEventListener("mousemove", mover);
+canvas.addEventListener("mouseup", detener);
+canvas.addEventListener("touchstart", iniciar, {passive: false});
+canvas.addEventListener("touchmove", mover, {passive: false});
+canvas.addEventListener("touchend", detener);
+
+// 4. FUNCIONES FIRMA
 function abrirFirma(id) {
   pedidoSeleccionado = id;
   document.getElementById("firmaContainer").style.display = "flex";
 }
+function cerrarFirma() { document.getElementById("firmaContainer").style.display = "none"; limpiarFirma(); }
+function limpiarFirma() { ctx.clearRect(0, 0, canvas.width, canvas.height); ctx.beginPath(); }
 
-function cerrarFirma() {
-  document.getElementById("firmaContainer").style.display = "none";
-  limpiarFirma();
-}
-
-function limpiarFirma() {
-  ctx.clearRect(0, 0, canvas.width, canvas.height);
-}
-
-// =======================
 async function guardarFirma() {
-
-  const firma = canvas.toDataURL();
-
-  await fetch(`http://localhost:3000/residente/firma/${pedidoSeleccionado}`, {
+  const firma = canvas.toDataURL(); // Imagen en Base64
+  const res = await fetch(`http://localhost:3000/residente/firma/${pedidoSeleccionado}`, {
     method: "POST",
     headers: {
       "Content-Type": "application/json",
@@ -243,48 +240,12 @@ async function guardarFirma() {
     },
     body: JSON.stringify({ firma })
   });
-
-  alert("✅ Pedido entregado");
-  cerrarFirma();
-  cargarPedidos();
-}
-// Eventos para Celular
-canvas.addEventListener("touchstart", (e) => {
-    e.preventDefault();
-    dibujando = true;
-}, { passive: false });
-
-canvas.addEventListener("touchend", () => {
-    dibujando = false;
-    ctx.beginPath();
-});
-
-canvas.addEventListener("touchmove", (e) => {
-    if (!dibujando) return;
-    e.preventDefault();
-    const touch = e.touches[0];
-    const rect = canvas.getBoundingClientRect();
-    const x = touch.clientX - rect.left;
-    const y = touch.clientY - rect.top;
-    
-    ctx.lineWidth = 2;
-    ctx.lineCap = "round";
-    ctx.lineTo(x, y);
-    ctx.stroke();
-    ctx.beginPath();
-    ctx.moveTo(x, y);
-}, { passive: false });
-
-// =======================
-function cerrarSesion() {
-  localStorage.clear();
-  window.location.href = '../login.html';
+  if(res.ok) { alert("¡Entregado con éxito!"); cerrarFirma(); cargarPedidos(); }
 }
 
-// =======================
+function cerrarSesion() { localStorage.clear(); window.location.href = '../login.html'; }
+
 cargarPedidos();
-
 </script>
-
 </body>
 </html>
