@@ -11,9 +11,17 @@ export class MensajeroController {
 
 @Post('crear-pedido')
 @UseGuards(JwtAuthGuard)
-crearPedido(@Body() dto: any, @Request() req) {
-  return this.mensajeroService.crearPedido(dto, req.user.id);
+async crearPedido(@Body() dto: any, @Request() req) {
+  if (!dto || Object.keys(dto).length === 0) {
+    throw new BadRequestException("El cuerpo (Body) de la petición está vacío o mal formado");
+  }
+  
+  console.log('DTO recibido:', dto);
+  console.log('ID Mensajero:', req.user?.userId);
+
+  return await this.mensajeroService.crearPedido(dto, req.user.userId);
 }
+
 
 @Get('buscar-residente')
 buscarResidente(@Query('q') query: string) {
