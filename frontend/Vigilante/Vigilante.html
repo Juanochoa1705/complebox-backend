@@ -2,7 +2,7 @@
 <html lang="es">
 <head>
   <meta charset="UTF-8">
-  <title>👮Panel Vigilante👮</title>
+  <title>Panel Vigilante</title>
   <meta name="viewport" content="width=device-width, initial-scale=1">
 
   <style>
@@ -84,7 +84,10 @@ button:active {
 
 <div class="mobile">
 <img src="../assets/logo.png" class="logo" alt="Complebox">
-<h2 >Panel Vigilante</h2>
+
+    <h2 id="titulovig"></h2>
+    <p id="ubicacionvig"></p>
+
 
 <div id="listaPedidos"></div>
 <h3>Buscar pedidos de residente</h3>
@@ -102,7 +105,34 @@ button:active {
 
 <script >
 
+async function cargarPerfilvig() {
+  const token = localStorage.getItem("token");
 
+  try {
+    const res = await fetch("http://localhost:3000/vigilante/perfilvig", {
+      headers: {
+        Authorization: `Bearer ${token}`
+      }
+    });
+
+    if (!res.ok) {
+        throw new Error("No se pudo obtener el perfil. Status: " + res.status);
+    }
+
+    const data = await res.json();
+
+    // Verificamos en consola qué está llegando realmente
+    console.log("Datos recibidos:", data);
+
+    const titulores = document.getElementById("titulovig");
+    const ubicacionres = document.getElementById("ubicacionvig");
+
+    if (titulores) titulores.innerText = `👋 Hola, ${data.nombres || 'Vigilante' } ${data.apellidos }-Vigilante 👮‍♂️`;
+
+  } catch (error) {
+    console.error("Error al cargar perfil:", error);
+  }
+}
   
 async function cargarPedidos() {
 
@@ -249,7 +279,7 @@ async function entregarPedido(id) {
 
 }
 
-
+ cargarPerfilvig();
 
 function cerrarSesion() {
   localStorage.clear();

@@ -50,4 +50,29 @@ async buscarResidente(query: string) {
     take: 5 // 🔥 limita resultados
   });
 }
+
+async obtenerPerfilmen(codUser: number) {
+
+  const persona = await this.prisma.persona.findUnique({
+    where: {
+      cod_user: codUser
+    },
+    select: {
+      nombres: true,
+      apellidos: true
+    }
+  });
+
+ const empresaMensajero = await this.prisma.empresa_mensajero.findFirst({
+  where: {
+    fk_persona_mensajero: codUser
+  }
+});
+
+  return {
+  nombres: persona?.nombres,
+  apellidos: persona?.apellidos
+};
+
+}
 }

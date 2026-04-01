@@ -20,4 +20,10 @@ buscarResidente(@Query('q') query: string) {
   return this.mensajeroService.buscarResidente(query);
 }
 
+@Get('perfilmen')
+@UseGuards(JwtAuthGuard)
+async perfilmen(@Request() req) {
+  return this.mensajeroService.obtenerPerfilmen(req.user.id);
+}
+
 }

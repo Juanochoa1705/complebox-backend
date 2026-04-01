@@ -116,4 +116,29 @@ async entregarPedido(pedidoId: number, vigilanteId: number) {
   });
 
 }
+
+async obtenerPerfilvig(codUser: number) {
+
+  const persona = await this.prisma.persona.findUnique({
+    where: {
+      cod_user: codUser
+    },
+    select: {
+      nombres: true,
+      apellidos: true
+    }
+  });
+
+ const empresaVigilanteconjunto = await this.prisma.empresa_vigilante_conjunto.findFirst({
+  where: {
+    fk_persona_vigilante: codUser
+  }
+});
+
+  return {
+  nombres: persona?.nombres,
+  apellidos: persona?.apellidos
+};
+
+}
 }

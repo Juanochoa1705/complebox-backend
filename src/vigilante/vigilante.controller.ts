@@ -30,4 +30,10 @@ buscarPedidos(@Query('query') query: string, @Req() req) {
 entregar(@Param('id') id: number, @Req() req) {
   return this.vigilanteService.entregarPedido(id, req.user.id);
 }
+
+@Get('perfilvig')
+@UseGuards(JwtAuthGuard)
+async perfilvig(@Request() req) {
+  return this.vigilanteService.obtenerPerfilvig(req.user.id);
+}
 }
