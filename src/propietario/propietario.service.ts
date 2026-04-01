@@ -25,7 +25,7 @@ export class PropietarioService {
     const aptoResidentes = await this.prisma.apto_residente.findMany({
       where: {
         fk_cod_apto: aptoProp.fk_cod_apto,
-        fk_estado_apto_residente: 2
+        fk_estado_apto_residente: 3
       }
     });
 

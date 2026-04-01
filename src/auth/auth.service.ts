@@ -100,7 +100,7 @@ export class AuthService {
       data: {
         fk_cod_residente: persona.cod_user,
         fk_cod_apto: dto.fk_apto,
-        fk_estado_apto_residente: 2,
+        fk_estado_apto_residente: 3,
       },
     });
 
