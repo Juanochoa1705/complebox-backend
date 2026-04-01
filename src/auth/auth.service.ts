@@ -110,55 +110,96 @@ export class AuthService {
     };
   }
 
+// =========================
+// LOGIN
+// =========================
+async login(dto: LoginDto) {
+  const user = await this.prisma.persona.findFirst({
+    where: { usuario: dto.usuario },
+    include: { rol: true, estado: true },
+  });
+
+  if (!user) {
+    throw new UnauthorizedException('Credenciales inválidas');
+  }
+
+  const isValid = await bcrypt.compare(dto.password, user.contrase_a);
+
+  if (!isValid) {
+    throw new UnauthorizedException('Credenciales inválidas');
+  }
+
   // =========================
-  // LOGIN
+  // 🔥 VALIDACIONES POR ROL
   // =========================
-  async login(dto: LoginDto) {
-    const user = await this.prisma.persona.findFirst({
-      where: { usuario: dto.usuario },
-      include: { rol: true, estado: true },
+
+  // 🟡 VIGILANTE
+  if (user.rol.nombre_rol === 'Vigilante') {
+
+    const vigilancia = await this.prisma.empresa_vigilante_conjunto.findFirst({
+      where: {
+        fk_persona_vigilante: user.cod_user
+      }
     });
 
-    if (!user) {
-      throw new UnauthorizedException('Credenciales inválidas');
+    if (vigilancia && [2, 3].includes(vigilancia.fk_estado_vigilante_empresa)) {
+      throw new UnauthorizedException(
+        'Tu usuario está inactivo. Por favor contacta al administrador para activarlo.'
+      );
     }
+  }
 
-    const isValid = await bcrypt.compare(dto.password, user.contrase_a);
+  // 🟢 RESIDENTE
+  if (user.rol.nombre_rol === 'Residente') {
 
-    if (!isValid) {
-      throw new UnauthorizedException('Credenciales inválidas');
+    const residente = await this.prisma.apto_residente.findFirst({
+      where: {
+        fk_cod_residente: user.cod_user
+      }
+    });
+
+    if (residente && [2, 3].includes(residente.fk_estado_apto_residente)) {
+      throw new UnauthorizedException(
+        'Tu acceso está pendiente. Por favor contacta al propietario para activar tu usuario.'
+      );
     }
+  }
 
-    // PRIMER LOGIN
-    if (user.estado.cod_estado === 2) {
-      return {
-        primerLogin: true,
-        user: {
-          id: user.cod_user,
-          usuario: user.usuario,
-          rol: user.rol.nombre_rol,
-        },
-        message: 'Debe cambiar la contraseña antes de continuar',
-      };
-    }
-
-    const payload = {
-      sub: user.cod_user,
-      usuario: user.usuario,
-      rol: user.rol.nombre_rol,
-    };
-
-    const token = this.jwtService.sign(payload);
-
+  // =========================
+  // PRIMER LOGIN
+  // =========================
+  if (user.estado.cod_estado === 2) {
     return {
-      token,
+      primerLogin: true,
       user: {
         id: user.cod_user,
         usuario: user.usuario,
         rol: user.rol.nombre_rol,
       },
+      message: 'Debe cambiar la contraseña antes de continuar',
     };
   }
+
+  // =========================
+  // LOGIN NORMAL
+  // =========================
+  const payload = {
+    sub: user.cod_user,
+    usuario: user.usuario,
+    rol: user.rol.nombre_rol,
+  };
+
+  const token = this.jwtService.sign(payload);
+
+  return {
+    token,
+    user: {
+      id: user.cod_user,
+      usuario: user.usuario,
+      rol: user.rol.nombre_rol,
+    },
+  };
+}
 
   // =========================
   // CAMBIAR PASSWORD PRIMER LOGIN
