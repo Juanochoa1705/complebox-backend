@@ -268,7 +268,7 @@ async login(dto: LoginDto) {
     data: {
       fk_persona_vigilante: persona.cod_user,
       fk_cod_empresa_vig_conjunto: dto.fk_empresa_vig_conjunto,
-      fk_estado_vigilante_empresa: 2, // 🔥 INACTIVO
+      fk_estado_vigilante_empresa: 3, // 🔥 PENDIENTE
     },
   });
 

@@ -300,7 +300,7 @@ async vigilantesPendientes(adminId: number) {
   const vigiConjunto = await this.prisma.empresa_vigilante_conjunto.findMany({
     where: {
       fk_cod_empresa_vig_conjunto: empresa.cod_empresa_vig_conjunto,
-      fk_estado_vigilante_empresa: 2
+      fk_estado_vigilante_empresa: 3
     }
   });
 

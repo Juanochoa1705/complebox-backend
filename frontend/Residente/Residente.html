@@ -205,6 +205,7 @@ async function cargarPerfilres() {
 }
 
 // 1. CARGAR PEDIDOS
+// 1. CARGAR PEDIDOS
 async function cargarPedidos() {
   const res = await fetch("http://localhost:3000/residente/mis-pedidos", {
     headers: { "Authorization": "Bearer " + localStorage.getItem("token") }
@@ -213,17 +214,22 @@ async function cargarPedidos() {
 
   if (!Array.isArray(pedidos)) return;
 
+  // 🔥 FILTRAR LOS QUE NO SEAN ESTADO 5
+  const pedidosFiltrados = pedidos.filter(p => p.fk_estado_pedido !== 5);
+
   contenedor.innerHTML = "";
-  pedidos.forEach(p => {
+
+  pedidosFiltrados.forEach(p => {
     const div = document.createElement("div");
     div.className = "card";
 
-    // Lógica de botones por estado
     let htmlBotones = "";
+
     if (p.fk_estado_pedido === 2) {
-        htmlBotones = `<button class="btn btn-recoger" onclick="recogerPedido(${p.cod_pedido_estado_entrega})">📦 Marcar como Recogido</button>`;
-    } else if (p.fk_estado_pedido === 4) {
-        htmlBotones = `<button class="btn btn-firmar" onclick="abrirFirma(${p.cod_pedido_estado_entrega})">✍️ Firmar Entrega</button>`;
+      htmlBotones = `<button class="btn btn-recoger" onclick="recogerPedido(${p.cod_pedido_estado_entrega})">📦 Marcar como Recogido</button>`;
+    } 
+    else if (p.fk_estado_pedido === 4) {
+      htmlBotones = `<button class="btn btn-firmar" onclick="abrirFirma(${p.cod_pedido_estado_entrega})">✍️ Firmar Entrega</button>`;
     }
 
     div.innerHTML = `
@@ -232,6 +238,7 @@ async function cargarPedidos() {
       <span>Estado: ${getEstado(p.fk_estado_pedido)}</span>
       ${htmlBotones}
     `;
+
     contenedor.appendChild(div);
   });
 }
