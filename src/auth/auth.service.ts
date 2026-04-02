@@ -24,7 +24,7 @@ export class AuthService {
 
     const userExists = await this.prisma.persona.findFirst({
       where: {
-        OR: [{ usuario: dto.usuario }, { correo: dto.correo }],
+        OR: [{ usuario: dto.usuario }, { correo: dto.correo },{ cedula: dto.usuario }],
       },
     });
 
@@ -227,14 +227,16 @@ async login(dto: LoginDto) {
   // LISTAR APTOS
   // =========================
   async findAllAptos() {
-    return this.prisma.apto.findMany({
-      select: {
-        cod_apto: true,
-        numero_apto: true,
-        fk_cod_torre: true,
-      },
-    });
-  }
+  return this.prisma.apto.findMany({
+    include: {
+      torre: {
+        include: {
+          conjunto: true
+        }
+      }
+    }
+  });
+}
 
   async registrarVigilante(dto: CrearVigilanteDto) {
 
