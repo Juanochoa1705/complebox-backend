@@ -70,6 +70,25 @@ async aprobarPedido(pedidoId: number, vigilanteId: number) {
   });
 }
 
+async rechazarPedido(pedidoId: number) {
+
+  // 🔥 validar que exista
+  const pedido = await this.prisma.pedido_estado_entrega_residente.findUnique({
+    where: { cod_pedido_estado_entrega: pedidoId }
+  });
+
+  if (!pedido) {
+    throw new NotFoundException('El pedido no existe');
+  }
+
+  // 🔥 eliminar
+  return this.prisma.pedido_estado_entrega_residente.delete({
+    where: {
+      cod_pedido_estado_entrega: pedidoId
+    }
+  });
+}
+
 async buscarPedidos(query: string, vigilanteId: number) {
 
   return this.prisma.pedido_estado_entrega_residente.findMany({

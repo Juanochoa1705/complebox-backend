@@ -1,4 +1,4 @@
-import { Injectable } from '@nestjs/common';
+import { Injectable , NotFoundException } from '@nestjs/common';
 import { PrismaService } from '../prisma/prisma.service';
 
 @Injectable()
@@ -104,6 +104,31 @@ export class PropietarioService {
   apto: aptoPropietario?.apto?.numero_apto
 };
 
+}
+
+async rechazarResidente(residenteId: number) {
+
+  const residente = await this.prisma.persona.findUnique({
+    where: { cod_user: residenteId }
+  });
+
+  if (!residente) {
+    throw new NotFoundException('El residente no existe');
+  }
+
+  // 🔥 1. eliminar relación primero
+  await this.prisma.apto_residente.deleteMany({
+    where: {
+      fk_cod_residente: residenteId
+    }
+  });
+
+  // 🔥 2. ahora sí eliminar persona
+  return this.prisma.persona.delete({
+    where: {
+      cod_user: residenteId
+    }
+  });
 }
 
 }

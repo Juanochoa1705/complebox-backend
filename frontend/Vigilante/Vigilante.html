@@ -103,8 +103,11 @@ button:active {
 <button onclick="cerrarSesion()">Cerrar sesión</button>
 </div>
 
-<script >
+<script>
 
+// ==========================
+// 🔥 PERFIL VIGILANTE
+// ==========================
 async function cargarPerfilvig() {
   const token = localStorage.getItem("token");
 
@@ -116,24 +119,26 @@ async function cargarPerfilvig() {
     });
 
     if (!res.ok) {
-        throw new Error("No se pudo obtener el perfil. Status: " + res.status);
+      throw new Error("No se pudo obtener el perfil. Status: " + res.status);
     }
 
     const data = await res.json();
 
-    // Verificamos en consola qué está llegando realmente
-    console.log("Datos recibidos:", data);
-
     const titulores = document.getElementById("titulovig");
-    const ubicacionres = document.getElementById("ubicacionvig");
 
-    if (titulores) titulores.innerText = `👋 Hola, ${data.nombres || 'Vigilante' } ${data.apellidos }-Vigilante 👮‍♂️`;
+    if (titulores) {
+      titulores.innerText = `👋 Hola, ${data.nombres || 'Vigilante'} ${data.apellidos || ''} 👮‍♂️`;
+    }
 
   } catch (error) {
     console.error("Error al cargar perfil:", error);
   }
 }
-  
+
+
+// ==========================
+// 🔥 CARGAR PEDIDOS (LISTA PRINCIPAL)
+// ==========================
 async function cargarPedidos() {
 
   const res = await fetch("http://localhost:3000/vigilante/pedidos", {
@@ -147,25 +152,36 @@ async function cargarPedidos() {
   const contenedor = document.getElementById("listaPedidos");
   contenedor.innerHTML = "";
 
-
   if (!Array.isArray(pedidos)) {
-  console.error("No es array:", pedidos);
-  return;
-}
+    console.error("No es array:", pedidos);
+    return;
+  }
 
-console.log("PEDIDOS:", pedidos);
   pedidos.forEach(p => {
 
     const div = document.createElement("div");
+
+    // 🔥 BOTONES DINÁMICOS
+    let htmlBotones = "";
+
+    if (p.fk_estado_pedido === 1) {
+      htmlBotones = `
+        <button onclick="aprobar(${p.cod_pedido_estado_entrega})">
+          ✅ Aprobar
+        </button>
+
+        <button onclick="rechazarPedido(${p.cod_pedido_estado_entrega})">
+          ❌ No aprobar
+        </button>
+      `;
+    }
 
     div.innerHTML = `
       <b>Guía:</b> ${p.numero_guia}<br>
       <b>Pedido:</b> ${p.nombre_pedido}<br>
       <b>Residente:</b> ${p.persona_pedido_estado_entrega_residente_fk_residenteTopersona.nombres}<br><br>
 
-      <button onclick="aprobar(${p.cod_pedido_estado_entrega})">
-        Aprobar
-      </button>
+      ${htmlBotones}
       <hr>
     `;
 
@@ -173,6 +189,10 @@ console.log("PEDIDOS:", pedidos);
   });
 }
 
+
+// ==========================
+// ✅ APROBAR PEDIDO
+// ==========================
 async function aprobar(id) {
 
   const res = await fetch(`http://localhost:3000/vigilante/aprobar/${id}`, {
@@ -190,28 +210,55 @@ async function aprobar(id) {
   }
 
   alert("✅ Pedido recibido");
-
-  cargarPedidos(); // 🔥 recargar lista
+  cargarPedidos();
 }
 
 
-cargarPedidos();
+// ==========================
+// ❌ RECHAZAR PEDIDO
+// ==========================
+async function rechazarPedido(id) {
+
+  const confirmar = confirm("¿Seguro que deseas rechazar y eliminar este pedido?");
+  if (!confirmar) return;
+
+  try {
+    const res = await fetch(`http://localhost:3000/vigilante/rechazar/${id}`, {
+      method: "POST",
+      headers: {
+        "Authorization": "Bearer " + localStorage.getItem("token")
+      }
+    });
+
+    const result = await res.json();
+
+    if (!res.ok) throw new Error(result.message);
+
+    alert("❌ Pedido rechazado y eliminado");
+    cargarPedidos();
+
+  } catch (err) {
+    alert(err.message);
+  }
+}
 
 
+// ==========================
+// 🔍 BUSCAR PEDIDOS
+// ==========================
 const inputBusqueda = document.getElementById("buscarResidente");
-const contenedor = document.getElementById("resultadosPedidos");
+const contenedorBusqueda = document.getElementById("resultadosPedidos");
 
 inputBusqueda.addEventListener("input", async () => {
 
   const texto = inputBusqueda.value.trim();
 
   if (texto.length < 2) {
-    contenedor.innerHTML = "";
+    contenedorBusqueda.innerHTML = "";
     return;
   }
 
   try {
-
     const res = await fetch(`http://localhost:3000/vigilante/buscar-pedidos?query=${texto}`, {
       headers: {
         "Authorization": "Bearer " + localStorage.getItem("token")
@@ -220,30 +267,37 @@ inputBusqueda.addEventListener("input", async () => {
 
     const pedidos = await res.json();
 
-    contenedor.innerHTML = "";
+    contenedorBusqueda.innerHTML = "";
 
     pedidos.forEach(p => {
 
       const div = document.createElement("div");
-      div.style.border = "1px solid #ccc";
-      div.style.padding = "10px";
-      div.style.marginBottom = "10px";
-      div.style.borderRadius = "10px";
+
+      let htmlBotones = "";
+
+      if (p.fk_estado_pedido === 1) {
+        htmlBotones = `
+          <button onclick="aprobar(${p.cod_pedido_estado_entrega})">
+            ✅ Aprobar
+          </button>
+
+          <button onclick="rechazarPedido(${p.cod_pedido_estado_entrega})">
+            ❌ No aprobar
+          </button>
+        `;
+      }
 
       div.innerHTML = `
         <b>${p.nombre_pedido}</b><br>
         Guía: ${p.numero_guia}<br>
-        Residente: ${p.residente}<br>
-        Estado: ${p.estado}
-        <br><br>
-        ${
-          p.fk_estado_pedido == 3
-          ? `<button onclick="entregarPedido(${p.id})">Entregar</button>`
-          : ''
-        }
+        Residente: ${p.residente || ''}<br>
+        Estado: ${p.estado || ''}<br><br>
+
+        ${htmlBotones}
+        <hr>
       `;
 
-      contenedor.appendChild(div);
+      contenedorBusqueda.appendChild(div);
     });
 
   } catch (error) {
@@ -253,11 +307,12 @@ inputBusqueda.addEventListener("input", async () => {
 });
 
 
-// 🔥 ENTREGAR PEDIDO
+// ==========================
+// 📦 ENTREGAR PEDIDO
+// ==========================
 async function entregarPedido(id) {
 
   try {
-
     const res = await fetch(`http://localhost:3000/vigilante/entregar/${id}`, {
       method: "POST",
       headers: {
@@ -271,7 +326,7 @@ async function entregarPedido(id) {
 
     alert("📝 Pendiente firma");
 
-    inputBusqueda.dispatchEvent(new Event("input")); // 🔄 refresca lista
+    inputBusqueda.dispatchEvent(new Event("input"));
 
   } catch (err) {
     alert(err.message);
@@ -279,12 +334,21 @@ async function entregarPedido(id) {
 
 }
 
- cargarPerfilvig();
 
+// ==========================
+// 🔐 CERRAR SESIÓN
+// ==========================
 function cerrarSesion() {
   localStorage.clear();
   window.location.href = '../login.html';
 }
+
+
+// ==========================
+// 🚀 INICIO
+// ==========================
+cargarPerfilvig();
+cargarPedidos();
 
 </script>
 </body>

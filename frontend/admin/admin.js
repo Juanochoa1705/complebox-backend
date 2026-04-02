@@ -150,14 +150,46 @@ async function cargarVigilantesPendientes() {
   mensajeVacio.style.display = "none";
 
   data.forEach(v => {
-    tablaVigilantes.innerHTML += `
-      <tr>
-        <td>${v.nombres} ${v.apellidos}</td>
-        <td>${v.cedula}</td>
-        <td><button onclick="aprobarVigilante(${v.cod_user})">OK</button></td>
-      </tr>
-    `;
+  
+  tablaVigilantes.innerHTML += `
+  <tr>
+    <td>${v.nombres} ${v.apellidos}</td>
+    <td>${v.cedula}</td>
+    <td>
+      <button onclick="aprobarVigilante(${v.cod_user})">✅ Aprobar</button>
+      <button onclick="rechazarVigilante(${v.cod_user})">❌ Rechazar</button>
+    </td>
+  </tr>
+`;
+
   });
+}
+
+async function rechazarVigilante(id) {
+
+  const confirmar = confirm("¿Seguro que deseas eliminar este vigilante?");
+  if (!confirmar) return;
+
+  try {
+
+    const res = await fetch(`${API_URL}/admin/rechazar/${id}`, {
+      method: "POST",
+      headers: {
+        Authorization: `Bearer ${token}`
+      }
+    });
+
+    const data = await res.json();
+
+    if (!res.ok) throw new Error(data.message);
+
+    alert("❌ Vigilante eliminado correctamente");
+
+    cargarVigilantesPendientes();
+
+  } catch (err) {
+    alert(err.message);
+  }
 }
 
 async function aprobarVigilante(id) {

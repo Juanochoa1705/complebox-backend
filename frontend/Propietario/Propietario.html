@@ -121,7 +121,6 @@
         padding: 40px 20px;
     }
     </style>
-</style>
 </head>
 
 <body>
@@ -184,18 +183,51 @@ async function cargarResidentesPendientes(){
     card.className="card";
 
     card.innerHTML=`
-      <div class="nombre">${r.nombres} ${r.apellidos}</div>
-      <div class="cedula">Cédula: ${r.cedula}</div>
+  <div class="nombre">${r.nombres} ${r.apellidos}</div>
+  <div class="cedula">Cédula: ${r.cedula}</div>
 
-      <button class="btn" onclick="aprobarResidente(${r.cod_user})">
-        ✔ Aprobar residente
-      </button>
-    `;
+  <button class="btn" onclick="aprobarResidente(${r.cod_user})">
+    ✔ Aprobar residente
+  </button>
+
+  <button class="btn" onclick="rechazarResidente(${r.cod_user})">
+    ❌ Rechazar residente
+  </button>
+`;
 
     lista.appendChild(card);
 
   });
 
+}
+
+async function rechazarResidente(codUser){
+
+  const confirmar = confirm("¿Seguro que deseas eliminar este residente?");
+  if (!confirmar) return;
+
+  const token = localStorage.getItem("token");
+
+  try {
+
+    const res = await fetch(`http://localhost:3000/propietario/rechazar/${codUser}`,{
+      method:"POST",
+      headers:{
+        Authorization:`Bearer ${token}`
+      }
+    });
+
+    const data = await res.json();
+
+    if (!res.ok) throw new Error(data.message);
+
+    alert("❌ Residente eliminado");
+
+    cargarResidentesPendientes();
+
+  } catch (err) {
+    alert(err.message);
+  }
 }
 
 async function aprobarResidente(codUser){

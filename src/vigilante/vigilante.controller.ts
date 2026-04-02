@@ -1,4 +1,4 @@
-import { Controller, Get, Post, Param, UseGuards, Request, Query, Req } from '@nestjs/common';
+import { Controller, Get, Post, Param, UseGuards, Request, Query, Req,UnauthorizedException } from '@nestjs/common';
 import { JwtAuthGuard } from '../auth/jwt-auth.guard';
 import { VigilanteService } from './vigilante.service';
 
@@ -35,5 +35,16 @@ entregar(@Param('id') id: number, @Req() req) {
 @UseGuards(JwtAuthGuard)
 async perfilvig(@Request() req) {
   return this.vigilanteService.obtenerPerfilvig(req.user.id);
+}
+@UseGuards(JwtAuthGuard)
+@Post('rechazar/:id')
+rechazarPedido(@Param('id') id: number, @Request() req) {
+
+  // 🔐 opcional pero recomendado
+  if (req.user.rol !== 'Vigilante') {
+    throw new UnauthorizedException('No tienes permisos');
+  }
+
+  return this.vigilanteService.rechazarPedido(Number(id));
 }
 }

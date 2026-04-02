@@ -1,4 +1,4 @@
-import { Controller, Get, Post, Body, Request, UseGuards } from '@nestjs/common';
+import { Controller, Get, Post, Body, Request, UseGuards,UnauthorizedException, Param } from '@nestjs/common';
 import { PropietarioService } from './propietario.service';
 import { JwtAuthGuard } from '../auth/jwt-auth.guard';
 
@@ -25,6 +25,18 @@ export class PropietarioController {
 @UseGuards(JwtAuthGuard)
 async perfil(@Request() req) {
   return this.propietarioService.obtenerPerfil(req.user.id);
+}
+
+  @UseGuards(JwtAuthGuard)
+@Post('rechazar/:id')
+rechazarResidente(@Param('id') id: number, @Request() req) {
+
+  // 🔐 opcional pero recomendado
+  if (req.user.rol !== 'Propietario') {
+    throw new UnauthorizedException('No tienes permisos');
+  }
+
+  return this.propietarioService.rechazarResidente(Number(id));
 }
 
 }

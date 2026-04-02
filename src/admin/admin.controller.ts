@@ -6,6 +6,8 @@ import {
   Req,
   UseGuards,
   Request,
+  UnauthorizedException,
+  Param,
 } from '@nestjs/common';
 import { AdminService } from './admin.service';
 import { CreateConjuntoDto } from './dto/create-conjunto.dto';
@@ -87,5 +89,17 @@ async crearEmpresa(
   async aprobarVigilante(@Body() body) {
     return this.adminService.aprobarVigilante(body.cod_user);
   }
+
+  @UseGuards(JwtAuthGuard)
+@Post('rechazar/:id')
+rechazarVigilante(@Param('id') id: number, @Request() req) {
+
+  // 🔐 opcional pero recomendado
+  if (req.user.rol !== 'Administrador') {
+    throw new UnauthorizedException('No tienes permisos');
+  }
+
+  return this.adminService.rechazarVigilante(Number(id));
+}
 
 }

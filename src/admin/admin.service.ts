@@ -348,5 +348,30 @@ async vigilantesPendientes(adminId: number) {
 
   }
 
+  async rechazarVigilante(vigilanteId: number) {
+
+  const vigilante = await this.prisma.persona.findUnique({
+    where: { cod_user: vigilanteId }
+  });
+
+  if (!vigilante) {
+    throw new NotFoundException('El vigilante no existe');
+  }
+
+  // 🔥 1. eliminar relación primero
+  await this.prisma.empresa_vigilante_conjunto.deleteMany({
+    where: {
+      fk_persona_vigilante: vigilanteId
+    }
+  });
+
+  // 🔥 2. ahora sí eliminar persona
+  return this.prisma.persona.delete({
+    where: {
+      cod_user: vigilanteId
+    }
+  });
+}
+
 
 }
