@@ -180,6 +180,9 @@ form.addEventListener('submit', async (e) => {
     localStorage.setItem('token', result.token);
     localStorage.setItem('user', JSON.stringify(result.user));
 
+    localStorage.setItem('estadoEspecial', result.estadoEspecial);
+    localStorage.setItem('mensajeEstado', result.mensaje);
+
     // 👉 Redirección por rol
     if (result.user.rol === 'Administrador') {
       window.location.href = '../frontend/admin/admin.html';

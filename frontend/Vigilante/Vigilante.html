@@ -347,8 +347,38 @@ function cerrarSesion() {
 // ==========================
 // 🚀 INICIO
 // ==========================
-cargarPerfilvig();
-cargarPedidos();
+// ==========================
+// 🚨 VALIDAR ESTADO
+// ==========================
+const estadoEspecial = localStorage.getItem("estadoEspecial");
+const mensaje = localStorage.getItem("mensajeEstado");
+
+if (estadoEspecial === "true") {
+
+  // 🔥 limpiar pantalla
+  document.body.innerHTML = `
+    <div style="
+      height:100vh;
+      display:flex;
+      justify-content:center;
+      align-items:center;
+      text-align:center;
+      padding:20px;
+      font-family:sans-serif;
+    ">
+      <div>
+        <h2 style="color:#d32f2f;">⚠️ Acceso restringido</h2>
+        <p>${mensaje}</p>
+        <button onclick="cerrarSesion()">Cerrar sesión</button>
+      </div>
+    </div>
+  `;
+
+} else {
+  // ✅ carga normal
+  cargarPerfilvig();
+  cargarPedidos();
+}
 
 </script>
 </body>

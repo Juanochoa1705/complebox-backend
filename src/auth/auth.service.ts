@@ -129,78 +129,84 @@ async login(dto: LoginDto) {
     throw new UnauthorizedException('Credenciales inválidas');
   }
 
-  // =========================
-  // 🔥 VALIDACIONES POR ROL
-  // =========================
+  /// =========================
+// 🔥 VALIDACIONES POR ROL (NO BLOQUEA)
+// =========================
 
-  // 🟡 VIGILANTE
-  if (user.rol.nombre_rol === 'Vigilante') {
+let mensaje: string | null = null;
+let estadoEspecial = false;
 
-    const vigilancia = await this.prisma.empresa_vigilante_conjunto.findFirst({
-      where: {
-        fk_persona_vigilante: user.cod_user
-      }
-    });
+// 🟡 VIGILANTE
+if (user.rol.nombre_rol === 'Vigilante') {
 
-    if (vigilancia && [2, 3].includes(vigilancia.fk_estado_vigilante_empresa)) {
-      throw new UnauthorizedException(
-        'Tu usuario está inactivo. Por favor contacta al administrador para activarlo.'
-      );
+  const vigilancia = await this.prisma.empresa_vigilante_conjunto.findFirst({
+    where: {
+      fk_persona_vigilante: user.cod_user
     }
+  });
+
+  if (vigilancia && [2, 3].includes(vigilancia.fk_estado_vigilante_empresa)) {
+    mensaje = '⚠️ Tu usuario está inactivo. Contacta al administrador.';
+    estadoEspecial = true;
   }
+}
 
-  // 🟢 RESIDENTE
-  if (user.rol.nombre_rol === 'Residente') {
+// 🟢 RESIDENTE
+if (user.rol.nombre_rol === 'Residente') {
 
-    const residente = await this.prisma.apto_residente.findFirst({
-      where: {
-        fk_cod_residente: user.cod_user
-      }
-    });
-
-    if (residente && [2, 3].includes(residente.fk_estado_apto_residente)) {
-      throw new UnauthorizedException(
-        'Tu acceso está pendiente. Por favor contacta al propietario para activar tu usuario.'
-      );
+  const residente = await this.prisma.apto_residente.findFirst({
+    where: {
+      fk_cod_residente: user.cod_user
     }
-  }
+  });
 
+  if (residente && [2, 3].includes(residente.fk_estado_apto_residente)) {
+    mensaje = '⚠️ Tu acceso está pendiente. Contacta al propietario.';
+    estadoEspecial = true;
+  }
+}
   // =========================
   // PRIMER LOGIN
   // =========================
-  if (user.estado.cod_estado === 2) {
-    return {
-      primerLogin: true,
-      user: {
-        id: user.cod_user,
-        usuario: user.usuario,
-        rol: user.rol.nombre_rol,
-      },
-      message: 'Debe cambiar la contraseña antes de continuar',
-    };
-  }
-
-  // =========================
-  // LOGIN NORMAL
-  // =========================
-  const payload = {
-    sub: user.cod_user,
-    usuario: user.usuario,
-    rol: user.rol.nombre_rol,
-  };
-
-  const token = this.jwtService.sign(payload);
-
+  
+  if (
+  user.rol.nombre_rol === 'Propietario' &&
+  user.estado.cod_estado === 2
+) {
   return {
-    token,
+    primerLogin: true,
+    estadoEspecial,
+    mensaje,
     user: {
       id: user.cod_user,
       usuario: user.usuario,
       rol: user.rol.nombre_rol,
     },
+    message: 'Debe cambiar la contraseña antes de continuar',
   };
 }
+  // =========================
+  // LOGIN NORMAL
+  // =========================
 
+const payload = {
+  sub: user.cod_user,
+  usuario: user.usuario,
+  rol: user.rol.nombre_rol,
+};
+
+const token = this.jwtService.sign(payload);
+  return {
+  token,
+  estadoEspecial,
+  mensaje,
+  user: {
+    id: user.cod_user,
+    usuario: user.usuario,
+    rol: user.rol.nombre_rol,
+  },
+};
+}
   // =========================
   // CAMBIAR PASSWORD PRIMER LOGIN
   // =========================
