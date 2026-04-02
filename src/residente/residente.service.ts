@@ -28,6 +28,9 @@ export class ResidenteService {
 
 async firmarPedido(id: number, firma: string, residenteId: number) {
 
+  const fecha = new Date();
+  fecha.setHours(fecha.getHours() - 5);
+
   if (!firma) {
     throw new BadRequestException('La firma es obligatoria');
   }
@@ -49,7 +52,7 @@ async firmarPedido(id: number, firma: string, residenteId: number) {
     data: {
       fk_estado_pedido: 5,
       firma_residente: firma,
-      fecha_entregado: new Date(),
+      fecha_entregado: fecha,
       fk_apto_entrega: apto.fk_cod_apto // 🔥 AQUÍ
     }
   });

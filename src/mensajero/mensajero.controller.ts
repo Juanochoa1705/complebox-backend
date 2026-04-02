@@ -17,9 +17,10 @@ async crearPedido(@Body() dto: any, @Request() req) {
   }
   
   console.log('DTO recibido:', dto);
-  console.log('ID Mensajero:', req.user?.userId);
 
-  return await this.mensajeroService.crearPedido(dto, req.user.userId);
+  console.log('Usuario del token:', req.user);
+
+return await this.mensajeroService.crearPedido(dto, req.user.id);
 }
 
 
