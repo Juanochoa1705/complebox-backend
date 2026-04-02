@@ -28,7 +28,8 @@ export class AdminController {
     @Req() req: any,
     @Body() dto: CreateConjuntoDto,
   ) {
-    const codAdmin = req.user.userId; // usa el mismo que tu JWT imprime
+    const codAdmin = req.user.id; // usa el mismo que tu JWT imprime
+
     return this.adminService.crearConjunto(codAdmin, dto);
   }
 
@@ -40,7 +41,7 @@ async obtenerConjuntoAdmin(@Request() req){
 
   @Get('torres')
   async obtenerTorres(@Req() req: any) {
-    const codAdmin = req.user.userId;
+    const codAdmin = req.user.id;
     return this.adminService.obtenerTorresAdmin(codAdmin);
   }
 
@@ -49,7 +50,7 @@ async obtenerConjuntoAdmin(@Request() req){
     @Req() req: any,
     @Body() body: { numero_torre: number },
   ) {
-    const codAdmin = req.user.userId;
+    const codAdmin = req.user.id;
     return this.adminService.crearTorre(codAdmin, body.numero_torre);
   }
 
@@ -80,7 +81,7 @@ async crearEmpresa(
   @Get('vigilantes-pendientes')
   async vigilantesPendientes(@Request() req) {
 
-      console.log("USUARIO TOKEN:", req.user);
+      
     return this.adminService.vigilantesPendientes(req.user.id);
   }
 
