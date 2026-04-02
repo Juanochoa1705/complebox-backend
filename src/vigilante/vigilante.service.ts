@@ -118,22 +118,21 @@ async buscarPedidos(query: string, vigilanteId: number) {
 
 }
 
-async entregarPedido(pedidoId: number, vigilanteId: number) {
+async entregarPedido(id: number, vigilanteId: number) {
 
   const fecha = new Date();
   fecha.setHours(fecha.getHours() - 5);
 
   return this.prisma.pedido_estado_entrega_residente.update({
     where: {
-      cod_pedido_estado_entrega: Number(pedidoId)
+      cod_pedido_estado_entrega: id
     },
     data: {
-      fk_estado_pedido: 4, // pendiente firma
+      fk_estado_pedido: 4,
       fecha_entregado: fecha,
       fk_cod_vigilante_entrega: vigilanteId
     }
   });
-
 }
 
 async obtenerPerfilvig(codUser: number) {

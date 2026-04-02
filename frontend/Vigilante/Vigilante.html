@@ -275,17 +275,26 @@ inputBusqueda.addEventListener("input", async () => {
 
       let htmlBotones = "";
 
-      if (p.fk_estado_pedido === 1) {
-        htmlBotones = `
-          <button onclick="aprobar(${p.cod_pedido_estado_entrega})">
-            ✅ Aprobar
-          </button>
+if (p.fk_estado_pedido === 1) {
+  htmlBotones = `
+    <button onclick="aprobar(${p.cod_pedido_estado_entrega})">
+      ✅ Aprobar
+    </button>
 
-          <button onclick="rechazarPedido(${p.cod_pedido_estado_entrega})">
-            ❌ No aprobar
-          </button>
-        `;
-      }
+    <button onclick="rechazarPedido(${p.cod_pedido_estado_entrega})">
+      ❌ No aprobar
+    </button>
+  `;
+}
+
+// 🔥 NUEVO BOTÓN
+else if (p.fk_estado_pedido === 3) {
+  htmlBotones = `
+    <button onclick="entregarPedido(${p.id})">
+      📦 Entregar al residente
+    </button>
+  `;
+}
 
       div.innerHTML = `
         <b>${p.nombre_pedido}</b><br>

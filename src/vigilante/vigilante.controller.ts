@@ -25,11 +25,23 @@ buscarPedidos(@Query('query') query: string, @Req() req) {
   return this.vigilanteService.buscarPedidos(query, req.user.id);
 }
 
-@UseGuards(JwtAuthGuard)
 @Post('entregar/:id')
-entregar(@Param('id') id: number, @Req() req) {
-  return this.vigilanteService.entregarPedido(id, req.user.id);
+@UseGuards(JwtAuthGuard)
+entregarPedido(
+  @Param('id') id: string,
+  @Req() req
+) {
+  console.log("ID RAW:", id); // 👈 DEBUG
+  console.log("ID NUMBER:", Number(id)); // 👈 DEBUG
+
+  const vigilanteId = req.user.id;
+
+  return this.vigilanteService.entregarPedido(
+    Number(id), // 🔥 CLAVE
+    vigilanteId
+  );
 }
+
 
 @Get('perfilvig')
 @UseGuards(JwtAuthGuard)
