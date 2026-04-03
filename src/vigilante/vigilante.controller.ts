@@ -59,4 +59,8 @@ rechazarPedido(@Param('id') id: number, @Request() req) {
 
   return this.vigilanteService.rechazarPedido(Number(id));
 }
+@Get('historial')
+historial(@Query('query') query: string) {
+  return this.vigilanteService.historialPedidos(query || '');
+}
 }
