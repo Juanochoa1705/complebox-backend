@@ -14,9 +14,11 @@ export class JwtStrategy extends PassportStrategy(Strategy) {
 
 async validate(payload: any) {
   return {
-    id: payload.sub, // 👈 AQUÍ ESTÁ EL FIX REAL
+    id: payload.sub || payload.id, // 🔥 soporta los dos
     usuario: payload.usuario,
     rol: payload.rol,
   };
 }
+
+
 }

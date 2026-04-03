@@ -2,6 +2,7 @@ import { Injectable } from '@nestjs/common';
 import { PrismaService } from '../prisma/prisma.service';
 import { NotFoundException } from '@nestjs/common';
 
+
 @Injectable()
 export class VigilanteService {
 
@@ -160,14 +161,26 @@ async obtenerPerfilvig(codUser: number) {
 
 }
 
-async historialPedidos(query: string) {
- return this.prisma.$queryRawUnsafe(`
-  SELECT * FROM vista_historial_pedidos
-  WHERE 
-    nombre_residente LIKE '%${query}%'
-    OR cedula LIKE '%${query}%'
-    OR numero_apto LIKE '%${query}%'
-    OR nombre_pedido LIKE '%${query}%'
-`);
+async historialPedidos(query: string, vigilanteId: number) {
+
+  return this.prisma.$queryRaw`
+    SELECT v.*
+    FROM vista_historial_pedidos v
+
+    INNER JOIN empresa_vigilante_conjunto evc 
+      ON evc.fk_persona_vigilante = ${vigilanteId}
+
+    INNER JOIN empresa_seguridad_conjunto esc 
+      ON esc.cod_empresa_vig_conjunto = evc.fk_cod_empresa_vig_conjunto
+
+    WHERE 
+      v.cod_conjunto = esc.fk_cod_conjunto
+      AND (
+        v.nombre_residente LIKE ${'%' + query + '%'}
+        OR v.cedula LIKE ${'%' + query + '%'}
+        OR v.numero_apto LIKE ${'%' + query + '%'}
+        OR v.nombre_pedido LIKE ${'%' + query + '%'}
+      )
+  `;
 }
 }

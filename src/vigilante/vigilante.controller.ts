@@ -2,6 +2,7 @@ import { Controller, Get, Post, Param, UseGuards, Request, Query, Req,Unauthoriz
 import { JwtAuthGuard } from '../auth/jwt-auth.guard';
 import { VigilanteService } from './vigilante.service';
 
+
 @Controller('vigilante')
 export class VigilanteController {
 
@@ -59,8 +60,14 @@ rechazarPedido(@Param('id') id: number, @Request() req) {
 
   return this.vigilanteService.rechazarPedido(Number(id));
 }
+@UseGuards(JwtAuthGuard)
 @Get('historial')
-historial(@Query('query') query: string) {
-  return this.vigilanteService.historialPedidos(query || '');
+async historialPedidos(@Query('query') query: string, @Req() req: any) {
+
+  console.log("REQ.USER:", req.user); // 👀 DEBUG
+
+  const vigilanteId = req.user.id;
+
+  return this.vigilanteService.historialPedidos(query || '', vigilanteId);
 }
 }
