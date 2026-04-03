@@ -8,6 +8,7 @@ import {
   Request,
   UnauthorizedException,
   Param,
+  Query
 } from '@nestjs/common';
 import { AdminService } from './admin.service';
 import { CreateConjuntoDto } from './dto/create-conjunto.dto';
@@ -103,4 +104,8 @@ rechazarVigilante(@Param('id') id: number, @Request() req) {
   return this.adminService.rechazarVigilante(Number(id));
 }
 
+@Get('historial')
+historial(@Query('query') query: string) {
+  return this.adminService.historialPedidos(query || '');
+}
 }

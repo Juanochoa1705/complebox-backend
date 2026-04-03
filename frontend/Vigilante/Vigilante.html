@@ -452,7 +452,20 @@ inputHistorial.addEventListener("input", async () => {
         <b>🚚 Mensajero:</b> ${p.nombre_mensajero || ""} ${p.apellido_mensajero || ""}<br>
         <b>🏢 Empresa:</b> ${p.nombre_empresa || "❌ Sin empresa"}<br>
 
-        <b>✍️ Firma:</b> ${p.firma_residente ? "✅ Registrada" : "❌ No registrada"}
+        <b>✍️ Firma:</b><br>
+${
+  p.firma_residente
+    ? `<img src="${p.firma_residente}" 
+           style="
+             width:100px;
+             height:auto;
+             border:1px solid #ccc;
+             border-radius:6px;
+             object-fit:contain;
+             margin-top:4px;
+           " />`
+    : `<span style="color:red;">❌ No registrada</span>`
+}
 
         <hr>
       `;

@@ -212,3 +212,87 @@ function cerrarSesion() {
   localStorage.clear();
   window.location.href = '../login.html';
 }
+
+const inputHistorial = document.getElementById("buscarHistorial");
+const tabla = document.getElementById("tablaHistorial");
+
+inputHistorial.addEventListener("input", async () => {
+
+  const query = inputHistorial.value.trim();
+
+  // 🔥 SI ESTÁ VACÍO → LIMPIA Y NO BUSCA
+  if (query.length === 0) {
+    tabla.innerHTML = "";
+    return;
+  }
+
+  // 🔥 OPCIONAL (evita consultas innecesarias)
+  if (query.length < 2) {
+    tabla.innerHTML = "";
+    return;
+  }
+
+  try {
+    const res = await fetch(`http://localhost:3000/admin/historial?query=${query}`, {
+      headers: {
+        Authorization: "Bearer " + localStorage.getItem("token")
+      }
+    });
+
+    const data = await res.json();
+
+    tabla.innerHTML = "";
+
+    data.forEach(p => {
+
+      const div = document.createElement("div");
+
+      div.innerHTML = `
+        <b>📦 Pedido:</b> ${p.nombre_pedido || "❌ No registrado"}<br>
+        <b>🔢 Guía:</b> ${p.numero_guia || "❌ No registrada"}<br>
+        <b>📌 Estado:</b> ${p.estado_pedido || "⚪ Sin estado"}<br>
+
+        <b>📅 Recibido:</b> ${p.fecha_recibido ? new Date(p.fecha_recibido).toLocaleString("es-CO") : "❌ No registrado"}<br>
+        <b>📅 Entregado:</b> ${p.fecha_entregado ? new Date(p.fecha_entregado).toLocaleString("es-CO") : "⏳ Pendiente"}<br>
+
+        <b>👮 Recibe:</b> ${p.nombre_vigilante_recibe || ""} ${p.apellido_vigilante_recibe || ""}<br>
+        <b>👮 Entrega:</b> ${p.nombre_vigilante_entrega || "⏳ Pendiente"} ${p.apellido_vigilante_entrega || ""}<br>
+
+        <b>🏠 Residente:</b> ${p.nombre_residente || ""} ${p.apellido_residente || ""}<br>
+        <b>🆔 Cédula:</b> ${p.cedula || "❌ No registrada"}<br>
+
+        <b>🏢 Apto:</b> ${
+          p.numero_torre && p.numero_apto
+            ? `Torre ${p.numero_torre} - Apto ${p.numero_apto}`
+            : "❌ No asignado"
+        }<br>
+
+        <b>🚚 Mensajero:</b> ${p.nombre_mensajero || ""} ${p.apellido_mensajero || ""}<br>
+        <b>🏢 Empresa:</b> ${p.nombre_empresa || "❌ Sin empresa"}<br>
+
+        <b>✍️ Firma:</b><br>
+${
+  p.firma_residente
+    ? `<img src="${p.firma_residente}" 
+           style="
+             width:100px;
+             height:auto;
+             border:1px solid #ccc;
+             border-radius:6px;
+             object-fit:contain;
+             margin-top:4px;
+           " />`
+    : `<span style="color:red;">❌ No registrada</span>`
+}
+
+        <hr>
+      `;
+
+      tabla.appendChild(div);
+    });
+
+  } catch (error) {
+    console.error("Error:", error);
+  }
+
+});

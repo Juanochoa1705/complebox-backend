@@ -373,5 +373,16 @@ async vigilantesPendientes(adminId: number) {
   });
 }
 
+async historialPedidos(query: string) {
+ return this.prisma.$queryRawUnsafe(`
+  SELECT * FROM vista_historial_pedidos
+  WHERE 
+    nombre_residente LIKE '%${query}%'
+    OR cedula LIKE '%${query}%'
+    OR numero_apto LIKE '%${query}%'
+    OR nombre_pedido LIKE '%${query}%'
+`);
+}
+
 
 }
