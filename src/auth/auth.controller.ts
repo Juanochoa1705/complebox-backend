@@ -31,6 +31,12 @@ registerResidente(@Body() dto: RegisterDto) {
     return this.authService.register(dto);
   }
 
+  @Post('registeradmin')
+  registeradmin(@Body() dto: RegisterDto) {
+    return this.authService.registeradmin(dto);
+  }
+  
+
   // 👉 LOGIN
   @Post('login')
   login(@Body() dto: LoginDto) {

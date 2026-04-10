@@ -63,6 +63,54 @@ export class AuthService {
     };
   }
 
+  //register admin
+    async registeradmin(dto: RegisterDto) {
+
+  const userExists = await this.prisma.persona.findFirst({
+    where: {
+      OR: [
+        { usuario: dto.usuario },
+        { correo: dto.correo ?? undefined },
+        { cedula: dto.cedula ?? undefined }
+      ],
+    },
+  });
+
+  if (userExists) {
+    throw new ConflictException('El usuario, correo o cédula ya existe');
+  }
+
+  const hashedPassword = await bcrypt.hash(dto.password, 10);
+
+  await this.prisma.persona.create({
+    data: {
+      nombres: dto.nombres,
+      apellidos: dto.apellidos,
+      cedula: dto.cedula ?? null,
+      correo: dto.correo ?? null,
+      telefono: dto.telefono ?? '',
+      usuario: dto.usuario,
+      contrase_a: hashedPassword,
+
+      estado: {
+        connect: { cod_estado: 1 }, // Activo
+      },
+
+      rol: {
+        connect: { cod_rol: 1 }, // ADMIN
+      },
+
+      tipo_doc: {
+        connect: { cod_tipo_doc: dto.fk_tipo_doc },
+      },
+    },
+  });
+
+  return {
+    message: 'Usuario registrado correctamente',
+  };
+}
+
   // =========================
   // REGISTER RESIDENTE
   // =========================

@@ -44,6 +44,8 @@ async function crearConjunto() {
   const body = {
     nombre_conjunto: conjuntoNombre.value,
     telefono_conjunto: conjuntoTelefono.value,
+    ciudad_conjunto: conjuntoCiudad.value,
+    direccion_conjunto: conjuntoDireccion.value,
     cantidad_torres: Number(torres.value)
   };
 

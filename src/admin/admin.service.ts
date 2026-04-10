@@ -15,6 +15,8 @@ export class AdminService {
       data: {
         nombre_conjunto: dto.nombre_conjunto,
         telefono_conjunto: dto.telefono_conjunto,
+        ciudad_conjunto: dto.ciudad_conjunto,
+        direccion_conjunto: dto.direccion_conjunto
       },
     });
 
