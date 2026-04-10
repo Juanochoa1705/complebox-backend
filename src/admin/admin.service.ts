@@ -100,128 +100,179 @@ async processExcel(file: Express.Multer.File) {
   const data = XLSX.utils.sheet_to_json(sheet);
 
   for (const row of data as any[]) {
+    try {
 
-    // 🔹 1️⃣ VALIDAR TORRE
-    const numeroTorre = Number(row.numero_torre);
+      // ==========================
+      // 🔹 LIMPIEZA DE DATOS
+      // ==========================
+      const nombres = String(row.nombres || '').trim();
+      const apellidos = String(row.apellidos || '').trim();
+      const cedulaStr = String(row.cedula || '').trim();
+      const correo = String(row.correo || '').trim();
+      const telefonoStr = String(row.telefono || '').trim();
+      const tipoDocNombre = String(row.tipo_doc || '').trim();
+      const conjuntoNombre = String(row.conjunto || '').trim();
+      const numeroTorre = Number(row.numero_torre);
+      const numeroApto = Number(row.numero_apto);
+      const estadoNombre = String(row.estado_apto_propietario || '').trim();
 
-    if (isNaN(numeroTorre)) {
-      console.log('Número de torre inválido:', row);
-      continue;
+      // ==========================
+      // 🔹 VALIDACIONES BÁSICAS
+      // ==========================
+      if (!cedulaStr) {
+        console.log('❌ Cédula inválida:', row);
+        continue;
+      }
+
+      if (isNaN(numeroTorre) || isNaN(numeroApto)) {
+        console.log('❌ Torre o apto inválido:', row);
+        continue;
+      }
+
+      // ==========================
+      // 🔹 BUSCAR CONJUNTO 🔥
+      // ==========================
+      const conjunto = await this.prisma.conjunto.findFirst({
+  where: {
+    nombre_conjunto: {
+      contains: conjuntoNombre
     }
-
-    const torreDB = await this.prisma.torre.findFirst({
-      where: { numero_torre: numeroTorre },
-    });
-
-    if (!torreDB) {
-      console.log(`La torre ${numeroTorre} no existe`);
-      continue;
-    }
-
-    // 🔹 2️⃣ CREAR O BUSCAR PERSONA
-    const cedulaStr = String(row.cedula).trim();
-    const telefonoStr = String(row.telefono).trim();
-    const usuarioStr = cedulaStr;
-
-    if (!cedulaStr) {
-      console.log('Cédula inválida:', row);
-      continue;
-    }
-
-    let persona = await this.prisma.persona.findUnique({
-      where: { cedula: cedulaStr },
-    });
-
-    if (!persona) {
-
-const hash = await bcrypt.hash('123456', 10);
-
-persona = await this.prisma.persona.create({
-  data: {
-    nombres: row.nombres,
-    apellidos: row.apellidos,
-    cedula: cedulaStr,
-    correo: row.correo,
-    telefono: telefonoStr,
-    usuario: usuarioStr,
-    contrase_a: hash,
-
-    estado: {
-      connect: { cod_estado: 2 } // 👈 INACTIVO
-    },
-
-    rol: {
-      connect: { cod_rol: 2 }
-    },
-
-    tipo_doc: {
-      connect: { cod_tipo_doc: Number(row.fk_tipo_doc) }
-    },
-  },
+  }
 });
-}
-    // 🔹 3️⃣ CREAR O BUSCAR APTO
-    const numeroApto = Number(row.numero_apto);
 
-    if (isNaN(numeroApto)) {
-      console.log('Número de apto inválido:', row);
-      continue;
-    }
+      if (!conjunto) {
+        console.log('❌ Conjunto no encontrado:', conjuntoNombre);
+        continue;
+      }
 
-    let aptoDB = await this.prisma.apto.findFirst({
-      where: {
-        fk_cod_torre: torreDB.cod_torre,
-        numero_apto: numeroApto,
-      },
-    });
-
-    if (!aptoDB) {
-      aptoDB = await this.prisma.apto.create({
-        data: {
-          numero_apto: numeroApto,
-          fk_cod_torre: torreDB.cod_torre,
-        },
-      });
-    }
-
-    // 🔹 4️⃣ CREAR O ACTUALIZAR RELACIÓN
-    const estadoNuevo = Number(row.fk_estado_apto_propietario);
-
-    if (isNaN(estadoNuevo)) {
-      console.log('Estado inválido:', row);
-      continue;
-    }
-
-    const relacion = await this.prisma.apto_propietario.findFirst({
-      where: {
-        fk_cod_apto: aptoDB.cod_apto,
-        fk_cod_propietario: persona.cod_user,
-      },
-    });
-
-    if (!relacion) {
-      // Crear relación
-      await this.prisma.apto_propietario.create({
-        data: {
-          fk_cod_apto: aptoDB.cod_apto,
-          fk_cod_propietario: persona.cod_user,
-          fk_estado_apto_propietario: estadoNuevo,
-        },
-      });
-    } else if (relacion.fk_estado_apto_propietario !== estadoNuevo) {
-      // Actualizar solo si cambió el estado
-      await this.prisma.apto_propietario.update({
+      // ==========================
+      // 🔹 BUSCAR TORRE (POR CONJUNTO 🔥)
+      // ==========================
+      const torreDB = await this.prisma.torre.findFirst({
         where: {
-          cod_apto_propietario: relacion.cod_apto_propietario, // 👈 usa tu PK real
-        },
-        data: {
-          fk_estado_apto_propietario: estadoNuevo,
-        },
+          numero_torre: numeroTorre,
+          fk_cod_conjunto: conjunto.cod_conjunto
+        }
       });
+
+      if (!torreDB) {
+        console.log(`❌ Torre ${numeroTorre} no existe en ${conjuntoNombre}`);
+        continue;
+      }
+
+      // ==========================
+      // 🔹 BUSCAR TIPO DOCUMENTO
+      // ==========================
+      const tipoDoc = await this.prisma.tipo_doc.findFirst({
+  where: {
+    nombre_tipo_doc: {
+      contains: tipoDocNombre
+    }
+  }
+});
+
+      if (!tipoDoc) {
+        console.log('❌ Tipo doc no encontrado:', tipoDocNombre);
+        continue;
+      }
+
+      // ==========================
+      // 🔹 BUSCAR ESTADO
+      // ==========================
+      const estadoApto = await this.prisma.estado.findFirst({
+  where: {
+    nombre_estado: {
+      contains: estadoNombre
+    }
+  }
+});
+      if (!estadoApto) {
+        console.log('❌ Estado no encontrado:', estadoNombre);
+        continue;
+      }
+
+      // ==========================
+      // 🔹 CREAR O BUSCAR PERSONA
+      // ==========================
+      let persona = await this.prisma.persona.findUnique({
+        where: { cedula: cedulaStr }
+      });
+
+      if (!persona) {
+        const hash = await bcrypt.hash('123456', 10);
+
+        persona = await this.prisma.persona.create({
+          data: {
+            nombres,
+            apellidos,
+            cedula: cedulaStr,
+            correo,
+            telefono: telefonoStr,
+            usuario: cedulaStr,
+            contrase_a: hash,
+            fk_estado_user: 2, // Inactivo por defecto
+            fk_rol: 2, // Propietario
+            fk_tipo_doc: tipoDoc.cod_tipo_doc
+          }
+        });
+      }
+
+      // ==========================
+      // 🔹 CREAR O BUSCAR APTO
+      // ==========================
+      let aptoDB = await this.prisma.apto.findFirst({
+        where: {
+          numero_apto: numeroApto,
+          fk_cod_torre: torreDB.cod_torre
+        }
+      });
+
+      if (!aptoDB) {
+        aptoDB = await this.prisma.apto.create({
+          data: {
+            numero_apto: numeroApto,
+            fk_cod_torre: torreDB.cod_torre
+          }
+        });
+      }
+
+      // ==========================
+      // 🔹 RELACIÓN APTO - PROPIETARIO (UPSERT 🔥)
+      // ==========================
+      const relacion = await this.prisma.apto_propietario.findFirst({
+        where: {
+          fk_cod_apto: aptoDB.cod_apto,
+          fk_cod_propietario: persona.cod_user
+        }
+      });
+
+      if (!relacion) {
+        await this.prisma.apto_propietario.create({
+          data: {
+            fk_cod_apto: aptoDB.cod_apto,
+            fk_cod_propietario: persona.cod_user,
+            fk_estado_apto_propietario: estadoApto.cod_estado
+          }
+        });
+      } else {
+        await this.prisma.apto_propietario.update({
+          where: {
+            cod_apto_propietario: relacion.cod_apto_propietario
+          },
+          data: {
+            fk_estado_apto_propietario: estadoApto.cod_estado
+          }
+        });
+      }
+
+    } catch (error) {
+      console.log('❌ Error procesando fila:', row);
+      console.log(error.message);
+      continue;
     }
   }
 
-  return { message: 'Carga masiva completada correctamente' };
+  return { message: '✅ Carga masiva completada correctamente' };
 }
 
 async crearEmpresaSeguridad(adminId: number, dto: CrearEmpresaDto) {

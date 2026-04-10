@@ -290,7 +290,7 @@ inputHistorial.addEventListener("input", async () => {
       <b>📦 Pedido:</b> ${p.nombre_pedido || '❌ Sin nombre'}<br>
       <b>🔢 Guía:</b> ${p.numero_guia || '❌ Sin guía'}<br>
       <b>📌 Estado:</b> ${p.estado_pedido || '❌ Sin estado'}<br>
-
+      
       <b>📅 Recibido:</b> ${p.fecha_recibido || '❌ No registrado'}<br>
       <b>📅 Entregado:</b> ${p.fecha_entregado || '⏳ Pendiente'}<br>
 
@@ -300,7 +300,7 @@ inputHistorial.addEventListener("input", async () => {
       <b>🏠 Residente:</b> ${p.nombre_residente || '❌'} ${p.apellido_residente || ''}<br>
       <b>🆔 Cédula:</b> ${p.cedula || '❌'}<br>
       <b>🏢 Apto:</b> Torre ${p.numero_torre || '❌'} - Apto ${p.numero_apto || '❌'}<br>
-
+      <b>🏘️ Conjunto:</b> ${p.nombre_conjunto || 'No disponible'}<br>
       ${acciones}
       <hr>
     `;
