@@ -265,6 +265,24 @@ async processExcel(file: Express.Multer.File) {
         });
       }
 
+
+    const existeResidente = await this.prisma.apto_residente.findFirst({
+  where: {
+    fk_cod_apto: aptoDB.cod_apto,
+    fk_cod_residente: persona.cod_user
+  }
+});
+
+if (!existeResidente) {
+  await this.prisma.apto_residente.create({
+    data: {
+      fk_cod_apto: aptoDB.cod_apto,
+      fk_cod_residente: persona.cod_user,
+      fk_estado_apto_residente: estadoApto.cod_estado
+    }
+  });
+}
+
     } catch (error) {
       console.log('❌ Error procesando fila:', row);
       console.log(error.message);

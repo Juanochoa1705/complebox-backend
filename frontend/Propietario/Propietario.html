@@ -144,7 +144,7 @@
     <p class="empty" id="mensajeVacio" style="display:none;">
       📭 No tienes residentes pendientes
     </p>
-
+    <button onclick="irAResidente()">📦 Ver mis pedidos</button>
     <div class="footer">
       <button class="logout" onclick="cerrarSesion()">Cerrar sesión</button>
     </div>
@@ -267,6 +267,10 @@ async function cargarPerfil(){
 
   document.getElementById("ubicacion").innerText =
     `🏢 Torre ${data.torre} • Apto ${data.apto}-Propietari@`;
+}
+
+function irAResidente() {
+  window.location.href = "../residente/residente.html";
 }
 
 function cerrarSesion(){

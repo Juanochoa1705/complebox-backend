@@ -48,7 +48,7 @@ historialResidente(
 ) {
   console.log("USER:", req.user); // 🔥 DEBUG
 
-  const residenteId = req.user.id;
+ const residenteId = req.user.id || req.user.sub;
 
   return this.residenteService.historialResidente(query || '', residenteId);
 }

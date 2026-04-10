@@ -38,7 +38,11 @@ async buscarResidente(query: string) {
   return this.prisma.persona.findMany({
     where: {
       AND: [
-        { fk_rol: 3 }, // 🔥 SOLO residentes
+        {
+          fk_rol: {
+            in: [2, 3] // 🔥 propietario y residente
+          }
+        },
         {
           OR: [
             { nombres: { contains: query } },
@@ -48,7 +52,7 @@ async buscarResidente(query: string) {
         }
       ]
     },
-    take: 5 // 🔥 limita resultados
+    take: 5
   });
 }
 
