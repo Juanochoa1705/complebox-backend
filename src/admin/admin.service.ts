@@ -373,16 +373,50 @@ async vigilantesPendientes(adminId: number) {
   });
 }
 
-async historialPedidos(query: string) {
- return this.prisma.$queryRawUnsafe(`
-  SELECT * FROM vista_historial_pedidos
-  WHERE 
-    nombre_residente LIKE '%${query}%'
-    OR cedula LIKE '%${query}%'
-    OR numero_apto LIKE '%${query}%'
-    OR nombre_pedido LIKE '%${query}%'
-`);
+async historial(query: string, userId: number, rol: string) {
+
+  if (rol === 'Administrador') {
+
+    return this.prisma.$queryRaw`
+      SELECT v.*
+      FROM vista_historial_pedidos v
+
+      INNER JOIN admin_conjunto ac
+        ON ac.fk_cod_administrador = ${userId}
+
+      WHERE v.cod_conjunto = ac.fk_cod_conjunto
+      AND (
+        v.nombre_residente LIKE ${'%' + query + '%'}
+        OR v.cedula LIKE ${'%' + query + '%'}
+        OR v.numero_apto LIKE ${'%' + query + '%'}
+        OR v.nombre_pedido LIKE ${'%' + query + '%'}
+      )
+    `;
+  }
+
+  if (rol === 'Vigilante') {
+
+    return this.prisma.$queryRaw`
+      SELECT v.*
+      FROM vista_historial_pedidos v
+
+      INNER JOIN empresa_vigilante_conjunto evc 
+        ON evc.fk_persona_vigilante = ${userId}
+
+      INNER JOIN empresa_seguridad_conjunto esc 
+        ON esc.cod_empresa_vig_conjunto = evc.fk_cod_empresa_vig_conjunto
+
+      WHERE v.cod_conjunto = esc.fk_cod_conjunto
+      AND (
+        v.nombre_residente LIKE ${'%' + query + '%'}
+        OR v.cedula LIKE ${'%' + query + '%'}
+        OR v.numero_apto LIKE ${'%' + query + '%'}
+        OR v.nombre_pedido LIKE ${'%' + query + '%'}
+      )
+    `;
+  }
+
+  return [];
+}
 }
 
-
-}

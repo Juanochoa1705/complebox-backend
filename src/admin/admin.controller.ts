@@ -105,7 +105,12 @@ rechazarVigilante(@Param('id') id: number, @Request() req) {
 }
 
 @Get('historial')
-historial(@Query('query') query: string) {
-  return this.adminService.historialPedidos(query || '');
+@UseGuards(JwtAuthGuard)
+async historial(@Query('query') query: string, @Req() req: any) {
+
+  const userId = req.user.id;
+  const rol = req.user.rol;
+
+  return this.adminService.historial(query || '', userId, rol);
 }
 }

@@ -91,4 +91,18 @@ async firmarPedido(id: number, firma: string, residenteId: number) {
 };
 
 }
+async historialResidente(query: string, residenteId: number) {
+
+  return this.prisma.$queryRaw`
+    SELECT *
+    FROM vista_historial_pedidos v
+    WHERE 
+      v.cod_residente = ${residenteId}
+      AND (
+        v.nombre_pedido LIKE ${'%' + query + '%'}
+        OR v.numero_guia LIKE ${'%' + query + '%'}
+      )
+    ORDER BY v.fecha_recibido DESC
+  `;
+}
 }

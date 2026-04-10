@@ -144,6 +144,14 @@
         color: #666;
         margin-bottom: 20px;
     }
+
+    input {
+  width: 100%;
+  padding: 12px;
+  border-radius: 12px;
+  border: 1px solid #ccc;
+}
+
   </style>
 </head>
 <body>
@@ -155,9 +163,16 @@
     <p id="ubicacionres"></p>
 
   <h3>📦 Mis nuevos pedidos</h3>
+
   <div id="listaPedidos"></div>
-  <button class="btn btn-logout" onclick="cerrarSesion()">Cerrar sesión</button>
+  
+  <h3>📊 Historial de pedidos</h3>
+
+<input type="text" id="buscarHistorial" placeholder="Buscar por guía o pedido...">
+
+<div id="tablaHistorial"></div><button class="btn btn-logout" onclick="cerrarSesion()">Cerrar sesión</button>
 </div>
+
 
 <div id="firmaContainer">
   <div id="firmaBox">
@@ -168,7 +183,12 @@
     <button class="btn" style="background:#95a5a6" onclick="limpiarFirma()">Limpiar</button>
     <button class="btn" style="background:#7f8c8d" onclick="cerrarFirma()">Cancelar</button>
   </div>
+
+
+
 </div>
+
+
 
 <script>
 
@@ -176,7 +196,7 @@
 
 
 
-const contenedor = document.getElementById("listaPedidos");
+const contenedorPedidos = document.getElementById("listaPedidos");
 let pedidoSeleccionado = null;
 
 async function cargarPerfilres() {
@@ -222,7 +242,7 @@ async function cargarPedidos() {
   // 🔥 FILTRAR LOS QUE NO SEAN ESTADO 5
   const pedidosFiltrados = pedidos.filter(p => p.fk_estado_pedido !== 5);
 
-  contenedor.innerHTML = "";
+  contenedorPedidos.innerHTML = "";
 
   pedidosFiltrados.forEach(p => {
     const div = document.createElement("div");
@@ -244,7 +264,7 @@ async function cargarPedidos() {
       ${htmlBotones}
     `;
 
-    contenedor.appendChild(div);
+    contenedorPedidos.appendChild(div);
   });
 }
 
@@ -344,6 +364,61 @@ if (estadoEspecial === "true") {
   cargarPerfilres();
   cargarPedidos();
 }
+const input = document.getElementById("buscarHistorial");
+const contenedorHistorial = document.getElementById("tablaHistorial");
+
+input.addEventListener("input", async () => {
+
+  const query = input.value.trim();
+
+  if (query.length === 0) {
+    contenedorHistorial.innerHTML = "";
+    return;
+  }
+
+  const res = await fetch(`http://localhost:3000/residente/historial?query=${query}`, {
+    headers: {
+      Authorization: "Bearer " + localStorage.getItem("token")
+    }
+  });
+
+  const data = await res.json();
+
+  contenedorHistorial.innerHTML = "";
+
+  data.forEach(p => {
+    const div = document.createElement("div");
+
+  div.className = "card";
+
+div.innerHTML = `
+  <b>📦 Pedido:</b> ${p.nombre_pedido}<br>
+  <b>🔢 Guía:</b> ${p.numero_guia}<br>
+  <b>📌 Estado:</b> ${p.estado_pedido || "Sin estado"}<br>
+
+  <b>📅 Recibido:</b> ${p.fecha_recibido}<br>
+  <b>📅 Entrega:</b> ${p.fecha_entregado || 'Pendiente'}<br>
+
+  <b>👮 Recibe:</b> ${p.nombre_vigilante_recibe || ''} ${p.apellido_vigilante_recibe || ''}<br>
+  <b>👮 Entrega:</b> ${p.nombre_vigilante_entrega || ''} ${p.apellido_vigilante_entrega || ''}<br>
+
+  <b>🚚 Mensajero:</b> ${p.nombre_mensajero || ''} ${p.apellido_mensajero || ''}<br>
+  <b>🏢 Empresa:</b> ${p.nombre_empresa || ''}<br>
+
+  <b>✍️ Firma:</b><br>
+  ${
+    p.firma_residente
+      ? `<img src="${p.firma_residente}" style="width:120px; border-radius:10px; margin-top:5px;">`
+      : `<span style="color:red;">❌ No registrada</span>`
+  }
+
+  <hr>
+`;
+
+    contenedorHistorial.appendChild(div);
+  });
+
+});
 </script>
 </body>
 </html>

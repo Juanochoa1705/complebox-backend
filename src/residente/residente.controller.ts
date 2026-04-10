@@ -1,4 +1,4 @@
-import { Controller, Get, Post, Param, UseGuards, Req, Body, ParseIntPipe, Request } from '@nestjs/common';
+import { Controller, Get, Post, Param, UseGuards, Req, Body, ParseIntPipe, Request, Query } from '@nestjs/common';
 import { JwtAuthGuard } from '../auth/jwt-auth.guard';
 import { ResidenteService } from './residente.service';
 
@@ -38,5 +38,18 @@ firmar(
 @UseGuards(JwtAuthGuard)
 async perfilres(@Request() req) {
   return this.residenteService.obtenerPerfilres(req.user.id);
+}
+
+@UseGuards(JwtAuthGuard)
+@Get('historial')
+historialResidente(
+  @Req() req: any,
+  @Query('query') query: string
+) {
+  console.log("USER:", req.user); // 🔥 DEBUG
+
+  const residenteId = req.user.id;
+
+  return this.residenteService.historialResidente(query || '', residenteId);
 }
 }
