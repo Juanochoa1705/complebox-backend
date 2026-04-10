@@ -122,6 +122,9 @@ button:active {
 </div>
 
 <button onclick="crearPedido()">Registrar Pedido</button>
+<h2>📊 Historial de pedidos</h2>
+<input type="text" id="buscarHistorial" placeholder="Buscar...">
+<div id="tablaHistorial"></div>
 <button onclick="cerrarSesion()">Cerrar sesión</button>
 
 <script >
@@ -246,6 +249,88 @@ inputBuscar.addEventListener("input", async () => {
   });
 
 });
+
+const inputHistorial = document.getElementById("buscarHistorial");
+const tabla = document.getElementById("tablaHistorial");
+
+inputHistorial.addEventListener("input", async () => {
+
+  const query = inputHistorial.value.trim();
+
+  if (query.length === 0) {
+    tabla.innerHTML = "";
+    return;
+  }
+
+  const res = await fetch(`http://localhost:3000/mensajero/historial?query=${query}`, {
+    headers: {
+      Authorization: "Bearer " + localStorage.getItem("token")
+    }
+  });
+
+  const data = await res.json();
+
+  tabla.innerHTML = "";
+
+  data.forEach(p => {
+
+    const div = document.createElement("div");
+
+    // 🔥 BOTONES SOLO SI ESTADO 1
+    let acciones = "";
+
+    if (p.fk_estado_pedido == 1) {
+      acciones = `
+        <button onclick="editarPedido(${p.cod_pedido_estado_entrega})">✏️ Editar</button>
+        <button onclick="eliminarPedido(${p.cod_pedido_estado_entrega})">❌ Eliminar</button>
+      `;
+    }
+
+    div.innerHTML = `
+      <b>📦 Pedido:</b> ${p.nombre_pedido || '❌ Sin nombre'}<br>
+      <b>🔢 Guía:</b> ${p.numero_guia || '❌ Sin guía'}<br>
+      <b>📌 Estado:</b> ${p.estado_pedido || '❌ Sin estado'}<br>
+
+      <b>📅 Recibido:</b> ${p.fecha_recibido || '❌ No registrado'}<br>
+      <b>📅 Entregado:</b> ${p.fecha_entregado || '⏳ Pendiente'}<br>
+
+      <b>👮 Recibe:</b> ${p.nombre_vigilante_recibe || '❌'} ${p.apellido_vigilante_recibe || ''}<br>
+      <b>👮 Entrega:</b> ${p.nombre_vigilante_entrega || '❌'} ${p.apellido_vigilante_entrega || ''}<br>
+
+      <b>🏠 Residente:</b> ${p.nombre_residente || '❌'} ${p.apellido_residente || ''}<br>
+      <b>🆔 Cédula:</b> ${p.cedula || '❌'}<br>
+      <b>🏢 Apto:</b> Torre ${p.numero_torre || '❌'} - Apto ${p.numero_apto || '❌'}<br>
+
+      ${acciones}
+      <hr>
+    `;
+
+    tabla.appendChild(div);
+  });
+
+});
+
+async function eliminarPedido(id) {
+
+  const confirmar = confirm("¿Eliminar pedido?");
+  if (!confirmar) return;
+
+  const res = await fetch(`http://localhost:3000/mensajero/eliminar/${id}`, {
+    method: "DELETE",
+    headers: {
+      Authorization: "Bearer " + localStorage.getItem("token")
+    }
+  });
+
+  if (res.ok) {
+    alert("Pedido eliminado");
+    inputHistorial.dispatchEvent(new Event("input"));
+  }
+}
+
+function editarPedido(id) {
+  window.location.href = `editar_pedido.html?id=${id}`;
+}
 
 cargarPerfilmen();
 

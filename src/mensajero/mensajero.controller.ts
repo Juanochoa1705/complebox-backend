@@ -1,5 +1,5 @@
 
-import { Controller, Get, Post, Body, Request, UseGuards,BadRequestException } from '@nestjs/common';
+import { Controller, Get, Post, Body, Request, UseGuards,BadRequestException, Req, Param, Delete, Put } from '@nestjs/common';
 import { MensajeroService } from './mensajero.service';
 import { JwtAuthGuard } from '../auth/jwt-auth.guard';
 import { Query } from '@nestjs/common';
@@ -34,5 +34,55 @@ buscarResidente(@Query('q') query: string) {
 async perfilmen(@Request() req) {
   return this.mensajeroService.obtenerPerfilmen(req.user.id);
 }
+
+@UseGuards(JwtAuthGuard)
+@Get('historial')
+historial(
+  @Query('query') query: string,
+  @Req() req
+) {
+  return this.mensajeroService.historialMensajero(
+    query || '',
+    req.user.id // 🔥 CLAVE
+  );
+}
+
+@UseGuards(JwtAuthGuard)
+@Delete('eliminar/:id')
+eliminarPedido(
+  @Param('id') id: string,
+  @Req() req
+) {
+  return this.mensajeroService.eliminarPedido(
+    Number(id),
+    req.user.id
+  );
+}
+
+@UseGuards(JwtAuthGuard)
+  @Get('pedido/:id')
+  obtenerPedido(
+    @Param('id') id: string,
+    @Req() req
+  ) {
+    return this.mensajeroService.obtenerPedido(
+      Number(id),
+      req.user.id
+    );
+  }
+
+   @UseGuards(JwtAuthGuard)
+  @Put('editar/:id')
+  editarPedido(
+    @Param('id') id: string,
+    @Body() dto: any,
+    @Req() req
+  ) {
+    return this.mensajeroService.editarPedido(
+      Number(id),
+      dto,
+      req.user.id
+    );
+  }
 
 }

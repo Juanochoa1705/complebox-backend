@@ -1,0 +1,179 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+<meta charset="UTF-8">
+<title>Editar Pedido</title>
+<meta name="viewport" content="width=device-width, initial-scale=1">
+
+<style>
+body {
+  font-family: 'Segoe UI';
+  background: #f4f6f9;
+  padding: 20px;
+}
+
+.container {
+  max-width: 400px;
+  margin: auto;
+  background: white;
+  padding: 20px;
+  border-radius: 15px;
+}
+
+input, textarea {
+  width: 100%;
+  padding: 10px;
+  margin-top: 10px;
+  border-radius: 10px;
+  border: 1px solid #ccc;
+}
+
+.resultado {
+  padding: 8px;
+  border-bottom: 1px solid #eee;
+  cursor: pointer;
+}
+
+.resultado:hover {
+  background: #f1f1f1;
+}
+
+button {
+  width: 100%;
+  padding: 12px;
+  margin-top: 15px;
+  border: none;
+  border-radius: 10px;
+  background: #1976d2;
+  color: white;
+  font-weight: bold;
+}
+</style>
+</head>
+
+<body>
+
+<div class="container">
+  <h2>✏️ Editar Pedido</h2>
+
+  <input type="text" id="numero_guia" placeholder="Número guía">
+  <input type="text" id="nombre_pedido" placeholder="Nombre pedido">
+  <textarea id="descripcion_pedido" placeholder="Descripción"></textarea>
+
+  <h3>👤 Residente</h3>
+  <input type="text" id="buscarResidente" placeholder="Buscar por nombre o cédula">
+  <div id="resultadosResidente"></div>
+
+  <button onclick="guardar()">💾 Guardar cambios</button>
+  <button onclick="volver()">⬅️ Volver</button>
+</div>
+
+<script>
+
+const params = new URLSearchParams(window.location.search);
+const id = params.get("id");
+
+let residenteSeleccionado = null;
+
+// 🔥 CARGAR PEDIDO
+async function cargarPedido() {
+
+  const res = await fetch(`http://localhost:3000/mensajero/pedido/${id}`, {
+    headers: {
+      Authorization: "Bearer " + localStorage.getItem("token")
+    }
+  });
+
+  const data = await res.json();
+
+  document.getElementById("numero_guia").value = data.numero_guia || '';
+  document.getElementById("nombre_pedido").value = data.nombre_pedido || '';
+  document.getElementById("descripcion_pedido").value = data.descripcion_pedido || '';
+
+  // residente actual
+  if (data.persona_pedido_estado_entrega_residente_fk_residenteTopersona) {
+    const r = data.persona_pedido_estado_entrega_residente_fk_residenteTopersona;
+    document.getElementById("buscarResidente").value = `${r.nombres} ${r.apellidos}`;
+    residenteSeleccionado = data.fk_residente;
+  }
+}
+
+// 🔍 BUSCAR RESIDENTE
+const inputRes = document.getElementById("buscarResidente");
+const resultados = document.getElementById("resultadosResidente");
+
+inputRes.addEventListener("input", async () => {
+
+  const query = inputRes.value.trim();
+
+  if (query.length < 2) {
+    resultados.innerHTML = "";
+    return;
+  }
+
+  const res = await fetch(`http://localhost:3000/mensajero/buscar-residente?query=${query}`, {
+    headers: {
+      Authorization: "Bearer " + localStorage.getItem("token")
+    }
+  });
+
+  const data = await res.json();
+
+  resultados.innerHTML = "";
+
+  data.forEach(r => {
+
+    const div = document.createElement("div");
+    div.className = "resultado";
+
+    div.innerHTML = `👤 ${r.nombres} ${r.apellidos} - ${r.cedula}`;
+
+    div.onclick = () => {
+      residenteSeleccionado = r.cod_user;
+      inputRes.value = `${r.nombres} ${r.apellidos}`;
+      resultados.innerHTML = "";
+    };
+
+    resultados.appendChild(div);
+  });
+
+});
+
+// 💾 GUARDAR
+async function guardar() {
+
+  const body = {
+    numero_guia: document.getElementById("numero_guia").value,
+    nombre_pedido: document.getElementById("nombre_pedido").value,
+    descripcion_pedido: document.getElementById("descripcion_pedido").value,
+    fk_residente: residenteSeleccionado
+  };
+
+  const res = await fetch(`http://localhost:3000/mensajero/editar/${id}`, {
+    method: "PUT",
+    headers: {
+      "Content-Type": "application/json",
+      Authorization: "Bearer " + localStorage.getItem("token")
+    },
+    body: JSON.stringify(body)
+  });
+
+  if (res.ok) {
+    alert("✅ Pedido actualizado");
+    window.location.href = "Mensajero.html";
+  } else {
+    const err = await res.json();
+    alert(err.message || "Error");
+  }
+}
+
+function volver() {
+  window.location.href = "Mensajero.html";
+}
+
+cargarPedido();
+
+</script>
+
+</body>
+</html>
