@@ -1,0 +1,33 @@
+import {
+  Controller,
+  Get,
+  Post,
+  Body,
+  Request,
+  UseGuards
+} from '@nestjs/common';
+import { AccesoService } from './acceso.service';
+import { JwtAuthGuard } from '../auth/jwt-auth.guard';
+
+@Controller('acceso')
+export class AccesoController {
+
+  constructor(private readonly accesoService: AccesoService) {}
+
+  // ==============================
+  // 🔍 OBTENER TODOS LOS APTOS
+  // ==============================
+  @Get('aptos')
+  async obtenerAptos() {
+    return this.accesoService.obtenerAptos();
+  }
+
+  // ==============================
+  // 🏢 CAMBIAR APARTAMENTO
+  // ==============================
+@Post('cambiar-apto')
+@UseGuards(JwtAuthGuard)
+cambiarApto(@Request() req, @Body() body: { fk_apto: number }) {
+  return this.accesoService.cambiarApto(req.user.id, body.fk_apto);
+}
+}

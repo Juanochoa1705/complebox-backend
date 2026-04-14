@@ -6,6 +6,7 @@ import { PropietarioModule } from './propietario/propietario.module';
 import { MensajeroModule } from './mensajero/mensajero.module';
 import { VigilanteModule } from './vigilante/vigilante.module';
 import { ResidenteModule } from './residente/residente.module';
+import { AccesoModule } from './acceso/acceso.module';
 
 @Module({
   imports: [
@@ -16,6 +17,7 @@ import { ResidenteModule } from './residente/residente.module';
     MensajeroModule,
     VigilanteModule,
     ResidenteModule, 
+    AccesoModule,
   ],
 })
 export class AppModule {}

@@ -1,0 +1,207 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+  <meta charset="UTF-8">
+  <title>Cambiar apartamento</title>
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+
+  <style>
+    body {
+      margin: 0;
+      font-family: sans-serif;
+      background: linear-gradient(180deg, #0d47a1, #1976d2);
+      display: flex;
+      justify-content: center;
+      align-items: center;
+      height: 100vh;
+    }
+
+    .box {
+      background: white;
+      padding: 20px;
+      border-radius: 15px;
+      width: 100%;
+      max-width: 350px;
+      text-align: center;
+    }
+
+    h2 {
+      color: #0d47a1;
+    }
+
+    input {
+      width: 100%;
+      padding: 12px;
+      margin-top: 10px;
+      border-radius: 10px;
+      border: 1px solid #ccc;
+    }
+
+    button {
+      width: 100%;
+      padding: 12px;
+      margin-top: 10px;
+      border: none;
+      border-radius: 10px;
+      background: #1976d2;
+      color: white;
+      cursor: pointer;
+      font-weight: bold;
+    }
+
+    .resultados {
+      margin-top: 5px;
+      max-height: 150px;
+      overflow-y: auto;
+      border: 1px solid #ddd;
+      border-radius: 10px;
+    }
+
+    .item {
+      padding: 10px;
+      cursor: pointer;
+      text-align: left;
+    }
+
+    .item:hover {
+      background: #eee;
+    }
+
+    .volver {
+      background: #95a5a6;
+    }
+
+  </style>
+</head>
+
+<body>
+
+<div class="box">
+
+  <h2>🏢 Solicitar nuevo apartamento</h2>
+
+  <input type="text" id="buscarApto" placeholder="Buscar conjunto, torre o apto">
+
+  <div id="resultados" class="resultados"></div>
+
+  <button onclick="enviarSolicitud()">Enviar solicitud</button>
+
+  <button class="volver" onclick="volver()">Volver</button>
+
+</div>
+
+<script>
+
+// ==============================
+// VARIABLES
+// ==============================
+let aptos = [];
+let seleccionado = null;
+
+// ==============================
+// CARGAR APTOS
+// ==============================
+async function cargarAptos() {
+  try {
+    const res = await fetch("http://localhost:3000/acceso/aptos");
+    aptos = await res.json();
+  } catch (error) {
+    console.error("Error cargando aptos:", error);
+  }
+}
+
+// ==============================
+// BUSCADOR
+// ==============================
+const input = document.getElementById("buscarApto");
+
+input.addEventListener("input", () => {
+
+  const texto = input.value.toLowerCase();
+  const contenedor = document.getElementById("resultados");
+
+  contenedor.innerHTML = "";
+
+  if (texto.length < 2) return;
+
+  const filtrados = aptos.filter(a =>
+    a.numero_apto.toString().includes(texto) ||
+    a.torre?.numero_torre?.toString().includes(texto) ||
+    a.torre?.conjunto?.nombre_conjunto?.toLowerCase().includes(texto) ||
+    a.torre?.conjunto?.ciudad_conjunto?.toLowerCase().includes(texto)
+  );
+
+  filtrados.forEach(a => {
+
+    const div = document.createElement("div");
+    div.className = "item";
+
+    div.innerText =
+      `🏙️ ${a.torre?.conjunto?.ciudad_conjunto || ''} - ` +
+      `🏢 ${a.torre?.conjunto?.nombre_conjunto || ''} - ` +
+      `Torre ${a.torre?.numero_torre || ''} - ` +
+      `Apto ${a.numero_apto}`;
+
+    div.onclick = () => {
+      seleccionado = a.cod_apto;
+      input.value = div.innerText;
+      contenedor.innerHTML = "";
+    };
+
+    contenedor.appendChild(div);
+  });
+
+});
+
+// ==============================
+// ENVIAR SOLICITUD
+// ==============================
+async function enviarSolicitud() {
+
+  if (!seleccionado) {
+    return alert("Selecciona un apartamento");
+  }
+
+  try {
+    const res = await fetch("http://localhost:3000/acceso/cambiar-apto", {
+      method: "POST",
+      headers: {
+        "Content-Type": "application/json",
+        "Authorization": "Bearer " + localStorage.getItem("token")
+      },
+      body: JSON.stringify({
+        fk_apto: seleccionado
+      })
+    });
+
+    const data = await res.json();
+
+    if (!res.ok) {
+      return alert(data.message);
+    }
+
+    alert("✅ Solicitud enviada correctamente");
+
+    input.value = "";
+    seleccionado = null;
+
+  } catch (error) {
+    console.error(error);
+    alert("Error enviando solicitud");
+  }
+}
+
+// ==============================
+// VOLVER
+// ==============================
+function volver() {
+  window.history.back();
+}
+
+// INIT
+cargarAptos();
+
+</script>
+
+</body>
+</html>
