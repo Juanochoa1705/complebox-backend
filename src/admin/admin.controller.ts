@@ -8,7 +8,9 @@ import {
   Request,
   UnauthorizedException,
   Param,
-  Query
+  Query,
+  Put,
+  Delete
 } from '@nestjs/common';
 import { AdminService } from './admin.service';
 import { CreateConjuntoDto } from './dto/create-conjunto.dto';
@@ -112,5 +114,27 @@ async historial(@Query('query') query: string, @Req() req: any) {
   const rol = req.user.rol;
 
   return this.adminService.historial(query || '', userId, rol);
+}
+@Put('torres/:id')
+async actualizarTorre(
+  @Req() req,
+  @Param('id') id: string,
+  @Body() body: { numero_torre: number }
+) {
+  return this.adminService.actualizarTorre(
+    req.user.id,
+    Number(id),
+    body.numero_torre
+  );
+}
+@Delete('torres/:id')
+async eliminarTorre(
+  @Req() req,
+  @Param('id') id: string
+) {
+  return this.adminService.eliminarTorre(
+    req.user.id,
+    Number(id)
+  );
 }
 }

@@ -79,9 +79,59 @@ async function verTorres() {
 
   const torres = await res.json();
 
-  listaTorres.innerHTML = torres.map(t =>
-    `<div>Torre ${t.numero_torre}</div>`
-  ).join('');
+  listaTorres.innerHTML = "";
+
+  torres.forEach(t => {
+
+    listaTorres.innerHTML += `
+      <div style="margin-bottom:10px; border-bottom:1px solid #ccc; padding:5px;">
+        
+        <input type="number" value="${t.numero_torre}" id="torre-${t.cod_torre}" style="width:80px;">
+        
+        <button onclick="actualizarTorre(${t.cod_torre})">✏️</button>
+        <button onclick="eliminarTorre(${t.cod_torre})">🗑️</button>
+      
+      </div>
+    `;
+  });
+}
+async function actualizarTorre(id) {
+
+  const input = document.getElementById(`torre-${id}`);
+  const numero = Number(input.value);
+
+  if (!numero) return alert("Número inválido");
+
+  await fetch(`${API_URL}/admin/torres/${id}`, {
+    method: "PUT",
+    headers: {
+      "Content-Type": "application/json",
+      Authorization: `Bearer ${token}`
+    },
+    body: JSON.stringify({
+      numero_torre: numero
+    })
+  });
+
+  alert("✅ Torre actualizada");
+  verTorres();
+}
+
+async function eliminarTorre(id) {
+
+  const confirmar = confirm("¿Eliminar torre?");
+  if (!confirmar) return;
+
+  await fetch(`${API_URL}/admin/torres/${id}`, {
+    method: "DELETE",
+    headers: {
+      Authorization: `Bearer ${token}`
+    }
+  });
+
+  alert("🗑️ Torre eliminada");
+  cargarCantidadTorres();
+  verTorres();
 }
 
 async function agregarTorre() {

@@ -521,5 +521,59 @@ async historial(query: string, userId: number, rol: string) {
 
   return [];
 }
+
+async actualizarTorre(codAdmin: number, codTorre: number, numero: number) {
+
+  const adminConjunto = await this.prisma.adminConjunto.findFirst({
+    where: { fk_cod_administrador: codAdmin },
+  });
+
+  if (!adminConjunto) {
+    throw new NotFoundException('ADMIN_SIN_CONJUNTO');
+  }
+
+  // 🔥 Validar que la torre pertenezca al conjunto
+  const torre = await this.prisma.torre.findFirst({
+    where: {
+      cod_torre: codTorre,
+      fk_cod_conjunto: adminConjunto.fk_cod_conjunto
+    }
+  });
+
+  if (!torre) {
+    throw new NotFoundException('TORRE_NO_EXISTE');
+  }
+
+  return this.prisma.torre.update({
+    where: { cod_torre: codTorre },
+    data: { numero_torre: numero }
+  });
+}
+
+async eliminarTorre(codAdmin: number, codTorre: number) {
+
+  const adminConjunto = await this.prisma.adminConjunto.findFirst({
+    where: { fk_cod_administrador: codAdmin },
+  });
+
+  if (!adminConjunto) {
+    throw new NotFoundException('ADMIN_SIN_CONJUNTO');
+  }
+
+  const torre = await this.prisma.torre.findFirst({
+    where: {
+      cod_torre: codTorre,
+      fk_cod_conjunto: adminConjunto.fk_cod_conjunto
+    }
+  });
+
+  if (!torre) {
+    throw new NotFoundException('TORRE_NO_EXISTE');
+  }
+
+  return this.prisma.torre.delete({
+    where: { cod_torre: codTorre }
+  });
+}
 }
 
