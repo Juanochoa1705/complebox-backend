@@ -52,4 +52,13 @@ historialResidente(
 
   return this.residenteService.historialResidente(query || '', residenteId);
 }
+@Post('cambiar-apto')
+@UseGuards(JwtAuthGuard)
+cambiarApto(
+  @Request() req,
+  @Body() body: { fk_apto: number }
+) {
+  return this.residenteService.cambiarApto(req.user.id, body.fk_apto);
+}
+
 }

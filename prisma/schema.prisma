@@ -34,13 +34,14 @@ model apto_propietario {
 }
 
 model apto_residente {
-  cod_apto_residente       Int      @id @default(autoincrement())
+  cod_apto_residente       Int       @id @default(autoincrement())
   fk_cod_apto              Int?
   fk_cod_residente         Int?
-  fk_estado_apto_residente Int      @default(1)
-  apto                     apto?    @relation(fields: [fk_cod_apto], references: [cod_apto], onDelete: Restrict, onUpdate: Restrict, map: "apto_residente_ibfk_1")
-  persona                  persona? @relation(fields: [fk_cod_residente], references: [cod_user], onDelete: Restrict, onUpdate: Restrict, map: "apto_residente_ibfk_2")
-  estado                   estado   @relation(fields: [fk_estado_apto_residente], references: [cod_estado], onUpdate: Restrict, map: "apto_residente_ibfk_3")
+  fk_estado_apto_residente Int       @default(1)
+  fecha_actualizacion      DateTime? @default(now()) @db.DateTime(0)
+  apto                     apto?     @relation(fields: [fk_cod_apto], references: [cod_apto], onDelete: Restrict, onUpdate: Restrict, map: "apto_residente_ibfk_1")
+  persona                  persona?  @relation(fields: [fk_cod_residente], references: [cod_user], onDelete: Restrict, onUpdate: Restrict, map: "apto_residente_ibfk_2")
+  estado                   estado    @relation(fields: [fk_estado_apto_residente], references: [cod_estado], onUpdate: Restrict, map: "apto_residente_ibfk_3")
 
   @@unique([fk_cod_apto, fk_cod_residente], map: "uq_apto_residente")
   @@index([fk_cod_residente], map: "fk_cod_residente")
@@ -48,15 +49,14 @@ model apto_residente {
 }
 
 model conjunto {
-  cod_conjunto       Int             @id @default(autoincrement())
-  nombre_conjunto    String?         @db.VarChar(100)
-  telefono_conjunto  String?         @db.VarChar(20)
-  direccion_conjunto String?         @db.VarChar(20)
-  ciudad_conjunto    String?         @db.VarChar(20)
-  adminConjuntos     AdminConjunto[]
-
-  torres                     torre[] // 👈 ESTA ES LA CLAVE
+  cod_conjunto               Int                          @id @default(autoincrement())
+  nombre_conjunto            String?                      @db.VarChar(100)
+  telefono_conjunto          String?                      @db.VarChar(20)
+  direccion_conjunto         String?                      @db.VarChar(20)
+  ciudad_conjunto            String?                      @db.VarChar(20)
+  adminConjuntos             AdminConjunto[]
   empresa_seguridad_conjunto empresa_seguridad_conjunto[]
+  torres                     torre[]
 }
 
 model empresa {
@@ -106,6 +106,7 @@ model empresa_vigilante_conjunto {
   fk_persona_vigilante        Int?
   fk_cod_empresa_vig_conjunto Int?
   fk_estado_vigilante_empresa Int                         @default(1)
+  fecha_actualizacion         DateTime?                   @default(now()) @db.DateTime(0)
   persona                     persona?                    @relation(fields: [fk_persona_vigilante], references: [cod_user], onDelete: Restrict, onUpdate: Restrict, map: "empresa_vigilante_conjunto_ibfk_1")
   empresa_seguridad_conjunto  empresa_seguridad_conjunto? @relation(fields: [fk_cod_empresa_vig_conjunto], references: [cod_empresa_vig_conjunto], onDelete: Restrict, onUpdate: Restrict, map: "empresa_vigilante_conjunto_ibfk_2")
   estado                      estado                      @relation(fields: [fk_estado_vigilante_empresa], references: [cod_estado], onUpdate: Restrict, map: "empresa_vigilante_conjunto_ibfk_3")
@@ -171,6 +172,7 @@ model persona {
   fk_estado_user                                                                                    Int
   fk_tipo_doc                                                                                       Int
   fk_rol                                                                                            Int
+  fecha_registro                                                                                    DateTime?                         @default(now()) @db.DateTime(0)
   adminConjuntos                                                                                    AdminConjunto[]
   apto_propietario                                                                                  apto_propietario[]
   apto_residente                                                                                    apto_residente[]

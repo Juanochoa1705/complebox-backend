@@ -105,4 +105,16 @@ async historialResidente(query: string, residenteId: number) {
     ORDER BY v.fecha_recibido DESC
   `;
 }
+
+
+async cambiarApto(userId: number, fk_apto: number) {
+
+  await this.prisma.$executeRawUnsafe(`
+    CALL sp_asignar_apto(${fk_apto}, ${userId});
+  `);
+
+  return {
+    message: "Apto actualizado correctamente"
+  };
+}
 }
