@@ -4,7 +4,8 @@ import {
   Post,
   Body,
   Request,
-  UseGuards
+  UseGuards,
+  Query
 } from '@nestjs/common';
 import { AccesoService } from './acceso.service';
 import { JwtAuthGuard } from '../auth/jwt-auth.guard';
@@ -30,4 +31,13 @@ export class AccesoController {
 cambiarApto(@Request() req, @Body() body: { fk_apto: number }) {
   return this.accesoService.cambiarApto(req.user.id, body.fk_apto);
 }
+
+
+ @Get('empresas')
+buscarEmpresas(@Query('q') query: string) {
+  return this.accesoService.buscarEmpresas(query);
+}
+
+
+
 }

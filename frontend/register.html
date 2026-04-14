@@ -174,7 +174,7 @@ select:focus {
   <div class="select-wrapper">
     <select id="fk_rol" required>
       <option value="">Seleccione su rol</option>
-      <option value="2">Vigilante</option>
+      <option value="4">Vigilante</option>
       <option value="3">Residente</option>
       <option value="5">Mensajero</option>
     </select>
@@ -212,11 +212,20 @@ select:focus {
 
 </div> 
 
-      <div class="form-group" id="empresaGroup" style="display:none;">
-  <label>Seleccione empresa de seguridad</label>
-  <select id="empresaSelect">
-    <option value="">Seleccione empresa</option>
-  </select>
+    <div class="form-group" id="empresaGroup" style="display:none;">
+
+  <label>Buscar empresa de seguridad</label>
+
+  <input type="text" id="buscarEmpresa" placeholder="Escribe el nombre de la empresa">
+
+  <div id="resultadosEmpresas" style="
+    border:1px solid #ccc;
+    border-radius:10px;
+    max-height:150px;
+    overflow-y:auto;
+    margin-top:5px;
+  "></div>
+
 </div>
 
       <div class="form-group">
@@ -271,64 +280,41 @@ const aptoGroup = document.getElementById("aptoGroup");
 const empresaGroup = document.getElementById("empresaGroup");
 const empresaMensajeroGroup = document.getElementById("empresaMensajeroGroup");
 
-const empresaSelect = document.getElementById("empresaSelect");
-
-// 🔥 NUEVO BUSCADOR
+// 🔥 BUSCADORES
 let aptosGlobal = [];
 let aptoSeleccionado = null;
+
+let empresaSeleccionada = null;
 
 // ==============================
 // MOSTRAR CAMPOS SEGÚN ROL
 // ==============================
-rolSelect.addEventListener("change", async function () {
+if (rolSelect) {
+  rolSelect.addEventListener("change", function () {
 
-  // RESET
-  empresaMensajeroGroup.style.display = "none";
-  aptoGroup.style.display = "none";
-  empresaGroup.style.display = "none";
+    if (empresaMensajeroGroup) empresaMensajeroGroup.style.display = "none";
+    if (aptoGroup) aptoGroup.style.display = "none";
+    if (empresaGroup) empresaGroup.style.display = "none";
 
-  const rol = Number(this.value);
+    const rol = Number(this.value);
 
-  // ======================
-  // RESIDENTE
-  // ======================
-  if (rol === 3) {
-    aptoGroup.style.display = "block";
-  }
-
-  // ======================
-  // VIGILANTE
-  // ======================
-  else if (rol === 2) {
-
-    empresaGroup.style.display = "block";
-
-    try {
-      const res = await fetch("http://localhost:3000/auth/empresas-seguridad");
-      const empresas = await res.json();
-
-      empresaSelect.innerHTML = "";
-
-      empresas.forEach(emp => {
-        const option = document.createElement("option");
-        option.value = emp.cod_empresa_vig_conjunto;
-        option.textContent = emp.empresa.nombre_empresa;
-        empresaSelect.appendChild(option);
-      });
-
-    } catch (error) {
-      console.error("Error cargando empresas:", error);
+    // 🔵 RESIDENTE
+    if (rol === 3 && aptoGroup) {
+      aptoGroup.style.display = "block";
     }
-  }
 
-  // ======================
-  // MENSAJERO
-  // ======================
-  else if (rol === 5) {
-    empresaMensajeroGroup.style.display = "block";
-  }
+    // 🟢 VIGILANTE → BUSCADOR (YA NO SELECT)
+    else if (rol === 4 && empresaGroup) {
+      empresaGroup.style.display = "block";
+    }
 
-});
+    // 🟡 MENSAJERO
+    else if (rol === 5 && empresaMensajeroGroup) {
+      empresaMensajeroGroup.style.display = "block";
+    }
+
+  });
+}
 
 // ==============================
 // CARGAR APTOS
@@ -342,9 +328,8 @@ async function cargarAptos() {
   }
 }
 
-
 // ==============================
-// BUSCADOR DE APTOS 🔥
+// BUSCADOR DE APTOS
 // ==============================
 const inputBuscar = document.getElementById("buscarApto");
 
@@ -354,6 +339,8 @@ if (inputBuscar) {
     const texto = inputBuscar.value.toLowerCase();
     const contenedor = document.getElementById("resultadosAptos");
 
+    if (!contenedor) return;
+
     contenedor.innerHTML = "";
 
     if (texto.length < 2) return;
@@ -362,7 +349,7 @@ if (inputBuscar) {
       a.numero_apto.toString().includes(texto) ||
       a.torre?.numero_torre?.toString().includes(texto) ||
       a.torre?.conjunto?.nombre_conjunto?.toLowerCase().includes(texto) ||
-      a.torre?.conjunto?.ciudad_conjunto?.toLowerCase().includes(texto) // 👈 SOLO ESTO SE AGREGA
+      a.torre?.conjunto?.ciudad_conjunto?.toLowerCase().includes(texto)
     );
 
     filtrados.forEach(a => {
@@ -396,79 +383,151 @@ if (inputBuscar) {
 }
 
 // ==============================
+// BUSCADOR DE EMPRESAS 🔥 (NUEVO)
+// ==============================
+const inputEmpresa = document.getElementById("buscarEmpresa");
+const contenedorEmpresas = document.getElementById("resultadosEmpresas");
+
+if (inputEmpresa) {
+  inputEmpresa.addEventListener("input", async () => {
+
+    const texto = inputEmpresa.value.trim();
+
+    if (!contenedorEmpresas) return;
+
+    contenedorEmpresas.innerHTML = "";
+
+    if (texto.length < 2) return;
+
+   try {
+
+  const res = await fetch(`http://localhost:3000/acceso/empresas?q=${texto}`, {
+    headers: {
+      "Authorization": "Bearer " + localStorage.getItem("token")
+    }
+  });
+
+  const data = await res.json();
+
+  console.log("RESPUESTA BACK:", data); // 🔥 CLAVE
+
+  contenedorEmpresas.innerHTML = "";
+
+  // ✅ VALIDACIÓN PRO
+  if (!Array.isArray(data)) {
+    console.error("No es array:", data);
+    return;
+  }
+
+  data.forEach(emp => {
+
+    const div = document.createElement("div");
+
+    div.innerText = `${emp.empresa.nombre_empresa} - NIT: ${emp.empresa.nit_empresa}`;
+    div.style.padding = "8px";
+    div.style.cursor = "pointer";
+    div.style.borderBottom = "1px solid #eee";
+
+div.onclick = () => {
+  console.log("EMPRESA SELECCIONADA:", emp); // 👈 agrega esto
+
+  empresaSeleccionada = emp.cod_empresa_vig_conjunto;
+
+  inputEmpresa.value = div.innerText;
+  contenedorEmpresas.innerHTML = "";
+};
+
+    contenedorEmpresas.appendChild(div);
+  });
+
+} catch (error) {
+  console.error("Error buscando empresas:", error);
+}
+
+  });
+}
+
+// ==============================
 // ENVÍO FORMULARIO
 // ==============================
-form.addEventListener('submit', async (e) => {
-  e.preventDefault();
+if (form) {
+  form.addEventListener('submit', async (e) => {
+    e.preventDefault();
 
-  const rolValue = Number(rolSelect.value);
+    const rolValue = Number(rolSelect.value);
 
-  const data = {
-    nombres: document.getElementById('nombres').value,
-    apellidos: document.getElementById('apellidos').value,
-    cedula: document.getElementById('cedula').value,
-    correo: document.getElementById('correo').value,
-    telefono: document.getElementById('telefono').value,
-    usuario: document.getElementById('usuario').value,
-    password: document.getElementById('password').value,
-    fk_rol: rolValue,
-    fk_tipo_doc: Number(document.getElementById('fk_tipo_doc').value)
-  };
+    const data = {
+      nombres: document.getElementById('nombres').value,
+      apellidos: document.getElementById('apellidos').value,
+      cedula: document.getElementById('cedula').value,
+      correo: document.getElementById('correo').value,
+      telefono: document.getElementById('telefono').value,
+      usuario: document.getElementById('usuario').value,
+      password: document.getElementById('password').value,
+      fk_rol: rolValue,
+      fk_tipo_doc: Number(document.getElementById('fk_tipo_doc').value)
+    };
 
-  // 🔵 RESIDENTE
-  if (rolValue === 3) {
-    if (!aptoSeleccionado) {
-      return alert("Selecciona un apartamento");
+    // 🔵 RESIDENTE
+    if (rolValue === 3) {
+      if (!aptoSeleccionado) {
+        return alert("Selecciona un apartamento");
+      }
+      data.fk_apto = aptoSeleccionado;
     }
-    data.fk_apto = aptoSeleccionado;
+
+    // 🟢 VIGILANTE (BUSCADOR)
+  if (rolValue === 4) {
+  if (!empresaSeleccionada) {
+    return alert("Selecciona una empresa");
   }
 
-  // 🟢 VIGILANTE
-  if (rolValue === 2) {
-    data.fk_empresa_vig_conjunto = Number(empresaSelect.value);
-  }
+  data.fk_empresa_vig_conjunto = empresaSeleccionada;
+}
 
-  // 🟡 MENSAJERO
-  if (rolValue === 5) {
-    data.nit_empresa = document.getElementById("nit_empresa").value;
-    data.nombre_empresa = document.getElementById("nombre_empresa").value;
-    data.direccion_empresa = document.getElementById("direccion_empresa").value;
-    data.telefono_empresa = document.getElementById("telefono_empresa").value;
-    data.correo_empresa = document.getElementById("correo_empresa").value;
-  }
+    // 🟡 MENSAJERO
+    if (rolValue === 5) {
+      data.nit_empresa = document.getElementById("nit_empresa").value;
+      data.nombre_empresa = document.getElementById("nombre_empresa").value;
+      data.direccion_empresa = document.getElementById("direccion_empresa").value;
+      data.telefono_empresa = document.getElementById("telefono_empresa").value;
+      data.correo_empresa = document.getElementById("correo_empresa").value;
+    }
 
-  // ENDPOINT
-  const endpoint =
-    rolValue === 3
-      ? 'http://localhost:3000/auth/register-residente'
-      : rolValue === 2
-      ? 'http://localhost:3000/auth/register-vigilante'
-      : rolValue === 5
-      ? 'http://localhost:3000/auth/register-mensajero'
-      : 'http://localhost:3000/auth/register';
+    // ENDPOINT
+    const endpoint =
+      rolValue === 3
+        ? 'http://localhost:3000/auth/register-residente'
+        : rolValue === 4
+        ? 'http://localhost:3000/auth/register-vigilante'
+        : rolValue === 5
+        ? 'http://localhost:3000/auth/register-mensajero'
+        : 'http://localhost:3000/auth/register';
 
-  try {
-    const res = await fetch(endpoint, {
-      method: 'POST',
-      headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify(data)
-    });
+    try {
+      const res = await fetch(endpoint, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify(data)
+      });
 
-    const result = await res.json();
+      const result = await res.json();
 
-    if (!res.ok) throw new Error(result.message);
+      if (!res.ok) throw new Error(result.message);
 
-    message.textContent = '✅ Registro exitoso';
-    message.className = 'message success';
+      message.textContent = '✅ Registro exitoso';
+      message.className = 'message success';
 
-    form.reset();
-    aptoSeleccionado = null;
+      form.reset();
+      aptoSeleccionado = null;
+      empresaSeleccionada = null;
 
-  } catch (err) {
-    message.textContent = err.message || 'Error de conexión';
-    message.className = 'message error';
-  }
-});
+    } catch (err) {
+      message.textContent = err.message || 'Error de conexión';
+      message.className = 'message error';
+    }
+  });
+}
 
 // ==============================
 // AUTOCOMPLETE EMPRESA MENSAJERO
@@ -504,15 +563,20 @@ if (nitInput) {
 // ==============================
 function bloquearCamposEmpresa() {
   ["nombre_empresa","direccion_empresa","telefono_empresa","correo_empresa"]
-  .forEach(id => document.getElementById(id).disabled = true);
+  .forEach(id => {
+    const el = document.getElementById(id);
+    if (el) el.disabled = true;
+  });
 }
 
 function habilitarCamposEmpresa() {
   ["nombre_empresa","direccion_empresa","telefono_empresa","correo_empresa"]
   .forEach(id => {
-    const input = document.getElementById(id);
-    input.disabled = false;
-    input.value = "";
+    const el = document.getElementById(id);
+    if (el) {
+      el.disabled = false;
+      el.value = "";
+    }
   });
 }
 

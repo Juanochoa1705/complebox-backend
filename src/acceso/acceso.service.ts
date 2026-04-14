@@ -50,4 +50,25 @@ export class AccesoService {
     }
   }
 
+ async buscarEmpresas(q: string) {
+
+  if (!q) return [];
+
+  return await this.prisma.empresa_seguridad_conjunto.findMany({
+    where: {
+      empresa: {
+        nombre_empresa: {
+          contains: q,
+       
+        }
+      }
+    },
+    include: {
+      empresa: true
+    },
+    take: 10
+  });
+
+}
+
 }

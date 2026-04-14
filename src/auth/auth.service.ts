@@ -294,6 +294,8 @@ const token = this.jwtService.sign(payload);
 
   async registrarVigilante(dto: CrearVigilanteDto) {
 
+
+
   // 1️⃣ Crear persona INACTIVA
   const persona = await this.prisma.persona.create({
     data: {
