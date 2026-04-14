@@ -575,5 +575,43 @@ async eliminarTorre(codAdmin: number, codTorre: number) {
     where: { cod_torre: codTorre }
   });
 }
+// Obtener vigilantes del conjunto
+// src/admin/admin.service.ts
+
+async obtenerVigilantesPorAdmin(adminId: number) {
+  // 1. Buscar el conjunto del admin (Ojo a las mayúsculas/minúsculas)
+  const relacionAdmin = await this.prisma.adminConjunto.findFirst({
+    where: { fk_cod_administrador: adminId }
+  });
+
+  console.log("Relación encontrada:", relacionAdmin); // Mira esto en la terminal de Nest
+
+  if (!relacionAdmin) return [];
+
+  // 2. Buscar vigilantes
+  return this.prisma.empresa_vigilante_conjunto.findMany({
+    where: {
+      empresa_seguridad_conjunto: {
+        fk_cod_conjunto: relacionAdmin.fk_cod_conjunto
+      }
+    },
+    include: {
+      persona: true,
+      estado: true
+    }
+  });
+}
+
+// Cambiar estado del vigilante
+async cambiarEstadoVigilante(idRegistro: number, nuevoEstado: number) {
+  return this.prisma.empresa_vigilante_conjunto.update({
+    where: {
+      cod_empresa_vigilante: idRegistro
+    },
+    data: {
+      fk_estado_vigilante_empresa: nuevoEstado
+    }
+  });
+}
 }
 

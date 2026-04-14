@@ -9,6 +9,7 @@ if (!token) {
 document.addEventListener('DOMContentLoaded', () => {
   obtenerConjunto();
   cargarVigilantesPendientes();
+  cargarVigilantes();
 });
 
 /* ================= CONJUNTO ================= */
@@ -347,4 +348,65 @@ ${
     console.error("Error:", error);
   }
 
+
 });
+
+/* ================= GESTIÓN DE VIGILANTES (NUEVO) ================= */
+
+async function cargarVigilantes() {
+    const contenedor = document.getElementById("contenedorVigilantes");
+    if (!contenedor) return;
+
+    try {
+        console.log("Cargando lista de vigilantes...");
+        const res = await fetch(`${API_URL}/admin/mis-vigilantes`, {
+            headers: { "Authorization": `Bearer ${token}` }
+        });
+
+        const data = await res.json();
+        contenedor.innerHTML = ""; 
+
+        if (!data || data.length === 0) {
+            contenedor.innerHTML = "<p>No hay vigilantes vinculados.</p>";
+            return;
+        }
+
+        data.forEach(item => {
+            const p = item.persona;
+            if (!p) return;
+
+            contenedor.innerHTML += `
+                <div style="border:1px solid #eee; padding:15px; border-radius:10px; margin-bottom:10px; background:#fff;">
+                    <b>${p.nombres} ${p.apellidos}</b><br>
+                    <small>Cédula: ${p.cedula || 'N/A'}</small><br>
+                    <span>Estado: ${item.fk_estado_vigilante_empresa === 1 ? "🟢 Activo" : "🔴 Inactivo"}</span>
+                    <div style="margin-top:10px; display:flex; gap:10px;">
+                        <button onclick="updateStatusVigilante(${item.cod_empresa_vigilante}, 1)">Activar</button>
+                        <button onclick="updateStatusVigilante(${item.cod_empresa_vigilante}, 2)">Inactivar</button>
+                    </div>
+                </div>`;
+        });
+    } catch (err) {
+        console.error("Error en cargarVigilantes:", err);
+    }
+}
+
+async function updateStatusVigilante(idRegistro, nuevoEstado) {
+    try {
+        const res = await fetch(`${API_URL}/admin/cambiar-estado-vigilante`, {
+            method: "POST",
+            headers: {
+                "Content-Type": "application/json",
+                "Authorization": `Bearer ${token}`
+            },
+            body: JSON.stringify({ id: idRegistro, estado: nuevoEstado })
+        });
+
+        if (res.ok) {
+            alert("✅ Estado actualizado");
+            cargarVigilantes(); // Recarga la lista
+        }
+    } catch (error) {
+        console.error("Error al actualizar:", error);
+    }
+}

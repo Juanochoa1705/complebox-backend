@@ -137,4 +137,17 @@ async eliminarTorre(
     Number(id)
   );
 }
+@Get('mis-vigilantes')
+@UseGuards(JwtAuthGuard)
+async listarVigilantes(@Req() req: any) {
+  // Solo extraemos el ID del token y se lo pasamos al servicio
+  const adminId = req.user.id; 
+  return this.adminService.obtenerVigilantesPorAdmin(adminId);
+}
+
+  @Post('cambiar-estado-vigilante')
+  async cambiarEstado(@Body() body: { id: number, estado: number }) {
+    return this.adminService.cambiarEstadoVigilante(body.id, body.estado);
+  }
+
 }
