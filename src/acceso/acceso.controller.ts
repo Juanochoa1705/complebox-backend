@@ -32,6 +32,18 @@ cambiarApto(@Request() req, @Body() body: { fk_apto: number }) {
   return this.accesoService.cambiarApto(req.user.id, body.fk_apto);
 }
 
+@Post('cambiar-empresa-vig')
+@UseGuards(JwtAuthGuard)
+cambiarEmpresa(
+  @Request() req,
+  @Body() body: { fk_empresa_vig_conjunto: number }
+) {
+  return this.accesoService.cambiarEmpresaVig(
+    req.user.id,
+    body.fk_empresa_vig_conjunto
+  );
+}
+
 
  @Get('empresas')
 buscarEmpresas(@Query('q') query: string) {

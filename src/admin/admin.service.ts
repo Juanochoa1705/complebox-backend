@@ -429,14 +429,46 @@ async vigilantesPendientes(adminId: number) {
     throw new NotFoundException('El vigilante no existe');
   }
 
-  // 🔥 1. eliminar relación primero
-  await this.prisma.empresa_vigilante_conjunto.deleteMany({
+  // 🔥 1. Verificar si tiene relación con empresa
+  const tieneRelacion = await this.prisma.empresa_vigilante_conjunto.findFirst({
     where: {
       fk_persona_vigilante: vigilanteId
     }
   });
 
-  // 🔥 2. ahora sí eliminar persona
+  // ==============================
+  // CASO 1: TIENE RELACIÓN → SOLO INACTIVAR
+  // ==============================
+  if (tieneRelacion) {
+
+    // 🔥 cambiar estado en la relación
+    await this.prisma.empresa_vigilante_conjunto.updateMany({
+      where: {
+        fk_persona_vigilante: vigilanteId
+      },
+      data: {
+        fk_estado_vigilante_empresa: 2 // 🔴 INACTIVO
+      }
+    });
+
+    // 🔥 también inactivar la persona
+    await this.prisma.persona.update({
+      where: {
+        cod_user: vigilanteId
+      },
+      data: {
+        fk_estado_user: 2 // 🔴 INACTIVO
+      }
+    });
+
+    return {
+      message: "Vigilante inactivado correctamente"
+    };
+  }
+
+  // ==============================
+  // CASO 2: NO TIENE RELACIÓN → ELIMINAR
+  // ==============================
   return this.prisma.persona.delete({
     where: {
       cod_user: vigilanteId

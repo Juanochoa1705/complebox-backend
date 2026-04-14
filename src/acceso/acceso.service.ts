@@ -50,6 +50,30 @@ export class AccesoService {
     }
   }
 
+   async cambiarEmpresaVig(userId: number, fk_empresa_vig_conjunto: number) {
+
+  if (!fk_empresa_vig_conjunto) {
+    throw new BadRequestException('Debes seleccionar una empresa');
+  }
+
+  try {
+
+    await this.prisma.$executeRawUnsafe(`
+      CALL sp_asignar_conjunto(${fk_empresa_vig_conjunto}, ${userId});
+    `);
+
+    return {
+      ok: true,
+      message: 'Solicitud enviada. Pendiente aprobación'
+    };
+
+  } catch (error) {
+    console.error('Error cambiarEmpresaVig:', error);
+
+    throw new BadRequestException('Error al solicitar cambio de empresa de seguridad');
+  }
+}
+
  async buscarEmpresas(q: string) {
 
   if (!q) return [];

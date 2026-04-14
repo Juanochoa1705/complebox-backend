@@ -1,0 +1,222 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+  <meta charset="UTF-8">
+  <title>Cambiar empresa de seguridad</title>
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+
+  <style>
+    body {
+      margin: 0;
+      font-family: sans-serif;
+      background: linear-gradient(180deg, #0d47a1, #1976d2);
+      display: flex;
+      justify-content: center;
+      align-items: center;
+      height: 100vh;
+    }
+
+    .box {
+      background: white;
+      padding: 20px;
+      border-radius: 15px;
+      width: 100%;
+      max-width: 350px;
+      text-align: center;
+    }
+
+    h2 {
+      color: #0d47a1;
+    }
+
+    input {
+      width: 100%;
+      padding: 12px;
+      margin-top: 10px;
+      border-radius: 10px;
+      border: 1px solid #ccc;
+    }
+
+    button {
+      width: 100%;
+      padding: 12px;
+      margin-top: 10px;
+      border: none;
+      border-radius: 10px;
+      background: #1976d2;
+      color: white;
+      cursor: pointer;
+      font-weight: bold;
+    }
+
+    .resultados {
+      margin-top: 5px;
+      max-height: 150px;
+      overflow-y: auto;
+      border: 1px solid #ddd;
+      border-radius: 10px;
+    }
+
+    .item {
+      padding: 10px;
+      cursor: pointer;
+      text-align: left;
+    }
+
+    .item:hover {
+      background: #eee;
+    }
+
+    .volver {
+      background: #95a5a6;
+    }
+
+  </style>
+</head>
+
+<body>
+
+<div class="box">
+
+  <h2>Cambio de empresa de seguridad</h2>
+
+   <div class="form-group" id="empresaGroup">
+
+  <label>Buscar empresa de seguridad</label>
+
+  <input type="text" id="buscarEmpresa" placeholder="Escribe el nombre de la empresa">
+
+  <div id="resultadosEmpresas" style="
+    border:1px solid #ccc;
+    border-radius:10px;
+    max-height:150px;
+    overflow-y:auto;
+    margin-top:5px;
+  "></div>
+  <button onclick="enviarSolicitud()">Enviar solicitud</button>
+
+  <button class="volver" onclick="volver()">Volver</button>
+
+</div>
+
+<script>
+// ==============================
+// BUSCADOR DE EMPRESAS 🔥 (NUEVO)
+// ==============================
+const inputEmpresa = document.getElementById("buscarEmpresa");
+const contenedorEmpresas = document.getElementById("resultadosEmpresas");
+
+if (inputEmpresa) {
+  inputEmpresa.addEventListener("input", async () => {
+
+    const texto = inputEmpresa.value.trim();
+
+    if (!contenedorEmpresas) return;
+
+    contenedorEmpresas.innerHTML = "";
+
+    if (texto.length < 2) return;
+
+   try {
+
+  const res = await fetch(`http://localhost:3000/acceso/empresas?q=${texto}`, {
+    headers: {
+      "Authorization": "Bearer " + localStorage.getItem("token")
+    }
+  });
+
+  const data = await res.json();
+
+  console.log("RESPUESTA BACK:", data); // 🔥 CLAVE
+
+  contenedorEmpresas.innerHTML = "";
+
+  // ✅ VALIDACIÓN PRO
+  if (!Array.isArray(data)) {
+    console.error("No es array:", data);
+    return;
+  }
+
+  data.forEach(emp => {
+
+    const div = document.createElement("div");
+
+    div.innerText = `${emp.empresa.nombre_empresa} - NIT: ${emp.empresa.nit_empresa}`;
+    div.style.padding = "8px";
+    div.style.cursor = "pointer";
+    div.style.borderBottom = "1px solid #eee";
+
+div.onclick = () => {
+  console.log("EMPRESA SELECCIONADA:", emp); // 👈 agrega esto
+
+  empresaSeleccionada = emp.cod_empresa_vig_conjunto;
+
+  inputEmpresa.value = div.innerText;
+  contenedorEmpresas.innerHTML = "";
+};
+
+    contenedorEmpresas.appendChild(div);
+  });
+
+} catch (error) {
+  console.error("Error buscando empresas:", error);
+}
+
+  });
+}
+
+// ==============================
+// ENVIAR SOLICITUD
+// ==============================
+async function enviarSolicitud() {
+
+ if (!empresaSeleccionada) {
+  return alert("Selecciona una empresa");
+}
+
+ // 🔥 AQUÍ VA EL DEBUG
+  console.log("BODY:", {
+    fk_empresa_vig_conjunto: empresaSeleccionada
+  });
+
+
+  try {
+    const res = await fetch("http://localhost:3000/acceso/cambiar-empresa-vig", {
+      method: "POST",
+      headers: {
+        "Content-Type": "application/json",
+        "Authorization": "Bearer " + localStorage.getItem("token")
+      },
+     body: JSON.stringify({
+  fk_empresa_vig_conjunto: empresaSeleccionada
+})
+    });
+
+    const data = await res.json();
+
+    if (!res.ok) {
+      return alert(data.message);
+    }
+
+    alert("✅ Solicitud enviada correctamente");
+
+    inputEmpresa.value = "";
+empresaSeleccionada = null;
+
+  } catch (error) {
+    console.error(error);
+    alert("Error enviando solicitud");
+  }
+}
+// ==============================
+// VOLVER
+// ==============================
+function volver() {
+  window.history.back();
+}
+
+
+</script>
+
+</body>
+</html>
