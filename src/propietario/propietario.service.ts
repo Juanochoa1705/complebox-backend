@@ -131,4 +131,42 @@ async rechazarResidente(residenteId: number) {
   });
 }
 
+async obtenerResidentesPropietario(propietarioId: number) {
+  return this.prisma.apto_propietario.findMany({
+    where: { 
+      fk_cod_propietario: propietarioId 
+    },
+    include: {
+      apto: {
+        include: {
+          apto_residente: {
+            where: {
+              // FILTRO CLAVE: Traer todos excepto al que tiene mi ID
+              NOT: {
+                fk_cod_residente: propietarioId
+              }
+            },
+            include: {
+              persona: true, // Para traer nombres y apellidos
+            }
+          }
+        }
+      }
+    }
+  });
+}
+
+async cambiarEstadoResidente(codResidente: number, estado: number, propietarioId: number) {
+  return this.prisma.apto_residente.updateMany({
+    where: {
+      fk_cod_residente: codResidente,
+      NOT: {
+        fk_cod_residente: propietarioId // Aquí bloqueamos que se edite a sí mismo
+      }
+    },
+    data: {
+      fk_estado_apto_residente: estado
+    }
+  });
+}
 }

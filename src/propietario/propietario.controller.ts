@@ -1,4 +1,4 @@
-import { Controller, Get, Post, Body, Request, UseGuards,UnauthorizedException, Param } from '@nestjs/common';
+import { Controller, Get, Post, Body, Request, UseGuards,UnauthorizedException, Param, Req } from '@nestjs/common';
 import { PropietarioService } from './propietario.service';
 import { JwtAuthGuard } from '../auth/jwt-auth.guard';
 
@@ -37,6 +37,32 @@ rechazarResidente(@Param('id') id: number, @Request() req) {
   }
 
   return this.propietarioService.rechazarResidente(Number(id));
+}
+
+@Get('mis-residentes')
+@UseGuards(JwtAuthGuard)
+async getResidentes(@Req() req: any) {
+  // Usamos .id porque vimos en tus logs que así viene en tu token
+  const propietarioId = req.user.id; 
+  return this.propietarioService.obtenerResidentesPropietario(propietarioId);
+}
+@UseGuards(JwtAuthGuard)
+@Post('estado-residente')
+async cambiarEstado(@Body() body: any, @Req() req: any) {
+  const { cod_residente, estado } = body;
+  
+  // CAMBIO AQUÍ: Usa .id en lugar de .userId
+  const propietarioId = req.user?.id; 
+
+  if (!propietarioId) {
+    throw new UnauthorizedException('No se encontró el ID en el token');
+  }
+
+  return this.propietarioService.cambiarEstadoResidente(
+    cod_residente, 
+    estado, 
+    propietarioId
+  );
 }
 
 }

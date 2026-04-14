@@ -1,286 +1,219 @@
 <!DOCTYPE html>
 <html lang="es">
 <head>
-<meta charset="UTF-8">
-<meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-<title>Panel Propietario</title>
-    
-<style>
-    * {
-        box-sizing: border-box;
-        font-family: 'Segoe UI', sans-serif;
-    }
-
-    body {
-        margin: 0;
-        padding: 0;
-        min-height: 100vh;
-        background: linear-gradient(180deg, #0d47a1, #1976d2);
-        display: flex;
-        justify-content: center;
-        align-items: flex-start; /* Cambiado para que en móviles largos se pueda scrollear */
-    }
-
-    .mobile {
-        width: 80%;
-        max-width: 500px; /* Un ancho máximo realista para apps móviles */
-        min-height: 100vh;
-        background: #fff;
-        padding: 30px 20px;
-        display: flex;
-        flex-direction: column;
-        box-shadow: 0 10px 25px rgba(0,0,0,0.2);
-    }
-
-    /* Ajustes para pantallas grandes (Escritorio) */
-    @media (min-width: 768px) {
-        body {
-            align-items: center;
-            padding: 20px;
-        }
-        .mobile {
-            min-height: auto;
-            height: 90vh;
-            border-radius: 30px;
-        }
-    }
-
-    .logo {
-        width: 150px; /* Tamaño más equilibrado */
-        margin: 0 auto 20px;
-        display: block;
-    }
-
-    h2 {
-        text-align: center;
-        color: #0d47a1;
-        font-size: 24px;
-        margin: 10px 0;
-        font-family: 'Segoe UI', sans-serif;
-    }
-
-    #ubicacion {
-        text-align: center;
-        font-size: 16px;
-        color: #666;
-        margin-bottom: 20px;
-    }
-
-    .card {
-        background: #f5f7fa;
-        padding: 20px;
-        border-radius: 15px;
-        margin-bottom: 15px;
-        border: 1px solid #eee;
-    }
-
-    .nombre {
-        font-size: 18px;
-        font-weight: bold;
-        color: #333;
-        font-family: 'Segoe UI', sans-serif;
-    }
-
-    .cedula {
-        font-size: 14px;
-        color: #777;
-        margin: 5px 0 15px;
-        font-family: 'Segoe UI', sans-serif;
-    }
-
-    button {
-        width: 100%;
-        padding: 15px;
-        background: #1976d2;
-        color: white;
-        border: none;
-        border-radius: 12px;
-        font-size: 16px;
-        font-weight: bold;
-        font-family: 'Segoe UI', sans-serif;
-        cursor: pointer;
-        transition: background 0.3s;
-    }
-
-    button:active {
-        transform: scale(0.98);
-    }
-
-    .logout {
-        background: #fdeded;
-        color: #e53935;
-        font-size: 16px;
-        margin-top: auto; /* Empuja el botón al final */
-        border: 1px solid #f8d7da;
-    }
-
-    .empty {
-        text-align: center;
-        color: #999;
-        font-size: 16px;
-        padding: 40px 20px;
-    }
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+    <title>Panel Propietario</title>
+    <style>
+        * { box-sizing: border-box; font-family: 'Segoe UI', sans-serif; }
+        body { margin: 0; padding: 0; min-height: 100vh; background: linear-gradient(180deg, #0d47a1, #1976d2); display: flex; justify-content: center; align-items: flex-start; }
+        .mobile { width: 90%; max-width: 500px; min-height: 100vh; background: #fff; padding: 30px 20px; display: flex; flex-direction: column; box-shadow: 0 10px 25px rgba(0,0,0,0.2); }
+        @media (min-width: 768px) { body { align-items: center; padding: 20px; } .mobile { min-height: auto; height: 90vh; border-radius: 30px; overflow-y: auto; } }
+        .logo { width: 120px; margin: 0 auto 10px; display: block; }
+        h2 { text-align: center; color: #0d47a1; font-size: 22px; margin: 5px 0; }
+        h3 { color: #0d47a1; border-bottom: 2px solid #eee; padding-bottom: 5px; margin-top: 20px; }
+        #ubicacion { text-align: center; font-size: 14px; color: #666; margin-bottom: 15px; }
+        .card, .card-residente { background: #f5f7fa; padding: 15px; border-radius: 12px; margin-bottom: 10px; border: 1px solid #eee; }
+        .nombre { font-size: 16px; font-weight: bold; color: #333; }
+        .cedula { font-size: 13px; color: #777; margin-bottom: 10px; }
+        button { width: 100%; padding: 12px; background: #1976d2; color: white; border: none; border-radius: 10px; font-size: 14px; font-weight: bold; cursor: pointer; margin-bottom: 5px; }
+        .btn-aprobar { background: #2e7d32; }
+        .btn-rechazar { background: #d32f2f; }
+        .logout { background: #fdeded; color: #e53935; margin-top: 20px; border: 1px solid #f8d7da; }
+        .empty { text-align: center; color: #999; font-size: 14px; padding: 20px; }
     </style>
 </head>
-
 <body>
 
-
-
 <div class="mobile">
-
     <img src="../assets/logo.png" class="logo">
-    <h2 id="titulo"></h2>
+    <h2 id="titulo">Cargando...</h2>
     <p id="ubicacion"></p>
 
-    <div style="text-align:center; margin:10px 0;">
-      <span style="background:#e3f2fd; color:#1976d2; padding:6px 12px; border-radius:20px; font-size:14px;">
-        🏢 Propietario activo
-      </span>
+    <div style="text-align:center; margin-bottom:20px;">
+        <span style="background:#e3f2fd; color:#1976d2; padding:6px 12px; border-radius:20px; font-size:12px; font-weight:bold;">
+            🏢 PROPIETARIO ACTIVO
+        </span>
     </div>
 
-    <div class="lista" id="listaResidentes"></div>
+    <h3>⏳ Por Aprobar</h3>
+    <div id="contenedorPendientes"></div>
+    <p class="empty" id="mensajeVacio" style="display:none;">📭 Sin solicitudes pendientes</p>
 
-    <p class="empty" id="mensajeVacio" style="display:none;">
-      📭 No tienes residentes pendientes
-    </p>
-    <button onclick="irAResidente()">📦 Ver mis pedidos</button>
-    <div class="footer">
-      <button class="logout" onclick="cerrarSesion()">Cerrar sesión</button>
+    <div class="box">
+        <h3>👨‍👩‍👧 Mis Residentes</h3>
+        <div id="contenedorAprobados"></div>
     </div>
 
-  </div>
+    <button onclick="irAResidente()" style="margin-top:20px; background:#444;">📦 Ver mis pedidos</button>
+    
+    <button class="logout" onclick="cerrarSesion()">Cerrar sesión</button>
+</div>
 
 <script>
+const API = "http://localhost:3000";
+const token = localStorage.getItem("token");
 
-const lista = document.getElementById("listaResidentes");
-const mensaje = document.getElementById("mensajeVacio");
+// Función para cargar los datos del propietario
+async function cargarPerfil(){
+    try {
+        const res = await fetch(`${API}/propietario/perfil`, {
+            headers: { Authorization: `Bearer ${token}` }
+        });
+        if (!res.ok) throw new Error("Error perfil");
+        const data = await res.json();
 
-async function cargarResidentesPendientes(){
-
-  const token = localStorage.getItem("token");
-
-  const res = await fetch("http://localhost:3000/propietario/residentes-pendientes",{
-    headers:{
-      Authorization:`Bearer ${token}`
+        document.getElementById("titulo").innerText = `👋 Hola, ${data.nombres}`;
+        document.getElementById("ubicacion").innerText = `🏢 Torre ${data.torre} • Apto ${data.apto}`;
+    } catch (err) {
+        console.error(err);
+        document.getElementById("titulo").innerText = "Error al cargar perfil";
     }
-  });
-
-  const residentes = await res.json();
-
-  lista.innerHTML="";
-
-  if(!Array.isArray(residentes) || residentes.length===0){
-    mensaje.style.display="block";
-    return;
-  }
-
-  mensaje.style.display="none";
-
-  residentes.forEach(r=>{
-
-    const card=document.createElement("div");
-    card.className="card";
-
-    card.innerHTML=`
-  <div class="nombre">${r.nombres} ${r.apellidos}</div>
-  <div class="cedula">Cédula: ${r.cedula}</div>
-
-  <button class="btn" onclick="aprobarResidente(${r.cod_user})">
-    ✔ Aprobar residente
-  </button>
-
-  <button class="btn" onclick="rechazarResidente(${r.cod_user})">
-    ❌ Rechazar residente
-  </button>
-`;
-
-    lista.appendChild(card);
-
-  });
-
 }
 
-async function rechazarResidente(codUser){
+// Función para residentes que esperan aprobación
+async function cargarResidentesPendientes(){
+    const listaUI = document.getElementById("contenedorPendientes");
+    const mensajeUI = document.getElementById("mensajeVacio");
 
-  const confirmar = confirm("¿Seguro que deseas eliminar este residente?");
-  if (!confirmar) return;
+    try {
+        const res = await fetch(`${API}/propietario/residentes-pendientes`, {
+            headers: { Authorization: `Bearer ${token}` }
+        });
+        const residentes = await res.json();
+        
+        listaUI.innerHTML = "";
 
-  const token = localStorage.getItem("token");
+        if(!Array.isArray(residentes) || residentes.length === 0){
+            mensajeUI.style.display = "block";
+            return;
+        }
 
-  try {
+        mensajeUI.style.display = "none";
+        residentes.forEach(r => {
+            listaUI.innerHTML += `
+                <div class="card">
+                    <div class="nombre">${r.nombres} ${r.apellidos}</div>
+                    <div class="cedula">Cédula: ${r.cedula}</div>
+                    <div style="display:flex; gap:10px;">
+                        <button class="btn-aprobar" onclick="aprobarResidente(${r.cod_user})">Aprobar</button>
+                        <button class="btn-rechazar" onclick="rechazarResidente(${r.cod_user})">Rechazar</button>
+                    </div>
+                </div>`;
+        });
+    } catch (err) { console.error(err); }
+}
 
-    const res = await fetch(`http://localhost:3000/propietario/rechazar/${codUser}`,{
-      method:"POST",
-      headers:{
-        Authorization:`Bearer ${token}`
-      }
-    });
+// Función para residentes ya vinculados
+async function cargarResidentes() {
+    const contenedorUI = document.getElementById("contenedorAprobados");
+    
+    try {
+        // 1. Obtenemos primero tu perfil para saber cuál es tu ID
+        const resPerfil = await fetch(`${API}/propietario/perfil`, {
+            headers: { Authorization: `Bearer ${token}` }
+        });
+        const miPerfil = await resPerfil.json();
+        const miId = Number(miPerfil.cod_user); // Tu ID convertido a número
 
-    const data = await res.json();
+        // 2. Obtenemos los residentes vinculados
+        const res = await fetch(`${API}/propietario/mis-residentes`, {
+            headers: { Authorization: `Bearer ${token}` }
+        });
+        const data = await res.json();
+        
+        contenedorUI.innerHTML = "";
 
-    if (!res.ok) throw new Error(data.message);
+        data.forEach(ap => {
+            if (ap.apto && ap.apto.apto_residente) {
+                ap.apto.apto_residente.forEach(r => {
+                    const p = r.persona; 
+                    if (!p) return;
 
-    alert("❌ Residente eliminado");
+                    // 3. FILTRO: Si el ID del residente es igual al tuyo, no lo dibujamos
+                    if (Number(r.fk_cod_residente) === miId) {
+                        return; 
+                    }
 
-    cargarResidentesPendientes();
-
-  } catch (err) {
-    alert(err.message);
-  }
+                    // 4. Dibujamos solo a los demás residentes
+                    contenedorUI.innerHTML += `
+                        <div class="card-residente" style="border: 1px solid #eee; padding: 15px; border-radius: 12px; margin-bottom: 10px;">
+                            <b>${p.nombres} ${p.apellidos}</b><br>
+                            <small>Estado: ${r.fk_estado_apto_residente === 1 ? "🟢 Activo" : "🔴 Inactivo"}</small>
+                            <div style="display:flex; gap:5px; margin-top:10px;">
+                                <button style="padding:8px; background:#4caf50; color:white; border:none; border-radius:5px; cursor:pointer;" 
+                                        onclick="cambiarEstado(${r.fk_cod_residente}, 1)">Activar</button>
+                                <button style="padding:8px; background:#ff9800; color:white; border:none; border-radius:5px; cursor:pointer;" 
+                                        onclick="cambiarEstado(${r.fk_cod_residente}, 2)">Inactivar</button>
+                            </div>
+                        </div>`;
+                });
+            }
+        });
+    } catch (err) { 
+        console.error("Error en cargarResidentes:", err); 
+    }
 }
 
 async function aprobarResidente(codUser){
+    await fetch(`${API}/propietario/aprobar-residente`, {
+        method: "POST",
+        headers: { "Content-Type": "application/json", Authorization: `Bearer ${token}` },
+        body: JSON.stringify({ cod_user: codUser })
+    });
+    alert("Residente aprobado");
+    actualizarTodo();
+}
 
-  const token=localStorage.getItem("token");
+async function rechazarResidente(codUser){
+    if (!confirm("¿Eliminar solicitud?")) return;
+    await fetch(`${API}/propietario/rechazar/${codUser}`, {
+        method: "POST",
+        headers: { Authorization: `Bearer ${token}` }
+    });
+    actualizarTodo();
+}
 
-  await fetch("http://localhost:3000/propietario/aprobar-residente",{
-    method:"POST",
-    headers:{
-      "Content-Type":"application/json",
-      Authorization:`Bearer ${token}`
+async function cambiarEstado(id, estado) {
+  // Usamos el token que ya tienes definido globalmente
+  // o lo obtenemos de nuevo para estar seguros
+  const tokenParaEnviar = localStorage.getItem("token");
+
+  const res = await fetch(`${API}/propietario/estado-residente`, {
+    method: "POST",
+    headers: {
+      "Content-Type": "application/json",
+      // Verifica que no falte el espacio después de Bearer
+      "Authorization": "Bearer " + tokenParaEnviar 
     },
-    body:JSON.stringify({
-      cod_user:codUser
+    body: JSON.stringify({
+      cod_residente: id,
+      estado: estado
     })
   });
 
-  alert("✅ Residente aprobado");
-
-  cargarResidentesPendientes();
+  if (res.ok) {
+    // Si la respuesta es 200, recargamos la lista
+    cargarResidentes();
+  } else if (res.status === 401) {
+    console.error("Error 401: El servidor no reconoció el token en esta petición.");
+  } else {
+    const errorData = await res.json();
+    alert("Error: " + errorData.message);
+  }
 }
 
-async function cargarPerfil(){
-
-  const token = localStorage.getItem("token");
-
-  const res = await fetch("http://localhost:3000/propietario/perfil",{
-    headers:{
-      Authorization:`Bearer ${token}`
-    }
-  });
-
-  const data = await res.json();
-
- document.getElementById("titulo").innerText =
-  `👋 Hola, ${data.nombres} ${data.apellidos}`;
-
-  document.getElementById("ubicacion").innerText =
-    `🏢 Torre ${data.torre} • Apto ${data.apto}-Propietari@`;
+function actualizarTodo() {
+    cargarPerfil();
+    cargarResidentes();
+    cargarResidentesPendientes();
 }
 
-function irAResidente() {
-  window.location.href = "../residente/residente.html";
-}
+function irAResidente() { window.location.href = "../residente/residente.html"; }
+function cerrarSesion() { localStorage.clear(); window.location.href = '../login.html'; }
 
-function cerrarSesion(){
-  localStorage.clear();
-  window.location.href = '../login.html';
-}
-
-cargarPerfil();
-cargarResidentesPendientes();
-
+// INICIO
+actualizarTodo();
 </script>
 
 </body>
