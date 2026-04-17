@@ -92,6 +92,23 @@ button:active {
 
 .success { color: green; }
 .error { color: red; }
+
+.btn-back {
+  width: 100%;
+  padding: 14px;
+  background: #e3f2fd;
+  color: #0d47a1;
+  border: none;
+  border-radius: 12px;
+  font-size: 15px;
+  font-weight: bold;
+  margin-bottom: 10px;
+  cursor: pointer;
+}
+
+.btn-back:hover {
+  background: #bbdefb;
+}
 </style>
 
 </head>
@@ -129,11 +146,13 @@ button:active {
 <input id="telefono" required>
 </div>
 
-<button type="submit">Actualizar</button>
+<button type="submit">Actualizar</button><br>
+
 
 </form>
 
 <div id="message" class="message"></div>
+<button onclick="history.back()" class="btn-back">← Atrás</button>
 </div>
 
 <script>
