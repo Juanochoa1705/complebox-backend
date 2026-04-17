@@ -50,6 +50,11 @@ buscarEmpresas(@Query('q') query: string) {
   return this.accesoService.buscarEmpresas(query);
 }
 
+@Get('validar-residente')
+@UseGuards(JwtAuthGuard)
+validarResidente(@Request() req) {
+  return this.accesoService.validarAcceso(req.user.id);
+}
 
 
 }

@@ -219,7 +219,12 @@
 <script>
 
 
+const modo = localStorage.getItem("modo");
 
+// 🚫 si no viene en modo residente → lo sacas
+if (modo !== "residente") {
+  window.location.href = "../login.html";
+}
 
 
 const contenedorPedidos = document.getElementById("listaPedidos");
@@ -388,8 +393,8 @@ if (estadoEspecial === "true") {
   `;
 
 } else {
-  cargarPerfilres();
-  cargarPedidos();
+  // 🔥 AQUÍ ESTÁ LA MAGIA
+  validarModoResidente();
 }
 const input = document.getElementById("buscarHistorial");
 const contenedorHistorial = document.getElementById("tablaHistorial");
@@ -446,6 +451,36 @@ div.innerHTML = `
   });
 
 });
+
+async function validarModoResidente() {
+
+  try {
+    const res = await fetch("http://localhost:3000/acceso/validar-residente", {
+      headers: {
+        Authorization: "Bearer " + localStorage.getItem("token")
+      }
+    });
+
+    const data = await res.json();
+
+    // 🔥 SI NO TIENE ACCESO → MISMO BLOQUE QUE YA TIENES
+    if (!data.acceso) {
+
+      localStorage.setItem("estadoEspecial", "true");
+      localStorage.setItem("mensajeEstado", data.mensaje);
+
+      location.reload(); // 🔥 reutiliza tu lógica
+      return;
+    }
+
+    // ✅ acceso normal
+    cargarPerfilres();
+    cargarPedidos();
+
+  } catch (err) {
+    console.error(err);
+  }
+}
 </script>
 </body>
 </html>

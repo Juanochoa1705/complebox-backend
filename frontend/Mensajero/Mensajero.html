@@ -154,6 +154,9 @@ button:active {
 <a href="editar-empresa.html" class="btn-perfil">
   ✏️🏢 Editar empresa
 </a>
+<div class="modo-switch" onclick="irModoResidente()">
+  🏠
+</div>
 
 <script >
 
@@ -361,6 +364,16 @@ function editarPedido(id) {
 }
 
 cargarPerfilmen();
+
+function irModoResidente() {
+  localStorage.setItem("modo", "residente");
+
+  // 🔥 LIMPIA ESTADO ANTERIOR
+  localStorage.removeItem("estadoEspecial");
+  localStorage.removeItem("mensajeEstado");
+
+  window.location.href = "../residente/Residente.html";
+}
 
 </script>
 </body>

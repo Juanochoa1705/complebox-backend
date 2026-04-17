@@ -95,4 +95,25 @@ export class AccesoService {
 
 }
 
+async validarAcceso(userId: number) {
+
+  const residente = await this.prisma.apto_residente.findFirst({
+    where: {
+      fk_cod_residente: userId,
+      fk_estado_apto_residente: 1 // activo
+    }
+  });
+
+  if (!residente) {
+    return {
+      acceso: false,
+      mensaje: "No tienes un apartamento activo asociado"
+    };
+  }
+
+  return {
+    acceso: true
+  };
+}
+
 }
