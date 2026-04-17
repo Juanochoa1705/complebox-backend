@@ -1,0 +1,216 @@
+<!DOCTYPE html>
+
+<html lang="es">
+<head>
+<meta charset="UTF-8">
+<title>Complebox | Actualizar Perfil</title>
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+
+<style>
+* {
+  box-sizing: border-box;
+  font-family: 'Segoe UI', sans-serif;
+}
+
+body {
+  margin: 0;
+  height: 100vh;
+  background: linear-gradient(180deg, #0d47a1, #1976d2);
+  display: flex;
+  justify-content: center;
+  align-items: center;
+}
+
+input {
+  width: 100%;
+  padding: 14px;
+  border-radius: 12px;
+  border: 1px solid #ccc;
+  font-size: 15px;
+}
+
+input:focus {
+  outline: none;
+  border-color: #1976d2;
+  box-shadow: 0 0 0 2px rgba(25,118,210,0.2);
+}
+
+.mobile {
+  width: 100%;
+  max-width: 390px;
+  height: 100vh;
+  background: #fff;
+  border-radius: 20px 20px 0 0;
+  padding: 25px;
+  overflow-y: auto;
+}
+
+.logo {
+  display: block;
+  margin: 20px auto 10px;
+  width: 120px;
+}
+
+h2 {
+  text-align: center;
+  color: #0d47a1;
+  margin-bottom: 25px;
+}
+
+.form-group {
+  margin-bottom: 14px;
+}
+
+label {
+  font-size: 13px;
+  color: #555;
+  display: block;
+  margin-bottom: 4px;
+}
+
+button {
+  width: 100%;
+  padding: 16px;
+  background: #1976d2;
+  color: white;
+  border: none;
+  border-radius: 14px;
+  font-size: 16px;
+  font-weight: bold;
+  cursor: pointer;
+}
+
+button:active {
+  transform: scale(0.98);
+}
+
+.message {
+  text-align: center;
+  margin-top: 15px;
+  font-size: 14px;
+}
+
+.success { color: green; }
+.error { color: red; }
+</style>
+
+</head>
+
+<body>
+
+<div class="mobile">
+<img src="assets/logo.png" class="logo" alt="Complebox">
+<h2>Actualizar Datos</h2>
+
+<form id="formUpdate">
+
+<div class="form-group">
+<label>Nombres</label>
+<input id="nombres" required>
+</div>
+
+<div class="form-group">
+<label>Apellidos</label>
+<input id="apellidos" required>
+</div>
+
+<div class="form-group">
+<label>Cédula</label>
+<input id="cedula">
+</div>
+
+<div class="form-group">
+<label>Correo</label>
+<input type="email" id="correo">
+</div>
+
+<div class="form-group">
+<label>Teléfono</label>
+<input id="telefono" required>
+</div>
+
+<button type="submit">Actualizar</button>
+
+</form>
+
+<div id="message" class="message"></div>
+</div>
+
+<script>
+
+const form = document.getElementById('formUpdate');
+const message = document.getElementById('message');
+
+// 🔥 ID DEL USUARIO
+const userId = localStorage.getItem("userId");
+
+console.log("UserId:", userId);
+
+if (!userId || userId === "undefined") {
+  alert("Sesión inválida");
+  window.location.href = "login.html";
+}
+
+// ==============================
+// CARGAR DATOS
+// ==============================
+async function cargarDatos() {
+  try {
+    const res = await fetch(`http://localhost:3000/auth/perfil/${userId}`);
+    const data = await res.json();
+
+    document.getElementById('nombres').value = data.nombres || '';
+    document.getElementById('apellidos').value = data.apellidos || '';
+    document.getElementById('cedula').value = data.cedula || '';
+    document.getElementById('correo').value = data.correo || '';
+    document.getElementById('telefono').value = data.telefono || '';
+
+  } catch {
+    message.textContent = "Error cargando datos";
+    message.className = "message error";
+  }
+}
+
+// ==============================
+// ACTUALIZAR
+// ==============================
+form.addEventListener('submit', async (e) => {
+  e.preventDefault();
+
+  const data = {
+    nombres: document.getElementById('nombres').value,
+    apellidos: document.getElementById('apellidos').value,
+    cedula: document.getElementById('cedula').value,
+    correo: document.getElementById('correo').value,
+    telefono: document.getElementById('telefono').value
+  };
+
+  try {
+    const res = await fetch(`http://localhost:3000/auth/perfil/${userId}`, {
+  method: "PUT",
+  headers: {
+    "Content-Type": "application/json",
+    "Authorization": "Bearer " + localStorage.getItem("token")
+  },
+  body: JSON.stringify(data)
+});
+
+    const result = await res.json();
+    if (!res.ok) throw new Error(result.message);
+
+    message.textContent = "✅ Actualizado correctamente";
+    message.className = "message success";
+
+  } catch (err) {
+    message.textContent = err.message;
+    message.className = "message error";
+  }
+});
+
+// INIT
+cargarDatos();
+
+</script>
+
+</body>
+</html>

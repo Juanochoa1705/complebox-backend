@@ -152,6 +152,29 @@
   border: 1px solid #ccc;
 }
 
+.btn-perfil {
+  display: block;
+  width: 100%;
+  text-align: center;
+  padding: 14px;
+  background: linear-gradient(180deg, #1976d2, #0d47a1);
+  color: white;
+  border-radius: 14px;
+  font-weight: bold;
+  text-decoration: none;
+  margin-top: 15px;
+  transition: 0.2s;
+}
+
+.btn-perfil:hover {
+  transform: scale(1.03);
+  box-shadow: 0 5px 15px rgba(0,0,0,0.2);
+}
+
+.btn-perfil:active {
+  transform: scale(0.97);
+}
+
   </style>
 </head>
 <body>
@@ -171,6 +194,9 @@
 <input type="text" id="buscarHistorial" placeholder="Buscar por guía o pedido...">
 
 <div id="tablaHistorial"></div><button class="btn btn-logout" onclick="cerrarSesion()">Cerrar sesión</button>
+<a href="../actualizar.html" class="btn-perfil">
+  ✏️ Editar perfil
+</a>
 </div>
 
 

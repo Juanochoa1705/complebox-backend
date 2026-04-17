@@ -6,6 +6,7 @@ import {
   UseGuards,
   Request,
   Param,
+  Put
 } from '@nestjs/common';
 
 import { AuthService } from './auth.service';
@@ -88,7 +89,21 @@ buscarEmpresa(@Param('nit') nit: string) {
 }
 
 @Post('register-mensajero')
+ @UseGuards(JwtAuthGuard)
 async registerMensajero(@Body() dto: any) {
   return this.authService.registerMensajero(dto);
+}
+
+
+
+@Get('perfil/:id')
+getPerfil(@Param('id') id: string) {
+  return this.authService.getPerfil(Number(id));
+}
+
+@Put('perfil/:id')
+ @UseGuards(JwtAuthGuard)
+updatePerfil(@Param('id') id: string, @Body() dto: any) {
+  return this.authService.updatePerfil(Number(id), dto);
 }
 }

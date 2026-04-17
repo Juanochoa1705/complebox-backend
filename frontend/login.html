@@ -167,7 +167,7 @@ form.addEventListener('submit', async (e) => {
       message.textContent = result.message;
       message.className = 'message error';
 
-      localStorage.setItem('primerLoginUserId', result.user.id);
+      localStorage.setItem('primerLoginUserId', result.user.cod_user);
 
       setTimeout(() => {
         window.location.href = 'primer-login.html';
@@ -176,9 +176,12 @@ form.addEventListener('submit', async (e) => {
       return;
     }
 
-    // 🔐 LOGIN NORMAL (solo si no es primer login)
+    // 🔐 LOGIN NORMAL
     localStorage.setItem('token', result.token);
     localStorage.setItem('user', JSON.stringify(result.user));
+
+    // 🔥 ESTA ES LA LÍNEA QUE TE FALTABA
+  localStorage.setItem("userId", result.user.cod_user || result.user.id);
 
     localStorage.setItem('estadoEspecial', result.estadoEspecial);
     localStorage.setItem('mensajeEstado', result.mensaje);
@@ -190,15 +193,12 @@ form.addEventListener('submit', async (e) => {
     else if (result.user.rol === 'Propietario') {
       window.location.href = '../frontend/propietario/propietario.html';
     }
-
     else if (result.user.rol === 'Mensajero') {
       window.location.href = '../frontend/mensajero/mensajero.html';
     }
-
     else if (result.user.rol === 'Vigilante') {
       window.location.href = '../frontend/vigilante/Vigilante.html';
     }
-
     else if (result.user.rol === 'Residente') {
       window.location.href = '../frontend/residente/Residente.html';
     }

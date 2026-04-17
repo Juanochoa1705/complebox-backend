@@ -392,4 +392,62 @@ async registerMensajero(dto: any) {
 
   return { message: "Mensajero registrado correctamente" };
 }
+// ==============================
+// OBTENER PERFIL
+// ==============================
+async getPerfil(id: number) {
+  return this.prisma.persona.findUnique({
+    where: { cod_user: id },
+    select: {
+      nombres: true,
+      apellidos: true,
+      cedula: true,
+      correo: true,
+      telefono: true
+    }
+  });
+}
+
+// ==============================
+// ACTUALIZAR PERFIL
+// ==============================
+async updatePerfil(id: number, dto: any) {
+
+  if (!id || isNaN(id)) {
+    throw new Error("ID inválido");
+  }
+
+  const existe = await this.prisma.persona.findFirst({
+    where: {
+      AND: [
+        {
+          cod_user: {
+            not: id
+          }
+        },
+        {
+          OR: [
+            { correo: dto.correo },
+            { cedula: dto.cedula }
+          ]
+        }
+      ]
+    }
+  });
+
+  if (existe) {
+    throw new Error("Correo o cédula ya en uso");
+  }
+
+  return this.prisma.persona.update({
+    where: { cod_user: id },
+    data: {
+      nombres: dto.nombres,
+      apellidos: dto.apellidos,
+      cedula: dto.cedula,
+      correo: dto.correo,
+      telefono: dto.telefono
+    }
+  });
+}
 }
