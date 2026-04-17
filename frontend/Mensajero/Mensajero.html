@@ -151,6 +151,9 @@ button:active {
 <a href="../actualizar.html" class="btn-perfil">
   ✏️ Editar perfil
 </a>
+<a href="editar-empresa.html" class="btn-perfil">
+  ✏️🏢 Editar empresa
+</a>
 
 <script >
 
@@ -212,7 +215,7 @@ async function crearPedido() {
 
     if (!res.ok) throw new Error(result.message);
 
-    document.getElementById("numero_guia").value = "";
+document.getElementById("numero_guia").value = "";
 document.getElementById("nombre_pedido").value = "";
 document.getElementById("descripcion_pedido").value = "";
 document.getElementById("buscar_residente").value = "";

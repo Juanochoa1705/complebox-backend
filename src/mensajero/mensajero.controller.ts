@@ -85,4 +85,16 @@ eliminarPedido(
     );
   }
 
+@Put('empresa-mensajero')
+@UseGuards(JwtAuthGuard)
+actualizarEmpresa(@Request() req, @Body() dto: any) {
+  return this.mensajeroService.actualizarEmpresaMensajero(req.user.id, dto);
+}
+
+ @Get('empresa-mensajero')
+@UseGuards(JwtAuthGuard)
+obtenerEmpresa(@Request() req) {
+  return this.mensajeroService.obtenerEmpresaMensajero(req.user.id);
+}
+
 }

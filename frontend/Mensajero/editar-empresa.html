@@ -1,0 +1,252 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+<meta charset="UTF-8">
+<title>Editar Empresa</title>
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+
+<style>
+* {
+  box-sizing: border-box;
+  font-family: 'Segoe UI', sans-serif;
+}
+
+body {
+  margin: 0;
+  height: 100vh;
+  background: linear-gradient(180deg, #0d47a1, #1976d2);
+  display: flex;
+  justify-content: center;
+  align-items: center;
+}
+
+.mobile {
+  width: 100%;
+  max-width: 390px;
+  height: 100vh;
+  background: #fff;
+  border-radius: 20px 20px 0 0;
+  padding: 25px;
+  overflow-y: auto;
+}
+
+.logo {
+  width: 120px;
+  display: block;
+  margin: 20px auto 10px;
+}
+
+h2 {
+  text-align: center;
+  color: #0d47a1;
+  margin-bottom: 20px;
+}
+
+.form-group {
+  margin-bottom: 14px;
+}
+
+label {
+  font-size: 13px;
+  color: #555;
+  display: block;
+  margin-bottom: 4px;
+}
+
+input {
+  width: 100%;
+  padding: 14px;
+  border-radius: 12px;
+  border: 1px solid #ccc;
+}
+
+input:focus {
+  outline: none;
+  border-color: #1976d2;
+  box-shadow: 0 0 0 2px rgba(25,118,210,0.2);
+}
+
+button {
+  width: 100%;
+  padding: 16px;
+  background: #1976d2;
+  color: white;
+  border: none;
+  border-radius: 14px;
+  font-size: 16px;
+  font-weight: bold;
+  margin-top: 10px;
+  cursor: pointer;
+}
+
+button:active {
+  transform: scale(0.98);
+}
+
+.btn-back {
+  display: block;
+  text-align: center;
+  margin-top: 10px;
+  color: #1976d2;
+  text-decoration: none;
+  font-size: 14px;
+}
+
+.message {
+  text-align: center;
+  margin-top: 15px;
+}
+
+.success { color: green; }
+.error { color: red; }
+
+</style>
+</head>
+
+<body>
+
+<div class="mobile">
+
+  <img src="../assets/logo.png" class="logo">
+
+  <h2>🏢 Editar Empresa</h2>
+
+  <form id="formEmpresa">
+
+    <div class="form-group">
+      <label>NIT</label>
+      <input id="nit_empresa" required>
+    </div>
+
+    <div class="form-group">
+      <label>Nombre empresa</label>
+      <input id="nombre_empresa" required>
+    </div>
+
+    <div class="form-group">
+      <label>Dirección</label>
+      <input id="direccion_empresa">
+    </div>
+
+    <div class="form-group">
+      <label>Teléfono</label>
+      <input id="telefono_empresa">
+    </div>
+
+    <div class="form-group">
+      <label>Correo</label>
+      <input type="email" id="correo_empresa">
+    </div>
+
+    <button type="submit">Guardar cambios</button>
+
+  </form>
+
+  <a href="javascript:history.back()" class="btn-back">⬅️ Volver</a>
+
+  <div id="message" class="message"></div>
+
+</div>
+
+<script>
+
+const form = document.getElementById("formEmpresa");
+const message = document.getElementById("message");
+const token = localStorage.getItem("token");
+
+// ==============================
+// 🔥 CARGAR EMPRESA ACTUAL
+// ==============================
+async function cargarEmpresa() {
+
+  try {
+    const res = await fetch("http://localhost:3000/mensajero/empresa-mensajero", {
+      headers: {
+        Authorization: "Bearer " + token
+      }
+    });
+
+    const data = await res.json();
+
+    if (!res.ok) throw new Error(data.message);
+
+    document.getElementById("nit_empresa").value = data.nit_empresa || '';
+    document.getElementById("nombre_empresa").value = data.nombre_empresa || '';
+    document.getElementById("direccion_empresa").value = data.direccion_empresa || '';
+    document.getElementById("telefono_empresa").value = data.telefono_empresa || '';
+    document.getElementById("correo_empresa").value = data.correo_empresa || '';
+
+  } catch (err) {
+    message.textContent = err.message;
+    message.className = "message error";
+  }
+}
+
+// ==============================
+// 🔥 AUTOCOMPLETE SI EXISTE NIT
+// ==============================
+document.getElementById("nit_empresa").addEventListener("blur", async () => {
+
+  const nit = nit_empresa.value.trim();
+  if (!nit) return;
+
+  const res = await fetch(`http://localhost:3000/mensajero/empresa/${nit}`);
+
+  if (!res.ok) return;
+
+  const empresa = await res.json();
+
+  nombre_empresa.value = empresa.nombre_empresa;
+  direccion_empresa.value = empresa.direccion_empresa;
+  telefono_empresa.value = empresa.telefono_empresa;
+  correo_empresa.value = empresa.correo_empresa;
+
+});
+
+// ==============================
+// 🔥 ACTUALIZAR EMPRESA
+// ==============================
+form.addEventListener("submit", async (e) => {
+  e.preventDefault();
+
+  const data = {
+    nit_empresa: nit_empresa.value,
+    nombre_empresa: nombre_empresa.value,
+    direccion_empresa: direccion_empresa.value,
+    telefono_empresa: telefono_empresa.value,
+    correo_empresa: correo_empresa.value
+  };
+
+  try {
+
+    const res = await fetch("http://localhost:3000/mensajero/empresa-mensajero", {
+      method: "PUT",
+      headers: {
+        "Content-Type": "application/json",
+        Authorization: "Bearer " + token
+      },
+      body: JSON.stringify(data)
+    });
+
+    const result = await res.json();
+
+    if (!res.ok) throw new Error(result.message);
+
+    message.textContent = "✅ Empresa actualizada correctamente";
+    message.className = "message success";
+
+  } catch (err) {
+    message.textContent = err.message;
+    message.className = "message error";
+  }
+});
+
+// ==============================
+// 🚀 INIT
+// ==============================
+cargarEmpresa();
+
+</script>
+
+</body>
+</html>

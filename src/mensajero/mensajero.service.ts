@@ -168,4 +168,88 @@ async eliminarPedido(id: number, mensajeroId: number) {
     });
   }
 
+ async actualizarEmpresaMensajero(userId: number, dto: any) {
+
+  const relacion = await this.prisma.empresa_mensajero.findFirst({
+    where: { fk_persona_mensajero: userId },
+    include: { empresa: true }
+  });
+
+  // ✅ VALIDACIÓN CLAVE
+  if (!relacion || !relacion.empresa) {
+    throw new Error("No tiene empresa asociada");
+  }
+
+  const empresaActual = relacion.empresa;
+
+  // ============================
+  // 🔵 MISMO NIT → UPDATE
+  // ============================
+  if (empresaActual.nit_empresa === dto.nit_empresa) {
+
+    return this.prisma.empresa.update({
+      where: { cod_empresa: empresaActual.cod_empresa },
+      data: {
+        nombre_empresa: dto.nombre_empresa,
+        direccion_empresa: dto.direccion_empresa,
+        telefono_empresa: dto.telefono_empresa,
+        correo_empresa: dto.correo_empresa
+      }
+    });
+  }
+
+  // ============================
+  // 🟡 NUEVO NIT → CREAR
+  // ============================
+  const existe = await this.prisma.empresa.findUnique({
+    where: { nit_empresa: dto.nit_empresa }
+  });
+
+  let nuevaEmpresa;
+
+  if (existe) {
+    nuevaEmpresa = existe;
+  } else {
+    nuevaEmpresa = await this.prisma.empresa.create({
+      data: {
+        nit_empresa: dto.nit_empresa,
+        nombre_empresa: dto.nombre_empresa,
+        direccion_empresa: dto.direccion_empresa,
+        telefono_empresa: dto.telefono_empresa,
+        correo_empresa: dto.correo_empresa,
+        fk_estado_empresa: 1
+      }
+    });
+  }
+
+  await this.prisma.empresa_mensajero.update({
+    where: {
+      cod_empresa_mensajero: relacion.cod_empresa_mensajero
+    },
+    data: {
+      fk_empresa_mensajero: nuevaEmpresa.cod_empresa
+    }
+  });
+
+  return { message: "Empresa actualizada correctamente" };
+}
+
+async obtenerEmpresaMensajero(userId: number) {
+
+  const empresaActual = await this.prisma.empresa_mensajero.findFirst({
+    where: {
+      fk_persona_mensajero: userId
+    },
+    include: {
+      empresa: true
+    }
+  });
+
+  // 🔥 VALIDACIÓN CLAVE
+  if (!empresaActual || !empresaActual.empresa) {
+    throw new Error("No tienes empresa asociada");
+  }
+
+  return empresaActual.empresa;
+}
 }
