@@ -99,10 +99,16 @@ button:active {
 .btn-perfil:active {
   transform: scale(0.97);
 }
-.modo-switch {
+.iconos-flotantes {
   position: absolute;
   top: 15px;
   right: 15px;
+  display: flex;
+  flex-direction: column; /* 🔥 esto los pone hacia abajo */
+  gap: 10px; /* espacio entre iconos */
+}
+
+.modo-switch {
   background: white;
   border-radius: 50%;
   width: 45px;
@@ -160,11 +166,15 @@ button:active {
 <a href="../actualizar.html" class="btn-perfil">
   ✏️ Editar perfil
 </a>
+<div class="iconos-flotantes">
 <div class="modo-switch" onclick="irModoResidente()">
   🏠
 </div>
+ <div class="modo-switch" onclick="irModoMensajero()">
+    🚚
+  </div>
 </div>
-
+</div>
 <script>
 
 // ==========================
@@ -547,6 +557,7 @@ function irModoResidente() {
 
   window.location.href = "../residente/Residente.html";
 }
+function irModoMensajero() { window.location.href = "../mensajero/mensajero.html"; }
 
 </script>
 </body>

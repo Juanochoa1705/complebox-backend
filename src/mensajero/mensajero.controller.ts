@@ -93,8 +93,31 @@ actualizarEmpresa(@Request() req, @Body() dto: any) {
 
  @Get('empresa-mensajero')
 @UseGuards(JwtAuthGuard)
-obtenerEmpresa(@Request() req) {
-  return this.mensajeroService.obtenerEmpresaMensajero(req.user.id);
+async obtenerEmpresa(@Request() req) {
+
+  const empresa = await this.mensajeroService.obtenerEmpresaMensajero(req.user.id);
+
+  if (!empresa) {
+    return {
+      acceso: false,
+      mensaje: "No tienes empresa asociada"
+    };
+  }
+
+  return {
+    acceso: true,
+    empresa
+  };
+}
+@Get('validar-empresa')
+@UseGuards(JwtAuthGuard)
+async validarEmpresa(@Request() req) {
+  return this.mensajeroService.validarEmpresa(req.user.id);
+}
+
+@Get('empresa/:nit')
+async buscarEmpresaPorNit(@Param('nit') nit: string) {
+  return this.mensajeroService.buscarEmpresaPorNit(nit);
 }
 
 }

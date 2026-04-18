@@ -99,10 +99,16 @@ button:active {
 .btn-perfil:active {
   transform: scale(0.97);
 }
-.modo-switch {
+.iconos-flotantes {
   position: absolute;
   top: 15px;
   right: 15px;
+  display: flex;
+  flex-direction: column; /* 🔥 esto los pone hacia abajo */
+  gap: 10px; /* espacio entre iconos */
+}
+
+.modo-switch {
   background: white;
   border-radius: 50%;
   width: 45px;
@@ -181,14 +187,70 @@ button:active {
 <a href="editar-empresa.html" class="btn-perfil">
   ✏️🏢 Editar empresa
 </a>
+
+<div class="iconos-flotantes">
 <div class="modo-switch" onclick="irModoResidente()">
   🏠
 </div>
+</div>
+<script>
 
-<script >
+// ==========================
+// 🔥 VALIDAR MODO MENSAJERO
+// ==========================
+async function validarModoMensajero() {
+
+  try {
+    const res = await fetch("http://localhost:3000/mensajero/validar-empresa", {
+      headers: {
+        Authorization: "Bearer " + localStorage.getItem("token")
+      }
+    });
+
+    const data = await res.json();
+    console.log("VALIDACION:", data);
+
+    // ❌ NO TIENE EMPRESA
+    if (!data.acceso) {
+
+      const app = document.querySelector(".mobile");
+
+      app.innerHTML = `
+        <div style="
+          height:100%;
+          display:flex;
+          justify-content:center;
+          align-items:center;
+          text-align:center;
+          padding:20px;
+        ">
+          <div>
+            <h2 style="color:#d32f2f;">🚫 Acceso restringido</h2>
+            <p>${data.mensaje}</p>
+            <button onclick="irRegistroEmpresa()">Registrar empresa</button>
+            <button onclick="cerrarSesion()">Cerrar sesión</button>
+          </div>
+        </div>
+      `;
+
+      return;
+    }
+
+    // ✅ TIENE EMPRESA → carga normal
+    cargarPerfilmen();
+    // 👉 si luego tienes función de pedidos, la llamas aquí
+
+  } catch (err) {
+    console.error("Error validando empresa:", err);
+  }
+}
 
 
-  async function cargarPerfilmen() {
+// ==========================
+// 👤 CARGAR PERFIL MENSAJERO
+// ==========================
+async function cargarPerfilmen() {
+
   const token = localStorage.getItem("token");
 
   try {
@@ -199,25 +261,31 @@ button:active {
     });
 
     if (!res.ok) {
-        throw new Error("No se pudo obtener el perfil. Status: " + res.status);
+      throw new Error("No se pudo obtener el perfil");
     }
 
     const data = await res.json();
 
-    // Verificamos en consola qué está llegando realmente
-    console.log("Datos recibidos:", data);
+    console.log("Perfil:", data);
 
     const titulomen = document.getElementById("titulomen");
 
-    if (titulomen) titulomen.innerText = `👋 Hola, ${data.nombres || 'Mensajero' } ${data.apellidos }-Mensajero 🚚`;
+    if (titulomen) {
+      titulomen.innerText = `👋 Hola, ${data.nombres || 'Mensajero'} ${data.apellidos || ''} 🚚`;
+    }
 
   } catch (error) {
-    console.error("Error al cargar perfil:", error);
+    console.error("Error perfil:", error);
   }
 }
+
+
+// ==========================
+// 📦 CREAR PEDIDO
+// ==========================
 async function crearPedido() {
 
-    if (!residenteSeleccionado) {
+  if (!residenteSeleccionado) {
     alert("Selecciona un residente");
     return;
   }
@@ -226,46 +294,60 @@ async function crearPedido() {
     numero_guia: document.getElementById("numero_guia").value,
     nombre_pedido: document.getElementById("nombre_pedido").value,
     descripcion_pedido: document.getElementById("descripcion_pedido").value,
-    fk_residente: residenteSeleccionado,
-
- 
+    fk_residente: residenteSeleccionado
   };
 
   try {
     const res = await fetch("http://localhost:3000/mensajero/crear-pedido", {
-  method: "POST",
-  headers: {
-    "Content-Type": "application/json",
-    "Authorization": "Bearer " + localStorage.getItem("token") // 🔥 CLAVE
-  },
-  body: JSON.stringify(data)
-});
+      method: "POST",
+      headers: {
+        "Content-Type": "application/json",
+        "Authorization": "Bearer " + localStorage.getItem("token")
+      },
+      body: JSON.stringify(data)
+    });
 
     const result = await res.json();
 
     if (!res.ok) throw new Error(result.message);
 
-document.getElementById("numero_guia").value = "";
-document.getElementById("nombre_pedido").value = "";
-document.getElementById("descripcion_pedido").value = "";
-document.getElementById("buscar_residente").value = "";
+    // limpiar formulario
+    document.getElementById("numero_guia").value = "";
+    document.getElementById("nombre_pedido").value = "";
+    document.getElementById("descripcion_pedido").value = "";
+    document.getElementById("buscar_residente").value = "";
 
-residenteSeleccionado = null;
-document.getElementById("resultados").innerHTML = "";
+    residenteSeleccionado = null;
+    document.getElementById("resultados").innerHTML = "";
 
     alert("✅ Pedido registrado");
+
   } catch (err) {
     alert(err.message);
   }
-
-
 }
 
+
+// ==========================
+// 🔐 CERRAR SESIÓN
+// ==========================
 function cerrarSesion() {
   localStorage.clear();
   window.location.href = '../login.html';
 }
 
+
+// ==========================
+// 🏢 IR A REGISTRAR EMPRESA
+// ==========================
+function irRegistroEmpresa() {
+  window.location.href = "editar-empresa.html";
+}
+
+
+// ==========================
+// 🔍 BUSCAR RESIDENTE
+// ==========================
 const inputBuscar = document.getElementById("buscar_residente");
 const resultados = document.getElementById("resultados");
 
@@ -280,16 +362,14 @@ inputBuscar.addEventListener("input", async () => {
     return;
   }
 
-
-
   const res = await fetch(`http://localhost:3000/mensajero/buscar-residente?q=${query}`);
   const data = await res.json();
 
   resultados.innerHTML = "";
 
   data.forEach(persona => {
-    const div = document.createElement("div");
 
+    const div = document.createElement("div");
     div.style.padding = "10px";
     div.style.cursor = "pointer";
 
@@ -298,8 +378,6 @@ inputBuscar.addEventListener("input", async () => {
     div.onclick = () => {
       inputBuscar.value = div.textContent;
       resultados.innerHTML = "";
-
-      // 🔥 guardamos el ID REAL
       residenteSeleccionado = persona.cod_user;
     };
 
@@ -308,6 +386,10 @@ inputBuscar.addEventListener("input", async () => {
 
 });
 
+
+// ==========================
+// 📊 HISTORIAL
+// ==========================
 const inputHistorial = document.getElementById("buscarHistorial");
 const tabla = document.getElementById("tablaHistorial");
 
@@ -334,7 +416,6 @@ inputHistorial.addEventListener("input", async () => {
 
     const div = document.createElement("div");
 
-    // 🔥 BOTONES SOLO SI ESTADO 1
     let acciones = "";
 
     if (p.fk_estado_pedido == 1) {
@@ -345,20 +426,9 @@ inputHistorial.addEventListener("input", async () => {
     }
 
     div.innerHTML = `
-      <b>📦 Pedido:</b> ${p.nombre_pedido || '❌ Sin nombre'}<br>
-      <b>🔢 Guía:</b> ${p.numero_guia || '❌ Sin guía'}<br>
-      <b>📌 Estado:</b> ${p.estado_pedido || '❌ Sin estado'}<br>
-      
-      <b>📅 Recibido:</b> ${p.fecha_recibido || '❌ No registrado'}<br>
-      <b>📅 Entregado:</b> ${p.fecha_entregado || '⏳ Pendiente'}<br>
-
-      <b>👮 Recibe:</b> ${p.nombre_vigilante_recibe || '❌'} ${p.apellido_vigilante_recibe || ''}<br>
-      <b>👮 Entrega:</b> ${p.nombre_vigilante_entrega || '❌'} ${p.apellido_vigilante_entrega || ''}<br>
-
-      <b>🏠 Residente:</b> ${p.nombre_residente || '❌'} ${p.apellido_residente || ''}<br>
-      <b>🆔 Cédula:</b> ${p.cedula || '❌'}<br>
-      <b>🏢 Apto:</b> Torre ${p.numero_torre || '❌'} - Apto ${p.numero_apto || '❌'}<br>
-      <b>🏘️ Conjunto:</b> ${p.nombre_conjunto || 'No disponible'}<br>
+      <b>📦 Pedido:</b> ${p.nombre_pedido || '❌'}<br>
+      <b>🔢 Guía:</b> ${p.numero_guia || '❌'}<br>
+      <b>📌 Estado:</b> ${p.estado_pedido || '❌'}<br>
       ${acciones}
       <hr>
     `;
@@ -368,6 +438,10 @@ inputHistorial.addEventListener("input", async () => {
 
 });
 
+
+// ==========================
+// ❌ ELIMINAR PEDIDO
+// ==========================
 async function eliminarPedido(id) {
 
   const confirmar = confirm("¿Eliminar pedido?");
@@ -386,21 +460,33 @@ async function eliminarPedido(id) {
   }
 }
 
+
+// ==========================
+// ✏️ EDITAR PEDIDO
+// ==========================
 function editarPedido(id) {
   window.location.href = `editar_pedido.html?id=${id}`;
 }
 
-cargarPerfilmen();
 
+// ==========================
+// 🔄 CAMBIAR A RESIDENTE
+// ==========================
 function irModoResidente() {
+
   localStorage.setItem("modo", "residente");
 
-  // 🔥 LIMPIA ESTADO ANTERIOR
   localStorage.removeItem("estadoEspecial");
   localStorage.removeItem("mensajeEstado");
 
   window.location.href = "../residente/Residente.html";
 }
+
+
+// ==========================
+// 🚀 INICIO
+// ==========================
+validarModoMensajero();
 
 </script>
 </body>

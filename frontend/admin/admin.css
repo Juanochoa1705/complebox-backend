@@ -63,10 +63,16 @@ button:active {
   display: none;
 }
 
-.modo-switch {
+.iconos-flotantes {
   position: absolute;
   top: 15px;
   right: 15px;
+  display: flex;
+  flex-direction: column; /* 🔥 esto los pone hacia abajo */
+  gap: 10px; /* espacio entre iconos */
+}
+
+.modo-switch {
   background: white;
   border-radius: 50%;
   width: 45px;

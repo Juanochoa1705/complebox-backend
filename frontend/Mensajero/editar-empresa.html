@@ -158,7 +158,6 @@ const token = localStorage.getItem("token");
 // 🔥 CARGAR EMPRESA ACTUAL
 // ==============================
 async function cargarEmpresa() {
-
   try {
     const res = await fetch("http://localhost:3000/mensajero/empresa-mensajero", {
       headers: {
@@ -168,13 +167,19 @@ async function cargarEmpresa() {
 
     const data = await res.json();
 
-    if (!res.ok) throw new Error(data.message);
+    // ❌ sin empresa → dejar vacío
+    if (!data.acceso || !data.empresa) {
+      document.getElementById("formEmpresa").reset();
+      return;
+    }
 
-    document.getElementById("nit_empresa").value = data.nit_empresa || '';
-    document.getElementById("nombre_empresa").value = data.nombre_empresa || '';
-    document.getElementById("direccion_empresa").value = data.direccion_empresa || '';
-    document.getElementById("telefono_empresa").value = data.telefono_empresa || '';
-    document.getElementById("correo_empresa").value = data.correo_empresa || '';
+    const empresa = data.empresa;
+
+    document.getElementById("nit_empresa").value = empresa.nit_empresa || '';
+    document.getElementById("nombre_empresa").value = empresa.nombre_empresa || '';
+    document.getElementById("direccion_empresa").value = empresa.direccion_empresa || '';
+    document.getElementById("telefono_empresa").value = empresa.telefono_empresa || '';
+    document.getElementById("correo_empresa").value = empresa.correo_empresa || '';
 
   } catch (err) {
     message.textContent = err.message;
@@ -190,16 +195,28 @@ document.getElementById("nit_empresa").addEventListener("blur", async () => {
   const nit = nit_empresa.value.trim();
   if (!nit) return;
 
-  const res = await fetch(`http://localhost:3000/mensajero/empresa/${nit}`);
+  try {
+    const res = await fetch(`http://localhost:3000/mensajero/empresa/${nit}`);
 
-  if (!res.ok) return;
+    if (!res.ok) {
+      // 🔥 NO EXISTE → limpiar campos
+      nombre_empresa.value = "";
+      direccion_empresa.value = "";
+      telefono_empresa.value = "";
+      correo_empresa.value = "";
+      return;
+    }
 
-  const empresa = await res.json();
+    const empresa = await res.json();
 
-  nombre_empresa.value = empresa.nombre_empresa;
-  direccion_empresa.value = empresa.direccion_empresa;
-  telefono_empresa.value = empresa.telefono_empresa;
-  correo_empresa.value = empresa.correo_empresa;
+    nombre_empresa.value = empresa.nombre_empresa || "";
+    direccion_empresa.value = empresa.direccion_empresa || "";
+    telefono_empresa.value = empresa.telefono_empresa || "";
+    correo_empresa.value = empresa.correo_empresa || "";
+
+  } catch (err) {
+    console.error(err);
+  }
 
 });
 

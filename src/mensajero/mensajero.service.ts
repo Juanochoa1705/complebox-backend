@@ -170,47 +170,83 @@ async eliminarPedido(id: number, mensajeroId: number) {
 
  async actualizarEmpresaMensajero(userId: number, dto: any) {
 
-  const relacion = await this.prisma.empresa_mensajero.findFirst({
+  // 🔍 Buscar relación mensajero - empresa
+  let relacion = await this.prisma.empresa_mensajero.findFirst({
     where: { fk_persona_mensajero: userId },
     include: { empresa: true }
   });
 
-  // ✅ VALIDACIÓN CLAVE
-  if (!relacion || !relacion.empresa) {
-    throw new Error("No tiene empresa asociada");
+  // ============================
+  // 🟢 CASO 1: NO EXISTE RELACIÓN
+  // ============================
+  if (!relacion) {
+
+    // 🔍 buscar empresa por NIT
+    let empresa = await this.prisma.empresa.findUnique({
+      where: { nit_empresa: dto.nit_empresa }
+    });
+
+    // 🆕 si no existe empresa → crearla
+    if (!empresa) {
+      empresa = await this.prisma.empresa.create({
+        data: {
+          nit_empresa: dto.nit_empresa,
+          nombre_empresa: dto.nombre_empresa,
+          direccion_empresa: dto.direccion_empresa,
+          telefono_empresa: dto.telefono_empresa,
+          correo_empresa: dto.correo_empresa,
+          fk_estado_empresa: 1
+        }
+      });
+    }
+
+    // 🔗 crear relación mensajero - empresa
+    await this.prisma.empresa_mensajero.create({
+      data: {
+        fk_persona_mensajero: userId,
+        fk_empresa_mensajero: empresa.cod_empresa
+      }
+    });
+
+    return { message: "Empresa creada y asociada correctamente" };
   }
+
+  // ============================
+  // 🔵 CASO 2: YA TIENE RELACIÓN
+  // ============================
 
   const empresaActual = relacion.empresa;
 
-  // ============================
-  // 🔵 MISMO NIT → UPDATE
-  // ============================
-  if (empresaActual.nit_empresa === dto.nit_empresa) {
+if (!empresaActual) {
+  throw new Error("Relación existe pero no tiene empresa asociada");
+}
 
-    return this.prisma.empresa.update({
-      where: { cod_empresa: empresaActual.cod_empresa },
-      data: {
-        nombre_empresa: dto.nombre_empresa,
-        direccion_empresa: dto.direccion_empresa,
-        telefono_empresa: dto.telefono_empresa,
-        correo_empresa: dto.correo_empresa
-      }
-    });
-  }
+if (empresaActual.nit_empresa === dto.nit_empresa) {
+
+  await this.prisma.empresa.update({
+    where: { cod_empresa: empresaActual.cod_empresa },
+    data: {
+      nombre_empresa: dto.nombre_empresa,
+      direccion_empresa: dto.direccion_empresa,
+      telefono_empresa: dto.telefono_empresa,
+      correo_empresa: dto.correo_empresa
+    }
+  });
+
+  return { message: "Empresa actualizada correctamente" };
+}
 
   // ============================
-  // 🟡 NUEVO NIT → CREAR
+  // 🟡 CASO 3: CAMBIO DE NIT
   // ============================
-  const existe = await this.prisma.empresa.findUnique({
+
+  let empresa = await this.prisma.empresa.findUnique({
     where: { nit_empresa: dto.nit_empresa }
   });
 
-  let nuevaEmpresa;
-
-  if (existe) {
-    nuevaEmpresa = existe;
-  } else {
-    nuevaEmpresa = await this.prisma.empresa.create({
+  // 🆕 si no existe nueva empresa → crearla
+  if (!empresa) {
+    empresa = await this.prisma.empresa.create({
       data: {
         nit_empresa: dto.nit_empresa,
         nombre_empresa: dto.nombre_empresa,
@@ -222,18 +258,18 @@ async eliminarPedido(id: number, mensajeroId: number) {
     });
   }
 
+  // 🔁 actualizar relación
   await this.prisma.empresa_mensajero.update({
     where: {
       cod_empresa_mensajero: relacion.cod_empresa_mensajero
     },
     data: {
-      fk_empresa_mensajero: nuevaEmpresa.cod_empresa
+      fk_empresa_mensajero: empresa.cod_empresa
     }
   });
 
-  return { message: "Empresa actualizada correctamente" };
+  return { message: "Empresa cambiada correctamente" };
 }
-
 async obtenerEmpresaMensajero(userId: number) {
 
   const empresaActual = await this.prisma.empresa_mensajero.findFirst({
@@ -247,9 +283,57 @@ async obtenerEmpresaMensajero(userId: number) {
 
   // 🔥 VALIDACIÓN CLAVE
   if (!empresaActual || !empresaActual.empresa) {
-    throw new Error("No tienes empresa asociada");
-  }
+  return null; // 🔥 clave
+}
 
   return empresaActual.empresa;
+}
+  async validarEmpresa(userId: number) {
+
+  const mensajero = await this.prisma.persona.findUnique({
+    where: { cod_user: userId },
+    include: {
+      empresa_mensajero: {
+        include: {
+          empresa: true
+        }
+      }
+    }
+  });
+
+  // ❌ NO TIENE RELACIÓN
+  if (!mensajero || mensajero.empresa_mensajero.length === 0) {
+    return {
+      acceso: false,
+      mensaje: "⚠️ No tienes empresa asociada. Debes registrarla para continuar."
+    };
+  }
+
+  const empresa = mensajero.empresa_mensajero[0].empresa;
+
+  // ❌ RELACIÓN PERO EMPRESA NULL
+  if (!empresa) {
+    return {
+      acceso: false,
+      mensaje: "⚠️ Empresa no válida."
+    };
+  }
+
+  // ✅ TODO OK
+  return {
+    acceso: true,
+    empresa
+  };
+}
+
+async buscarEmpresaPorNit(nit: string) {
+
+  const nitLimpio = nit.trim();
+
+  const empresa = await this.prisma.empresa.findUnique({
+    where: { nit_empresa: nitLimpio }
+  });
+
+  return empresa || null;
 }
 }
