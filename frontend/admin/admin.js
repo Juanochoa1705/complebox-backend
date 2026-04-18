@@ -409,4 +409,17 @@ async function updateStatusVigilante(idRegistro, nuevoEstado) {
     } catch (error) {
         console.error("Error al actualizar:", error);
     }
+
+  
+ 
+}
+
+   function irModoResidente() {
+  localStorage.setItem("modo", "residente");
+
+  // 🔥 LIMPIA ESTADO ANTERIOR
+  localStorage.removeItem("estadoEspecial");
+  localStorage.removeItem("mensajeEstado");
+
+  window.location.href = "../residente/Residente.html";
 }
