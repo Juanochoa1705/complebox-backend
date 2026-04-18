@@ -192,6 +192,9 @@ button:active {
 <div class="modo-switch" onclick="irModoResidente()">
   🏠
 </div>
+<div class="modo-switch" onclick="irModoVigilante()">
+  👮‍♂️
+  </div>
 </div>
 <script>
 
@@ -426,13 +429,31 @@ inputHistorial.addEventListener("input", async () => {
     }
 
     div.innerHTML = `
-      <b>📦 Pedido:</b> ${p.nombre_pedido || '❌'}<br>
-      <b>🔢 Guía:</b> ${p.numero_guia || '❌'}<br>
-      <b>📌 Estado:</b> ${p.estado_pedido || '❌'}<br>
-      ${acciones}
-      <hr>
-    `;
+  <b>📦 Pedido:</b> ${p.nombre_pedido}<br>
+  <b>🔢 Guía:</b> ${p.numero_guia}<br>
+  <b>📌 Estado:</b> ${p.estado_pedido || "Sin estado"}<br>
+  <b>🏘️ Conjunto:</b> ${p.nombre_conjunto || 'No disponible'}<br>
+  <b>📅 Recibido:</b> ${p.fecha_recibido}<br>
+  <b>📅 Entrega:</b> ${p.fecha_entregado || 'Pendiente'}<br>
 
+  <b>👮 Recibe:</b> ${p.nombre_vigilante_recibe || ''} ${p.apellido_vigilante_recibe || ''}<br>
+  <b>👮 Entrega:</b> ${p.nombre_vigilante_entrega || ''} ${p.apellido_vigilante_entrega || ''}<br>
+
+   <b>🏢 Apto:</b> ${
+          p.numero_torre && p.numero_apto
+            ? `Torre ${p.numero_torre} - Apto ${p.numero_apto}`
+            : "❌ No asignado"
+        }<br>
+
+  <b>✍️ Firma:</b><br>
+  ${
+    p.firma_residente
+      ? `<img src="${p.firma_residente}" style="width:120px; border-radius:10px; margin-top:5px;">`
+      : `<span style="color:red;">❌ No registrada</span>`
+  }
+
+  <hr>
+`;
     tabla.appendChild(div);
   });
 
@@ -481,7 +502,7 @@ function irModoResidente() {
 
   window.location.href = "../residente/Residente.html";
 }
-
+function irModoVigilante() { window.location.href = "../vigilante/vigilante.html"; }
 
 // ==========================
 // 🚀 INICIO

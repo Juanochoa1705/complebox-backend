@@ -182,25 +182,26 @@ button:active {
 // ==========================
 async function cargarPerfilvig() {
   const token = localStorage.getItem("token");
-
+  
   try {
     const res = await fetch("http://localhost:3000/vigilante/perfilvig", {
-      headers: {
-        Authorization: `Bearer ${token}`
-      }
+      headers: { "Authorization": `Bearer ${token}` }
     });
-
-    if (!res.ok) {
-      throw new Error("No se pudo obtener el perfil. Status: " + res.status);
-    }
-
     const data = await res.json();
 
-    const titulores = document.getElementById("titulovig");
-
-    if (titulores) {
-      titulores.innerText = `👋 Hola, ${data.nombres || 'Vigilante'} ${data.apellidos || ''} 👮‍♂️`;
+    // Si el backend dice que el acceso está restringido (Estado 3)
+    if (data.accesoRestringido) {
+        localStorage.setItem("estadoEspecial", "true");
+        localStorage.setItem("mensajeEstado", data.mensaje);
+        
+        // Recargamos para que se ejecute tu lógica de bloqueo que limpia la pantalla
+        location.reload(); 
+        return;
     }
+
+    // Si el acceso es normal, limpiamos cualquier bloqueo previo y mostramos datos
+    localStorage.setItem("estadoEspecial", "false");
+    document.getElementById("datosPerfil").innerText = `${data.nombres} ${data.apellidos}`;
 
   } catch (error) {
     console.error("Error al cargar perfil:", error);

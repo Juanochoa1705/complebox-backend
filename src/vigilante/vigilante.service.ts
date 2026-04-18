@@ -137,28 +137,35 @@ async entregarPedido(id: number, vigilanteId: number) {
 }
 
 async obtenerPerfilvig(codUser: number) {
-
+  // 1. Buscamos los datos de la persona
   const persona = await this.prisma.persona.findUnique({
-    where: {
-      cod_user: codUser
-    },
-    select: {
-      nombres: true,
-      apellidos: true
-    }
+    where: { cod_user: codUser },
+    select: { nombres: true, apellidos: true }
   });
 
- const empresaVigilanteconjunto = await this.prisma.empresa_vigilante_conjunto.findFirst({
-  where: {
-    fk_persona_vigilante: codUser
+  // 2. Buscamos la relación con la empresa/conjunto
+  const relacion = await this.prisma.empresa_vigilante_conjunto.findFirst({
+    where: { fk_persona_vigilante: codUser }
+  });
+
+  // 3. Validamos el estado 3 o si no existe registro
+  // Usamos 'cod_empresa_vigilante' que es el nombre real en tu modelo
+  if (!relacion || relacion.fk_estado_vigilante_empresa === 3) {
+    return {
+      accesoRestringido: true,
+      mensaje: "Tu perfil de vigilante está inactivo o fue rechazado.",
+      nombres: persona?.nombres,
+      apellidos: persona?.apellidos
+    };
   }
-});
 
+  // 4. Si todo está OK
   return {
-  nombres: persona?.nombres,
-  apellidos: persona?.apellidos
-};
-
+    accesoRestringido: false,
+    nombres: persona?.nombres,
+    apellidos: persona?.apellidos,
+    cod_relacion: relacion.cod_empresa_vigilante // 👈 Corregido según tu modelo
+  };
 }
 
 async historialPedidos(query: string, vigilanteId: number) {

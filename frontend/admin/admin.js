@@ -424,3 +424,4 @@ async function updateStatusVigilante(idRegistro, nuevoEstado) {
   window.location.href = "../residente/Residente.html";
 }
 function irModoMensajero() { window.location.href = "../mensajero/mensajero.html"; }
+function irModoVigilante() { window.location.href = "../vigilante/vigilante.html"; }
