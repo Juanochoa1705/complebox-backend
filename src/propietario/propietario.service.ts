@@ -73,37 +73,37 @@ export class PropietarioService {
   }
 
   async obtenerPerfil(codUser: number) {
-
   const persona = await this.prisma.persona.findUnique({
-    where: {
-      cod_user: codUser
-    },
-    select: {
-      nombres: true,
-      apellidos: true
+    where: { cod_user: codUser },
+    select: { nombres: true, apellidos: true }
+  });
+
+  const aptoPropietario = await this.prisma.apto_propietario.findFirst({
+    where: { fk_cod_propietario: codUser },
+    include: {
+      apto: {
+        include: { torre: true }
+      }
     }
   });
 
- const aptoPropietario = await this.prisma.apto_propietario.findFirst({
-  where: {
-    fk_cod_propietario: codUser
-  },
-  include: {
-    apto: {
-      include: {
-        torre: true
-      }
-    }
+  // 🚨 LÓGICA DE BLOQUEO:
+  // Si no tiene apto asignado o si el estado es 3 (Inactivo/Rechazado)
+  if (!aptoPropietario || aptoPropietario.fk_estado_apto_propietario === 3) {
+    return {
+      accesoRestringido: true,
+      mensaje: "Aún no estás registrado como propietario en ningún conjunto / apto.",
+      nombres: persona?.nombres
+    };
   }
-});
 
   return {
-  nombres: persona?.nombres,
-  apellidos: persona?.apellidos,
-  torre: aptoPropietario?.apto?.torre?.numero_torre,
-  apto: aptoPropietario?.apto?.numero_apto
-};
-
+    accesoRestringido: false,
+    nombres: persona?.nombres,
+    apellidos: persona?.apellidos,
+    torre: aptoPropietario?.apto?.torre?.numero_torre,
+    apto: aptoPropietario?.apto?.numero_apto
+  };
 }
 
 async rechazarResidente(residenteId: number) {

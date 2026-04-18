@@ -93,25 +93,59 @@
 </div>
 
 <script>
+// 1. CONFIGURACIÓN INICIAL
 const API = "http://localhost:3000";
 const token = localStorage.getItem("token");
+const estadoEspecial = localStorage.getItem("estadoEspecialProp");
+const mensaje = localStorage.getItem("mensajeEstadoProp");
 
-// Función para cargar los datos del propietario
-async function cargarPerfil(){
+// 2. EL "MATAPERROS" (Si hay bloqueo, se detiene TODO)
+if (estadoEspecial === "true") {
+    document.body.innerHTML = `
+    <div style="height:100vh; display:flex; justify-content:center; align-items:center; text-align:center; padding:20px; font-family:sans-serif; background:#f0f2f5;">
+      <div style="background:white; padding:40px; border-radius:15px; box-shadow:0 8px 30px rgba(0,0,0,0.1); border-top: 8px solid #003366; max-width: 400px;">
+        <h2 style="color:#003366; margin-top:0;">⚠️ Acceso restringido</h2>
+        <p style="color:#555; margin-bottom:25px;">${mensaje}</p>
+        <div style="display: flex; flex-direction: column; gap: 12px;">
+            <button onclick="volver()" style="background:#003366; color:white; border:none; padding:12px; border-radius:8px; cursor:pointer; font-weight:bold;">⬅️ Volver</button>
+            <button onclick="cerrarSesion()" style="background:transparent; color:#d32f2f; border:1px solid #d32f2f; padding:10px; border-radius:8px; cursor:pointer;">Cerrar sesión</button>
+        </div>
+      </div>
+    </div>`;
+
+    // FORZAMOS LA PARADA DEL SCRIPT
+    window.stop(); // Detiene la carga de la página
+    throw new Error("Bucle detenido: Usuario bloqueado"); 
+}
+
+// 3. CARGA NORMAL (Solo llega aquí si NO entró al IF de arriba)
+cargarPerfil();
+
+async function cargarPerfil() {
     try {
         const res = await fetch(`${API}/propietario/perfil`, {
             headers: { Authorization: `Bearer ${token}` }
         });
-        if (!res.ok) throw new Error("Error perfil");
         const data = await res.json();
 
+        if (data.accesoRestringido) {
+            localStorage.setItem("estadoEspecialProp", "true");
+            localStorage.setItem("mensajeEstadoProp", data.mensaje);
+            location.reload(); // Solo recargará UNA VEZ para activar el bloqueo de arriba
+            return;
+        }
+
+        // Si llegamos aquí, el usuario es legal
+        localStorage.setItem("estadoEspecialProp", "false");
         document.getElementById("titulo").innerText = `👋 Hola, ${data.nombres}`;
         document.getElementById("ubicacion").innerText = `🏢 Torre ${data.torre} • Apto ${data.apto}`;
     } catch (err) {
         console.error(err);
-        document.getElementById("titulo").innerText = "Error al cargar perfil";
     }
 }
+
+function volver() { window.history.back(); }
+function cerrarSesion() { localStorage.clear(); window.location.href = "../login.html"; }
 
 // Función para residentes que esperan aprobación
 async function cargarResidentesPendientes(){
@@ -257,6 +291,7 @@ function irModoMensajero() { window.location.href = "../mensajero/mensajero.html
 function irModoVigilante() { window.location.href = "../vigilante/vigilante.html"; }
 // INICIO
 actualizarTodo();
+
 
 </script>
 

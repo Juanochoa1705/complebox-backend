@@ -425,3 +425,4 @@ async function updateStatusVigilante(idRegistro, nuevoEstado) {
 }
 function irModoMensajero() { window.location.href = "../mensajero/mensajero.html"; }
 function irModoVigilante() { window.location.href = "../vigilante/vigilante.html"; }
+function irModoPropietario() { window.location.href = "../propietario/propietario.html"; }
