@@ -5,7 +5,10 @@ import {
   Body,
   Request,
   UseGuards,
-  Query
+  Query,
+  Patch,
+  Param,
+  ParseIntPipe
 } from '@nestjs/common';
 import { AccesoService } from './acceso.service';
 import { JwtAuthGuard } from '../auth/jwt-auth.guard';
@@ -55,6 +58,22 @@ buscarEmpresas(@Query('q') query: string) {
 validarResidente(@Request() req) {
   return this.accesoService.validarAcceso(req.user.id);
 }
+
+@Patch('solicitar/:id')
+solicitar(@Param('id') id: string) {
+  console.log('ID que llega al controlador (tipo):', typeof id, 'valor:', id);
+  return this.accesoService.solicitarAccesoAdmin(Number(id));
+}
+
+  @Get('pendientes')
+  listarPendientes() {
+    return this.accesoService.obtenerSolicitudesPendientes();
+  }
+
+  @Patch('aprobar/:id')
+  aprobar(@Param('id', ParseIntPipe) id: number) {
+    return this.accesoService.aprobarAcceso(id);
+  }
 
 
 }

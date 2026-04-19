@@ -116,4 +116,60 @@ async validarAcceso(userId: number) {
   };
 }
 
+async solicitarAccesoAdmin(cod_user: number) {
+  // 1. Forzamos que sea número (a veces desde el controlador llega como string)
+  const idLimpio = Number(cod_user);
+  
+  console.log('--- Intentando actualizar ID:', idLimpio, '---');
+
+  try {
+    // 2. Realizamos la actualización directamente
+    const resultado = await this.prisma.persona.update({
+      where: { 
+        cod_user: idLimpio 
+      },
+      data: { 
+        // Verifica que este nombre coincida EXACTO con tu schema.prisma
+        fk_estado_user: 3 
+      },
+    });
+
+    console.log('✅ Actualización exitosa en DB:', resultado);
+    return resultado;
+
+  } catch (error) {
+    console.error('❌ Error de Prisma al actualizar:', error.message);
+    
+    // Si el error es P2025 es que el ID no existe
+    if (error.code === 'P2025') {
+      throw new Error(`No se encontró el usuario con ID ${idLimpio}`);
+    }
+    
+    throw error;
+  }
+}
+
+  // 2. Tú apruebas la solicitud
+  async aprobarAcceso(cod_user: number) {
+    return this.prisma.persona.update({
+      where: { cod_user },
+      data: { 
+        fk_rol: 1,         // Cambiamos a Rol Admin
+        fk_estado_user: 1  // Cambiamos a Estado Activo
+      },
+    });
+  }
+
+  // 3. Ver lista de gente que quiere ser Admin
+  async obtenerSolicitudesPendientes() {
+    return this.prisma.persona.findMany({
+      where: {
+        fk_estado_user: 3, // Todos los que están esperando
+      },
+      include: {
+        rol: true,
+      }
+    });
+  }
+
 }

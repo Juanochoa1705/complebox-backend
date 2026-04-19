@@ -81,6 +81,9 @@ function mostrarPantallaBloqueo(msj) {
             <button onclick="cerrarSesion()" style="width: 100%; background: #1976d2; color: white; border: none; padding: 16px; border-radius: 15px; font-weight: bold; cursor: pointer;">
                 Cerrar sesión
             </button>
+            <button onclick="solicitaradmin()" style="width: 100%; background: #1976d2; color: white; border: none; padding: 16px; border-radius: 15px; font-weight: bold; cursor: pointer;">
+                ¿Eres administrador de un conjunto?
+            </button>
         </div>
     </div>`;
 }
@@ -464,3 +467,4 @@ function irModoMensajero() { window.location.href = "../mensajero/mensajero.html
 function irModoVigilante() { window.location.href = "../vigilante/vigilante.html"; }
 function irModoPropietario() { window.location.href = "../propietario/propietario.html"; }
 function irModoAdministrador() { window.location.href = "../admin/admin.html"; }
+function solicitaradmin() { window.location.href = "../superadmin/solicitudes.html"; }

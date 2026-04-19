@@ -1,0 +1,62 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>CompleBox - Solicitar Acceso</title>
+    <style>
+        /* TUS ESTILOS */
+        * { box-sizing: border-box; font-family: 'Segoe UI', sans-serif; }
+        body { margin: 0; height: 100vh; background: linear-gradient(180deg, #0d47a1, #1976d2); display: flex; justify-content: center; align-items: center; }
+        .mobile { position: relative; width: 100%; max-width: 390px; height: 100vh; background: #fff; border-radius: 20px 20px 0 0; padding: 25px; overflow-y: auto; }
+        h2 { text-align: center; color: #0d47a1; margin-bottom: 20px; }
+        button { width: 100%; padding: 14px; background: #1976d2; color: white; border: none; border-radius: 12px; margin-top: 10px; cursor: pointer; font-weight: bold; }
+        button:active { transform: scale(0.98); }
+        .mensaje { text-align: center; margin-top: 20px; font-weight: bold; }
+    </style>
+</head>
+<body>
+    <div class="mobile">
+        <h2>Mi Perfil</h2>
+        <div style="text-align: center; color: #555; margin-bottom: 30px;">
+            <p>Si eres administrador de un conjunto residencial, solicita aquí el acceso al panel de control.</p>
+        </div>
+        
+        <button id="btnSolicitar" onclick="enviarPeticion()">
+            Enviar Solicitud de Admin
+        </button>
+
+        <div id="status" class="mensaje"></div>
+    </div>
+
+    <script>
+
+        async function enviarPeticion() {
+    const btn = document.getElementById('btnSolicitar');
+    const status = document.getElementById('status');
+    
+    // Obtenemos directamente el valor de la clave 'userId'
+    const idDelStorage = localStorage.getItem('userId'); 
+
+    if (!idDelStorage) {
+        status.innerText = "❌ No se encontró el userId en el sistema.";
+        return;
+    }
+
+    try {
+        const res = await fetch(`http://localhost:3000/acceso/solicitar/${idDelStorage}`, {
+            method: 'PATCH'
+        });
+
+        if (res.ok) {
+            btn.style.display = 'none';
+            status.style.color = "#2e7d32";
+            status.innerText = "✅ ¡Solicitud enviada con el ID: " + idDelStorage + "!";
+        }
+    } catch (err) {
+        status.innerText = "❌ Error de conexión.";
+    }
+}
+    </script>
+</body>
+</html>
