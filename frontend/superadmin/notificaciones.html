@@ -187,6 +187,19 @@ async function aprobarTraspaso(userId, conjuntoId) {
             }
         }
 
+        async function rechazarSolicitud(userId) {
+    if (!confirm("¿Seguro que quieres rechazar esta solicitud?")) return;
+
+    const res = await fetch(`http://localhost:3000/acceso/rechazars/${userId}`, {
+        method: 'PATCH' // O POST, según como lo definas en el controller
+    });
+
+    if (res.ok) {
+        alert("Solicitud rechazada");
+        document.getElementById(`solicitud-${userId}`).remove();
+    }
+}
+
         // Auxiliar para selects
         async function llenarSelectConjuntos(idSelect) {
             const select = document.getElementById(idSelect);

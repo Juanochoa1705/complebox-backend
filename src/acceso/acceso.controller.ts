@@ -86,6 +86,16 @@ rechazar(@Param('id', ParseIntPipe) id: number) {
   return this.accesoService.rechazarAcceso(id);
 }
 
+ @Patch('rechazars/:cod_user')
+  async rechazars(
+    @Param('cod_user', ParseIntPipe) cod_user: number
+  ) {
+    return await this.accesoService.rechazarAccesos(cod_user);
+  }
+
+
+ 
+
 @Post('solicitar-traspaso')
   async solicitard(@Body() data: { userId: number, conjuntoId: number }) {
     return await this.accesoService.crearSolicitudTraspaso(data.userId, data.conjuntoId);

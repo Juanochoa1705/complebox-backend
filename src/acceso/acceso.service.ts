@@ -198,6 +198,29 @@ async solicitarAccesoAdmin(cod_user: number) {
   
 }
 
+async rechazarAccesos(cod_user: number) {
+  const idLimpio = Number(cod_user);
+
+  return await this.prisma.$transaction(async (tx) => {
+    // 1. Regresamos a la persona a estado "Activo Normal" (ej: 2) o "Registrado" (1)
+    await tx.persona.update({
+      where: { cod_user: idLimpio },
+      data: { fk_estado_user: 1 }, 
+    });
+
+    // 2. Borramos la solicitud pendiente en admin_conjunto para que no quede basura
+    // Usamos deleteMany porque es más seguro si por error hubiera más de una solicitud
+    await tx.adminConjunto.deleteMany({
+      where: { 
+        fk_cod_administrador: idLimpio,
+        fk_estado_admin: 3 // Solo borramos la que estaba "Pendiente"
+      }
+    });
+
+    return { message: "Solicitud rechazada y eliminada con éxito" };
+  });
+}
+
 async obtenerConjuntos() {
   return await this.prisma.conjunto.findMany({
     select: {
@@ -214,7 +237,7 @@ async crearSolicitudTraspaso(cod_user: number, cod_conjunto: number) {
     // 1. Cambiamos el estado del usuario a "En espera" (estado 3)
     await tx.persona.update({
       where: { cod_user: Number(cod_user) },
-      data: { fk_estado_user: 3 } 
+      data: { fk_estado_user: 4 } 
     });
 
     // 2. Creamos la relación en admin_conjunto con estado "Pendiente" (estado 3)
