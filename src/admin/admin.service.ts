@@ -420,60 +420,54 @@ async vigilantesPendientes(adminId: number) {
   }
 
   async rechazarVigilante(vigilanteId: number) {
-
+  // 1. Verificamos que el usuario exista y traemos sus relaciones de un solo golpe
   const vigilante = await this.prisma.persona.findUnique({
-    where: { cod_user: vigilanteId }
+    where: { cod_user: vigilanteId },
+    include: {
+      apto_residente: true,
+      apto_propietario: true,
+      empresa_mensajero: true,
+      adminConjuntos: true,
+    }
   });
 
   if (!vigilante) {
     throw new NotFoundException('El vigilante no existe');
   }
 
-  // 🔥 1. Verificar si tiene relación con empresa
-  const tieneRelacion = await this.prisma.empresa_vigilante_conjunto.findFirst({
-    where: {
-      fk_persona_vigilante: vigilanteId
-    }
+  // ==========================================
+  // PASO 1: ELIMINAR SIEMPRE LA RELACIÓN DE VIGILANTE
+  // ==========================================
+  // Borramos de empresa_vigilante_conjunto para liberar la FK
+  await this.prisma.empresa_vigilante_conjunto.deleteMany({
+    where: { fk_persona_vigilante: vigilanteId }
   });
 
-  // ==============================
-  // CASO 1: TIENE RELACIÓN → SOLO INACTIVAR
-  // ==============================
-  if (tieneRelacion) {
+  // ==========================================
+  // PASO 2: VERIFICAR SI TIENE OTROS ROLES ACTIVOS
+  // ==========================================
+  const tieneOtrosRoles = 
+    vigilante.apto_residente.length > 0 || 
+    vigilante.apto_propietario.length > 0 || 
+    vigilante.empresa_mensajero.length > 0 || 
+    vigilante.adminConjuntos.length > 0;
 
-    // 🔥 cambiar estado en la relación
-    await this.prisma.empresa_vigilante_conjunto.updateMany({
-      where: {
-        fk_persona_vigilante: vigilanteId
-      },
-      data: {
-        fk_estado_vigilante_empresa: 2 // 🔴 INACTIVO
-      }
-    });
-
-    // 🔥 también inactivar la persona
-    await this.prisma.persona.update({
-      where: {
-        cod_user: vigilanteId
-      },
-      data: {
-        fk_estado_user: 2 // 🔴 INACTIVO
-      }
-    });
-
+  if (tieneOtrosRoles) {
+    // Si tiene otros roles, NO borramos la persona. 
+    // Solo devolvemos éxito porque el rol de vigilante ya se borró arriba.
     return {
-      message: "Vigilante inactivado correctamente"
+      message: "Se rechazó el cargo de vigilante. La persona permanece en el sistema por tener otros roles (Residente/Propietario/Admin/Mensajero)."
+    };
+  } else {
+    // Si NO tiene absolutamente nada más, limpiamos la tabla persona
+    await this.prisma.persona.delete({
+      where: { cod_user: vigilanteId }
+    });
+    
+    return {
+      message: "Vigilante rechazado y eliminado completamente del sistema."
     };
   }
-
-  // ==============================
-  // CASO 2: NO TIENE RELACIÓN → ELIMINAR
-  // ==============================
-  return this.prisma.persona.delete({
-    where: {
-      cod_user: vigilanteId
-    }
-  });
 }
 
 async historial(query: string, userId: number, rol: string) {
@@ -612,6 +606,34 @@ async cambiarEstadoVigilante(idRegistro: number, nuevoEstado: number) {
       fk_estado_vigilante_empresa: nuevoEstado
     }
   });
+}
+
+async obtenerPerfilAdmin(codUser: number) {
+  const persona = await this.prisma.persona.findUnique({
+    where: { cod_user: codUser },
+    select: { nombres: true, apellidos: true }
+  });
+
+  const relacionAdmin = await this.prisma.adminConjunto.findFirst({
+    where: { fk_cod_administrador: codUser },
+    include: { conjunto: true }
+  });
+
+ if (!relacionAdmin) {
+  return {
+    tieneConjunto: false, // Cambiamos el nombre de la variable
+    mensaje: "Bienvenido. Para comenzar, registra tu conjunto residencial.",
+    nombres: persona?.nombres
+  };
+}
+
+  return {
+    accesoRestringido: false,
+    nombres: persona?.nombres,
+    apellidos: persona?.apellidos,
+    nombreConjunto: relacionAdmin.conjunto?.nombre_conjunto,
+    codConjunto: relacionAdmin.fk_cod_conjunto
+  };
 }
 }
 

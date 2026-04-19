@@ -10,7 +10,9 @@ import {
   Param,
   Query,
   Put,
-  Delete
+  Delete,
+  Res,
+  HttpStatus,
 } from '@nestjs/common';
 import { AdminService } from './admin.service';
 import { CreateConjuntoDto } from './dto/create-conjunto.dto';
@@ -18,6 +20,7 @@ import { JwtAuthGuard } from '../auth/jwt-auth.guard';
 import { UseInterceptors, UploadedFile } from '@nestjs/common';
 import { FileInterceptor } from '@nestjs/platform-express';
 import { CrearEmpresaDto } from './dto/crear-empresa.dto';
+import type { Response } from 'express';
 
 
 
@@ -149,5 +152,23 @@ async listarVigilantes(@Req() req: any) {
   async cambiarEstado(@Body() body: { id: number, estado: number }) {
     return this.adminService.cambiarEstadoVigilante(body.id, body.estado);
   }
+
+@UseGuards(JwtAuthGuard)
+@Get('perfil')
+async obtenerPerfil(@Req() req: any, @Res() res: Response) {
+  try {
+    // CAMBIO AQUÍ: Usa req.user.id en lugar de req.user.userId
+    const codUser = req.user.id; 
+    
+    const resultado = await this.adminService.obtenerPerfilAdmin(codUser);
+    return res.status(HttpStatus.OK).json(resultado);
+  } catch (error) {
+    console.error("Error en perfil:", error);
+    return res.status(HttpStatus.INTERNAL_SERVER_ERROR).json({ 
+      mensaje: "Error interno", 
+      error: error.message 
+    });
+  }
+}
 
 }

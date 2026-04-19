@@ -198,6 +198,9 @@ button:active {
   <div class="modo-switch" onclick="irModoPropietario()">
   🔑
   </div>
+  <div class="modo-switch" onclick="irModoAdministrador()">
+  ⚙️
+  </div>
 
 </div>
 <script>
@@ -234,6 +237,13 @@ async function validarModoMensajero() {
           <div>
             <h2 style="color:#d32f2f;">🚫 Acceso restringido</h2>
             <p>${data.mensaje}</p>
+            <div class="iconos-flotantes">
+                <div class="modo-switch" onclick="irModoResidente()" title="Modo Residente">🏠</div>
+                <div class="modo-switch" onclick="irModoMensajero()" title="Modo Mensajero">🚚</div>
+                <div class="modo-switch" onclick="irModoVigilante()" title="Modo Vigilante">👮‍♂️</div>
+                <div class="modo-switch" onclick="irModoPropietario()" title="Modo Propietario">🔑</div>
+                <div class="modo-switch" onclick="irModoAdministrador()" title="Modo Administrador">⚙️</div>
+            </div>
             <button onclick="irRegistroEmpresa()">Registrar empresa</button>
             <button onclick="cerrarSesion()">Cerrar sesión</button>
           </div>
@@ -508,7 +518,8 @@ function irModoResidente() {
 }
 function irModoVigilante() { window.location.href = "../vigilante/vigilante.html"; }
 function irModoPropietario() { window.location.href = "../propietario/propietario.html"; }
-
+function irModoAdministrador() { window.location.href = "../admin/admin.html"; }
+function irModoMensajero() { window.location.href = "../mensajero/mensajero.html"; }
 // ==========================
 // 🚀 INICIO
 // ==========================
