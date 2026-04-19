@@ -78,11 +78,15 @@ model empresa_mensajero {
   cod_empresa_mensajero Int      @id @default(autoincrement())
   fk_persona_mensajero  Int?
   fk_empresa_mensajero  Int?
+  fk_estado_mensajero   Int?     @default(1)
+  fecha_actualizacion   DateTime @default(now()) @db.Timestamp(0)
   persona               persona? @relation(fields: [fk_persona_mensajero], references: [cod_user], onDelete: Restrict, onUpdate: Restrict, map: "empresa_mensajero_ibfk_1")
   empresa               empresa? @relation(fields: [fk_empresa_mensajero], references: [cod_empresa], onDelete: Restrict, onUpdate: Restrict, map: "empresa_mensajero_ibfk_2")
+  estado                estado?  @relation(fields: [fk_estado_mensajero], references: [cod_estado], onDelete: Restrict, onUpdate: Restrict, map: "fk_mensajero_estado_rel")
 
   @@index([fk_empresa_mensajero], map: "fk_empresa_mensajero")
   @@index([fk_persona_mensajero], map: "fk_persona_mensajero")
+  @@index([fk_estado_mensajero], map: "fk_mensajero_estado_rel")
 }
 
 model empresa_seguridad_conjunto {
@@ -119,9 +123,11 @@ model empresa_vigilante_conjunto {
 model estado {
   cod_estado                 Int                          @id @default(autoincrement())
   nombre_estado              String                       @db.VarChar(50)
+  admin_conjunto             AdminConjunto[]
   apto_propietario           apto_propietario[]
   apto_residente             apto_residente[]
   empresa                    empresa[]
+  empresa_mensajero          empresa_mensajero[]
   empresa_seguridad_conjunto empresa_seguridad_conjunto[]
   empresa_vigilante_conjunto empresa_vigilante_conjunto[]
   persona                    persona[]
@@ -217,10 +223,14 @@ model AdminConjunto {
   cod_admin_conjunto   Int       @id @default(autoincrement())
   fk_cod_conjunto      Int?
   fk_cod_administrador Int?
+  fk_estado_admin      Int?      @default(1)
+  fecha_actualizacion  DateTime  @default(now()) @db.Timestamp(0)
   admin                persona?  @relation(fields: [fk_cod_administrador], references: [cod_user])
   conjunto             conjunto? @relation(fields: [fk_cod_conjunto], references: [cod_conjunto])
+  estado               estado?   @relation(fields: [fk_estado_admin], references: [cod_estado], onDelete: Restrict, onUpdate: Restrict, map: "fk_estado_admin")
 
   @@unique([fk_cod_conjunto, fk_cod_administrador], map: "uq_admin_conjunto")
   @@index([fk_cod_administrador], map: "admin_conjunto_fk_cod_administrador_fkey")
+  @@index([fk_estado_admin], map: "fk_estado_admin")
   @@map("admin_conjunto")
 }

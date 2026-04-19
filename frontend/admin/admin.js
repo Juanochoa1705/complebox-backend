@@ -6,6 +6,35 @@ const token = localStorage.getItem('token');
 const estadoEspecialAdmin = localStorage.getItem("estadoEspecialAdmin");
 const mensajeAdmin = localStorage.getItem("mensajeAdmin");
 
+async function inicializarPaginaAdmin() {
+    try {
+        const respuesta = await fetch('http://localhost:3000/admin/perfil', {
+    headers: { 
+        'Authorization': `Bearer ${localStorage.getItem('token')}` 
+    }
+});
+        const data = await respuesta.json();
+
+        // Si el backend dice que está bloqueado, disparamos tu pantalla
+        if (data.bloqueado) {
+            mostrarPantallaBloqueo(data.mensaje);
+            return; // Detenemos la ejecución del resto de la página
+        }
+
+        if (!data.tieneConjunto) {
+            // Lógica para mostrar formulario de crear conjunto...
+        } else {
+            // Cargar Dashboard normal
+        }
+
+    } catch (error) {
+        console.error("Error al cargar perfil:", error);
+    }
+}
+
+// Ejecutar al cargar
+inicializarPaginaAdmin();
+
 // Función de validación mejorada
 function validarRol() {
     if (!token) return false;
@@ -25,32 +54,35 @@ if (!validarRol()) {
 }
 
 function mostrarPantallaBloqueo(msj) {
-    document.addEventListener('DOMContentLoaded', () => {
-        document.body.innerHTML = `
-        <div style="margin: 0; height: 100vh; background: #f0f2f5; display: flex; justify-content: center; align-items: center; font-family: sans-serif;">
-            <div style="width: 100%; max-width: 450px; height: 100vh; background: #fff; border-left: 30px solid #0d47a1; border-right: 30px solid #0d47a1; display: flex; flex-direction: column; align-items: center; padding: 40px 20px; box-sizing: border-box;">
-                <div style="text-align: center; margin-bottom: 30px;">
-                    <h1 style="margin: 0; color: #003366; font-size: 24px; font-weight: bold;">Complebox</h1>
+    // Quitamos el listener para que actúe al instante
+    document.body.innerHTML = `
+    <style>
+        .iconos-flotantes { position: absolute; top: 15px; right: 15px; display: flex; flex-direction: column; gap: 10px; z-index: 9999; }
+        .modo-switch { background: white; border-radius: 50%; width: 45px; height: 45px; display: flex; justify-content: center; align-items: center; font-size: 20px; cursor: pointer; box-shadow: 0 4px 10px rgba(0,0,0,0.2); }
+    </style>
+    <div style="margin: 0; height: 100vh; background: #f0f2f5; display: flex; justify-content: center; align-items: center; font-family: sans-serif; position: relative;">
+        <div style="width: 100%; max-width: 450px; height: 100vh; background: #fff; border-left: 30px solid #0d47a1; border-right: 30px solid #0d47a1; display: flex; flex-direction: column; align-items: center; padding: 40px 20px; box-sizing: border-box;">
+            <div style="text-align: center; margin-bottom: 30px;">
+                <h1 style="margin: 0; color: #003366; font-size: 24px; font-weight: bold;">Complebox</h1>
+            </div>
+            <div style="text-align: center; margin-bottom: 40px;">
+                <h2 style="color: #0d47a1; font-size: 26px;">🚫 Acceso Denegado</h2>
+                <div style="background: #f8f9fa; border-radius: 15px; padding: 20px; border: 1px solid #dee2e6;">
+                    <p style="color: #555; font-size: 18px;">${msj}</p>
                 </div>
-                <div style="text-align: center; margin-bottom: 40px;">
-                    <h2 style="color: #0d47a1; font-size: 26px;">🚫 Acceso Denegado</h2>
-                    <div style="background: #f8f9fa; border-radius: 15px; padding: 20px; border: 1px solid #dee2e6;">
-                        <p style="color: #555; font-size: 18px;">${msj}</p>
-                    </div>
-                </div>
-                <div class="iconos-flotantes">
+            </div>
+            <div class="iconos-flotantes">
                 <div class="modo-switch" onclick="irModoResidente()" title="Modo Residente">🏠</div>
                 <div class="modo-switch" onclick="irModoMensajero()" title="Modo Mensajero">🚚</div>
                 <div class="modo-switch" onclick="irModoVigilante()" title="Modo Vigilante">👮‍♂️</div>
                 <div class="modo-switch" onclick="irModoPropietario()" title="Modo Propietario">🔑</div>
                 <div class="modo-switch" onclick="irModoAdministrador()" title="Modo Administrador">⚙️</div>
             </div>
-                <button onclick="cerrarSesion()" style="width: 100%; background: #1976d2; color: white; border: none; padding: 16px; border-radius: 15px; font-weight: bold; cursor: pointer;">
-                    Cerrar sesión
-                </button>
-            </div>
-        </div>`;
-    });
+            <button onclick="cerrarSesion()" style="width: 100%; background: #1976d2; color: white; border: none; padding: 16px; border-radius: 15px; font-weight: bold; cursor: pointer;">
+                Cerrar sesión
+            </button>
+        </div>
+    </div>`;
 }
 
 /* ==========================================
@@ -431,4 +463,4 @@ function irModoResidente() {
 function irModoMensajero() { window.location.href = "../mensajero/mensajero.html"; }
 function irModoVigilante() { window.location.href = "../vigilante/vigilante.html"; }
 function irModoPropietario() { window.location.href = "../propietario/propietario.html"; }
-function irModoAdministrador() { window.location.href = "../admmin/admmin.html"; }
+function irModoAdministrador() { window.location.href = "../admin/admin.html"; }

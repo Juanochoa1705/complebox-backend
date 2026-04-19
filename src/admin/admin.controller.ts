@@ -21,13 +21,17 @@ import { UseInterceptors, UploadedFile } from '@nestjs/common';
 import { FileInterceptor } from '@nestjs/platform-express';
 import { CrearEmpresaDto } from './dto/crear-empresa.dto';
 import type { Response } from 'express';
+import { PrismaService } from '../prisma/prisma.service';
 
 
 
 @Controller('admin')
 @UseGuards(JwtAuthGuard)
 export class AdminController {
-  constructor(private readonly adminService: AdminService) {}
+  constructor(
+    private readonly adminService: AdminService,
+    private readonly prisma: PrismaService // <--- ESTA ES LA LÍNEA QUE TE FALTA
+  ) {}
 
   @Post('conjunto')
   async crearConjunto(
@@ -153,22 +157,32 @@ async listarVigilantes(@Req() req: any) {
     return this.adminService.cambiarEstadoVigilante(body.id, body.estado);
   }
 
-@UseGuards(JwtAuthGuard)
 @Get('perfil')
-async obtenerPerfil(@Req() req: any, @Res() res: Response) {
-  try {
-    // CAMBIO AQUÍ: Usa req.user.id en lugar de req.user.userId
-    const codUser = req.user.id; 
-    
-    const resultado = await this.adminService.obtenerPerfilAdmin(codUser);
-    return res.status(HttpStatus.OK).json(resultado);
-  } catch (error) {
-    console.error("Error en perfil:", error);
-    return res.status(HttpStatus.INTERNAL_SERVER_ERROR).json({ 
-      mensaje: "Error interno", 
-      error: error.message 
-    });
+async obtenerPerfil(@Req() req) {
+  const userId = req.user.id; // Extraído de tu JWT
+
+  const adminRelacion = await this.prisma.adminConjunto.findFirst({
+    where: { fk_cod_administrador: userId },
+  });
+
+  // Si no existe, es que no tiene conjunto asignado
+  if (!adminRelacion) {
+    return { tieneConjunto: false };
   }
+
+  // VALIDACIÓN CLAVE: Si el estado es diferente a 1 (Activo)
+  if (adminRelacion.fk_estado_admin !== 1) {
+    return {
+      bloqueado: true,
+      mensaje: "Tu acceso como administrador ha sido revocado o está inactivo."
+    };
+  }
+
+  return {
+    tieneConjunto: true,
+    bloqueado: false,
+    // ... otros datos del admin
+  };
 }
 
 }
