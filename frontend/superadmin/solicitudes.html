@@ -5,58 +5,143 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>CompleBox - Solicitar Acceso</title>
     <style>
-        /* TUS ESTILOS */
         * { box-sizing: border-box; font-family: 'Segoe UI', sans-serif; }
         body { margin: 0; height: 100vh; background: linear-gradient(180deg, #0d47a1, #1976d2); display: flex; justify-content: center; align-items: center; }
         .mobile { position: relative; width: 100%; max-width: 390px; height: 100vh; background: #fff; border-radius: 20px 20px 0 0; padding: 25px; overflow-y: auto; }
         h2 { text-align: center; color: #0d47a1; margin-bottom: 20px; }
-        button { width: 100%; padding: 14px; background: #1976d2; color: white; border: none; border-radius: 12px; margin-top: 10px; cursor: pointer; font-weight: bold; }
+        
+        .form-group { margin: 20px 0 10px; }
+        label { font-size: 14px; color: #555; display: block; margin-bottom: 5px; }
+        select { width: 100%; padding: 12px; border-radius: 10px; border: 1px solid #ccc; background: white; font-size: 15px; }
+        
+        button { width: 100%; padding: 14px; background: #1976d2; color: white; border: none; border-radius: 12px; margin-top: 10px; cursor: pointer; font-weight: bold; font-size: 15px; }
         button:active { transform: scale(0.98); }
-        .mensaje { text-align: center; margin-top: 20px; font-weight: bold; }
+        
+        .mensaje { text-align: center; margin-top: 20px; font-weight: bold; font-size: 14px; }
+        .hr-div { border-top: 1px solid #eee; margin: 35px 0; position: relative; }
+        .hr-div span { position: absolute; top: -10px; left: 50%; transform: translateX(-50%); background: white; padding: 0 15px; color: #aaa; font-size: 11px; font-weight: bold; }
     </style>
 </head>
 <body>
     <div class="mobile">
-        <h2>Mi Perfil</h2>
-        <div style="text-align: center; color: #555; margin-bottom: 30px;">
-            <p>Si eres administrador de un conjunto residencial, solicita aquí el acceso al panel de control.</p>
+        <h2 style="margin-top: 10px;">Mi Perfil</h2>
+
+        <div style="text-align: center; color: #555; margin-bottom: 20px;">
+            <p>Gestiona tu nivel de acceso administrativo en la plataforma.</p>
         </div>
-        
-        <button id="btnSolicitar" onclick="enviarPeticion()">
-            Enviar Solicitud de Admin
-        </button>
+
+        <div id="seccion-sencilla">
+            <button id="btnSolicitar" onclick="enviarPeticion()">
+                Solicitud Sencilla de Admin
+            </button>
+            <p style="font-size: 11px; color: #888; text-align: center; margin-top: 8px;">
+                Usa esto si tu conjunto <b>no existe</b> aún en la app.
+            </p>
+        </div>
+
+        <div class="hr-div"><span>O RECLAMAR EXISTENTE</span></div>
+
+        <div id="seccion-traspaso">
+            <h3 style="color: #0d47a1; font-size: 17px; text-align: center; margin: 0;">Traspaso de Administración</h3>
+            <div class="form-group">
+                <label>Selecciona el conjunto:</label>
+                <select id="select-conjunto">
+                    <option value="">-- Cargando conjuntos... --</option>
+                </select>
+            </div>
+            <button onclick="solicitarTraspaso()" style="background: #fb8c00;">
+                Solicitar Mando del Conjunto
+            </button>
+            
+            <p style="font-size: 11px; color: #888; margin-top: 12px; line-height: 1.4; text-align: center;">
+                ⚠️ Al aprobarse, los administradores anteriores serán inactivados automáticamente.
+            </p>
+        </div>
 
         <div id="status" class="mensaje"></div>
     </div>
 
     <script>
-
+        // --- FUNCIÓN 1: SOLICITUD SENCILLA ---
         async function enviarPeticion() {
-    const btn = document.getElementById('btnSolicitar');
-    const status = document.getElementById('status');
-    
-    // Obtenemos directamente el valor de la clave 'userId'
-    const idDelStorage = localStorage.getItem('userId'); 
+            const status = document.getElementById('status');
+            const userId = localStorage.getItem('userId'); 
 
-    if (!idDelStorage) {
-        status.innerText = "❌ No se encontró el userId en el sistema.";
-        return;
-    }
+            if (!userId) {
+                status.style.color = "red";
+                status.innerText = "❌ No hay sesión activa.";
+                return;
+            }
 
-    try {
-        const res = await fetch(`http://localhost:3000/acceso/solicitar/${idDelStorage}`, {
-            method: 'PATCH'
-        });
-
-        if (res.ok) {
-            btn.style.display = 'none';
-            status.style.color = "#2e7d32";
-            status.innerText = "✅ ¡Solicitud enviada con el ID: " + idDelStorage + "!";
+            try {
+                const res = await fetch(`http://localhost:3000/acceso/solicitar/${userId}`, { 
+                    method: 'PATCH' 
+                });
+                
+                if (res.ok) {
+                    status.style.color = "#2e7d32";
+                    status.innerText = "✅ Solicitud sencilla enviada con éxito.";
+                }
+            } catch (err) {
+                status.innerText = "❌ Error al conectar con el servidor.";
+            }
         }
-    } catch (err) {
-        status.innerText = "❌ Error de conexión.";
-    }
-}
+
+        // --- FUNCIÓN 2: CARGAR CONJUNTOS DE LA DB ---
+        async function cargarConjuntos() {
+            const select = document.getElementById('select-conjunto');
+            try {
+                // Endpoint que creaste en el backend para listar conjuntos
+                const res = await fetch('http://localhost:3000/acceso/conjuntos');
+                const conjuntos = await res.json();
+                
+                select.innerHTML = '<option value="">-- Seleccionar Conjunto --</option>';
+                conjuntos.forEach(c => {
+                    const option = document.createElement('option');
+                    option.value = c.cod_conjunto;
+                    option.textContent = c.nombre_conjunto;
+                    select.appendChild(option);
+                });
+            } catch (e) {
+                select.innerHTML = '<option value="">Error al cargar la lista</option>';
+            }
+        }
+
+        // --- FUNCIÓN 3: SOLICITAR TRASPASO ---
+        async function solicitarTraspaso() {
+            const status = document.getElementById('status');
+            const conjuntoId = document.getElementById('select-conjunto').value;
+            const userId = localStorage.getItem('userId');
+
+            if (!conjuntoId) {
+                alert("Debes seleccionar un conjunto de la lista.");
+                return;
+            }
+
+            try {
+                const res = await fetch(`http://localhost:3000/acceso/solicitar-traspaso`, {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({ 
+                        userId: Number(userId), 
+                        conjuntoId: Number(conjuntoId) 
+                    })
+                });
+
+                if (res.ok) {
+                    status.style.color = "#fb8c00";
+                    status.innerText = "⏳ Petición de traspaso enviada al SuperAdmin.";
+                } else {
+                    const data = await res.json();
+                    alert("Error: " + data.message);
+                }
+            } catch (err) {
+                status.innerText = "❌ Error en la conexión.";
+            }
+        }
+
+        // Iniciar carga de conjuntos al abrir la página
+        cargarConjuntos();
     </script>
 </body>
 </html>

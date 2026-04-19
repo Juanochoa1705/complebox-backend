@@ -5,57 +5,80 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>CompleBox - Panel de Aprobación</title>
     <style>
-        /* TUS ESTILOS */
         * { box-sizing: border-box; font-family: 'Segoe UI', sans-serif; }
         body { margin: 0; height: 100vh; background: #f0f2f5; display: flex; justify-content: center; align-items: center; }
+        
         .mobile { position: relative; width: 100%; max-width: 390px; height: 100vh; background: #fff; padding: 25px; overflow-y: auto; border: 1px solid #ddd; }
         h2 { text-align: center; color: #0d47a1; margin-bottom: 25px; }
-        
-        /* Tarjetas de usuarios */
+        h3 { color: #1976d2; font-size: 16px; border-bottom: 2px solid #eee; padding-bottom: 5px; margin-top: 25px; }
+
         .card {
-            background: #fff;
-            border-radius: 15px;
-            padding: 15px;
-            margin-bottom: 15px;
-            box-shadow: 0 4px 10px rgba(0,0,0,0.1);
-            border-left: 5px solid #1976d2;
+            background: #fff; border-radius: 15px; padding: 15px; margin-bottom: 15px;
+            box-shadow: 0 4px 10px rgba(0,0,0,0.1); border-left: 5px solid #1976d2;
         }
-        .card p { margin: 4px 0; color: #333; }
-        .card .nombre { font-weight: bold; font-size: 1.1em; }
+        .card.traspaso { border-left-color: #fb8c00; } /* Naranja para traspasos */
+        
+        .card p { margin: 4px 0; color: #333; font-size: 14px; }
+        .card .nombre { font-weight: bold; font-size: 1.1em; color: #0d47a1; }
         
         .btn-group { display: flex; gap: 10px; margin-top: 10px; }
+        button { border: none; padding: 10px; border-radius: 8px; cursor: pointer; font-weight: bold; font-size: 13px; color: white; }
         
-        .btn-aprobar { background: #2e7d32; color: white; border: none; padding: 10px; border-radius: 8px; flex: 1; cursor: pointer; }
-        .btn-rechazar { background: #c62828; color: white; border: none; padding: 10px; border-radius: 8px; flex: 1; cursor: pointer; }
+        .btn-aprobar { background: #2e7d32; flex: 2; }
+        .btn-rechazar { background: #c62828; flex: 1; }
         
-        .iconos-flotantes { position: absolute; top: 15px; right: 15px; display: flex; flex-direction: column; gap: 10px; }
-        .modo-switch { background: white; border-radius: 50%; width: 45px; height: 45px; display: flex; justify-content: center; align-items: center; font-size: 20px; cursor: pointer; box-shadow: 0 4px 10px rgba(0,0,0,0.2); }
+        select { width: 100%; padding: 8px; border-radius: 8px; margin-top: 5px; border: 1px solid #ccc; }
+        
+        .logout { width: 100%; background: #555; margin-top: 30px; }
+        .footer-links { text-align: center; margin-top: 15px; }
+        .footer-links a { color: #1976d2; text-decoration: none; font-size: 14px; }
+
+        .refresh-btn { 
+            position: absolute; top: 15px; right: 15px; background: white; 
+            border-radius: 50%; width: 40px; height: 40px; display: flex; 
+            justify-content: center; align-items: center; cursor: pointer; 
+            box-shadow: 0 2px 5px rgba(0,0,0,0.2); border: none; 
+        }
     </style>
 </head>
 <body>
     <div class="mobile">
-        <div class="iconos-flotantes">
-            <div class="modo-switch" onclick="cargarSolicitudes()">🔄</div>
+        <button class="refresh-btn" onclick="actualizarTodo()">🔄</button>
+
+        <h2>Panel SuperAdmin</h2>
+        
+        <h3>Solicitudes Nuevas</h3>
+        <div id="contenedor-pendientes">
+            <p style="text-align: center; color: #999;">Cargando...</p>
         </div>
 
-        <h2>Solicitudes Admin</h2>
-        <div id="contenedor">
-            <p style="text-align: center; color: #999;">Buscando solicitudes pendientes...</p>
-
+        <h3>Traspasos de Mando</h3>
+        <div id="contenedor-traspasos">
+            <p style="text-align: center; color: #999;">Cargando...</p>
         </div>
-         <button class="logout" onclick="cerrarSesion()">Cerrar sesión</button>
-        <a href="register_admin.html">Registrar un nuevo administrador</a>
+
+        <button class="logout" onclick="cerrarSesion()">Cerrar sesión</button>
+        <div class="footer-links">
+            <a href="register_admin.html">Registrar nuevo admin manual</a>
+        </div>
     </div>
 
     <script>
-        async function cargarSolicitudes() {
-            const contenedor = document.getElementById('contenedor');
+        // --- 1. CARGA INICIAL ---
+        function actualizarTodo() {
+            cargarSolicitudesSencillas();
+            cargarSolicitudesTraspaso();
+        }
+
+        // --- 2. SOLICITUDES SENCILLAS (ESTADO 3) ---
+        async function cargarSolicitudesSencillas() {
+            const contenedor = document.getElementById('contenedor-pendientes');
             try {
                 const res = await fetch('http://localhost:3000/acceso/pendientes');
                 const data = await res.json();
 
                 if (data.length === 0) {
-                    contenedor.innerHTML = '<p style="text-align: center;">No hay nadie esperando aprobación. 😎</p>';
+                    contenedor.innerHTML = '<p style="text-align: center; font-size: 12px; color: #aaa;">No hay solicitudes sencillas.</p>';
                     return;
                 }
 
@@ -66,34 +89,121 @@
                             <p class="nombre">${user.nombres} ${user.apellidos}</p>
                             <p>📧 ${user.correo}</p>
                             <div class="btn-group">
-                                <button class="btn-aprobar" onclick="aprobar(${user.cod_user})">Aprobar</button>
-                                <button class="btn-rechazar">Rechazar</button>
+                                <button class="btn-aprobar" onclick="aprobarSencillo(${user.cod_user})">Aprobar</button>
+                                <button class="btn-rechazar" onclick="rechazar(${user.cod_user})">Rechazar</button>
                             </div>
                         </div>
                     `;
                 });
             } catch (err) {
-                contenedor.innerHTML = '<p style="color:red;">Error al conectar con la API.</p>';
+                contenedor.innerHTML = '<p style="color:red;">Error API</p>';
             }
         }
 
-        async function aprobar(id) {
-            try {
-                const res = await fetch(`http://localhost:3000/acceso/aprobar/${id}`, {
-                    method: 'PATCH'
-                });
-                if (res.ok) {
-                    document.getElementById(`user-${id}`).style.display = 'none';
-                    alert("¡Usuario aprobado! Ahora es Administrador.");
-                }
-            } catch (err) {
-                alert("Error al aprobar");
+        // --- 3. SOLICITUDES DE TRASPASO (ESTADO 4) ---
+      async function cargarSolicitudesTraspaso() {
+    const contenedor = document.getElementById('contenedor-traspasos');
+    try {
+        const res = await fetch('http://localhost:3000/acceso/pendientes-traspaso');
+        const solicitudes = await res.json();
+
+        contenedor.innerHTML = "";
+
+        if (solicitudes.length === 0) {
+            contenedor.innerHTML = "<p>No hay solicitudes de traspaso pendientes.</p>";
+            return;
+        }
+
+        solicitudes.forEach(sol => {
+            // sol.admin trae los datos del usuario
+            // sol.conjunto trae los datos del conjunto que el usuario eligió
+            contenedor.innerHTML += `
+                <div class="card-notificacion" id="solicitud-${sol.admin.cod_user}">
+                    <div class="info">
+                        <h3>${sol.admin.nombres} ${sol.admin.apellidos}</h3>
+                        <p>Solicita administrar el conjunto: <strong>${sol.conjunto.nombre_conjunto}</strong></p>
+                        <span class="badge">ID Conjunto: ${sol.conjunto.cod_conjunto}</span>
+                    </div>
+                    <div class="acciones">
+                        <button class="btn-aprobar" 
+                            onclick="aprobarTraspaso(${sol.admin.cod_user}, ${sol.conjunto.cod_conjunto})">
+                            Aprobar y Vincular
+                        </button>
+                        <button class="btn-rechazar" onclick="rechazarSolicitud(${sol.admin.cod_user})">
+                            Rechazar
+                        </button>
+                    </div>
+                </div>
+            `;
+        });
+    } catch (error) {
+        console.error("Error al cargar traspasos:", error);
+    }
+}
+
+async function aprobarTraspaso(userId, conjuntoId) {
+    if (!confirm("¿Estás seguro de aprobar este traspaso? Se inactivará al administrador anterior.")) return;
+
+    try {
+        const res = await fetch('http://localhost:3000/acceso/aprobar-traspaso', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({ 
+                userId: Number(userId), 
+                conjuntoId: Number(conjuntoId) 
+            })
+        });
+
+        const data = await res.json();
+
+        if (res.ok) {
+            alert("✅ Traspaso completado con éxito.");
+            // Removemos la tarjeta de la lista visualmente
+            document.getElementById(`solicitud-${userId}`).remove();
+        } else {
+            alert("❌ Error: " + data.message);
+        }
+    } catch (error) {
+        alert("Ocurrió un error en la conexión con el servidor.");
+    }
+}
+
+        // --- 4. ACCIONES ---
+        async function aprobarSencillo(id) {
+            if(!confirm("¿Aprobar como administrador general?")) return;
+            const res = await fetch(`http://localhost:3000/acceso/aprobar/${id}`, { method: 'PATCH' });
+            if (res.ok) {
+                document.getElementById(`user-${id}`).remove();
+                alert("¡Aprobado!");
             }
         }
 
-        // Cargar al abrir la página
-        cargarSolicitudes();
+        async function rechazar(id) {
+            if (!confirm("¿Rechazar solicitud?")) return;
+            const res = await fetch(`http://localhost:3000/acceso/rechazar/${id}`, { method: 'PATCH' });
+            if (res.ok) {
+                const el = document.getElementById(`user-${id}`) || document.getElementById(`traspaso-${id}`);
+                if (el) el.remove();
+            }
+        }
+
+        // Auxiliar para selects
+        async function llenarSelectConjuntos(idSelect) {
+            const select = document.getElementById(idSelect);
+            const res = await fetch('http://localhost:3000/acceso/conjuntos');
+            const conjuntos = await res.json();
+            conjuntos.forEach(c => {
+                const opt = document.createElement('option');
+                opt.value = c.cod_conjunto;
+                opt.textContent = c.nombre_conjunto;
+                select.appendChild(opt);
+            });
+        }
+
         function cerrarSesion() { localStorage.clear(); window.location.href = '../login.html'; }
+        
+        // Ejecución inicial
+        actualizarTodo();
     </script>
 </body>
 </html>

@@ -172,4 +172,96 @@ async solicitarAccesoAdmin(cod_user: number) {
     });
   }
 
+ async obtenerPendientesTraspaso() {
+  return await this.prisma.adminConjunto.findMany({
+    where: { fk_estado_admin: 3 }, // Solo los pendientes
+    include: {
+      admin: {
+        select: { cod_user: true, nombres: true, apellidos: true }
+      },
+      conjunto: {
+        select: { cod_conjunto: true, nombre_conjunto: true }
+      }
+    }
+  });
+}
+
+  async rechazarAcceso(cod_user: number) {
+  const idLimpio = Number(cod_user);
+  
+  return await this.prisma.persona.update({
+    where: { cod_user: idLimpio },
+    data: { 
+      fk_estado_user: 1 // Lo regresamos a estado normal (Residente/Invitado)
+    },
+  });
+  
+}
+
+async obtenerConjuntos() {
+  return await this.prisma.conjunto.findMany({
+    select: {
+      cod_conjunto: true,
+      nombre_conjunto: true,
+    },
+    orderBy: {
+      nombre_conjunto: 'asc', // Para que salgan en orden alfabético
+    },
+  });
+}
+async crearSolicitudTraspaso(cod_user: number, cod_conjunto: number) {
+  return await this.prisma.$transaction(async (tx) => {
+    // 1. Cambiamos el estado del usuario a "En espera" (estado 3)
+    await tx.persona.update({
+      where: { cod_user: Number(cod_user) },
+      data: { fk_estado_user: 3 } 
+    });
+
+    // 2. Creamos la relación en admin_conjunto con estado "Pendiente" (estado 3)
+    // Esto guarda el conjunto que el usuario seleccionó
+    return await tx.adminConjunto.create({
+      data: {
+        fk_cod_administrador: Number(cod_user),
+        fk_cod_conjunto: Number(cod_conjunto),
+        fk_estado_admin: 3 // <-- 3 significa "Esperando que el SuperAdmin me apruebe"
+      }
+    });
+  });
+}
+
+  // --- PASO 2: El SuperAdmin aprueba y se ejecuta la "magia" ---
+  async ejecutarTraspasoReal(cod_user: number, cod_conjunto: number) {
+  return await this.prisma.$transaction(async (tx) => {
+    
+    // A. Inactivar a cualquier administrador que esté ACTIVO (estado 1) en ese conjunto
+    await tx.adminConjunto.updateMany({
+      where: { 
+        fk_cod_conjunto: Number(cod_conjunto), 
+        fk_estado_admin: 1 
+      },
+      data: { fk_estado_admin: 2 } // 2 = Inactivo
+    });
+
+    // B. Activar la solicitud del usuario (Pasar de estado 3 a 1)
+    await tx.adminConjunto.update({
+      where: {
+        // Usamos el unique que tienes en tu esquema
+        fk_cod_conjunto_fk_cod_administrador: {
+          fk_cod_administrador: Number(cod_user),
+          fk_cod_conjunto: Number(cod_conjunto)
+        }
+      },
+      data: { fk_estado_admin: 1 } // 1 = Activo
+    });
+
+    // C. Poner al usuario como Admin Activo
+    await tx.persona.update({
+      where: { cod_user: Number(cod_user) },
+      data: { 
+        fk_rol: 1, 
+        fk_estado_user: 1 // 1= Activo
+      }
+    });
+  });
+}
 }

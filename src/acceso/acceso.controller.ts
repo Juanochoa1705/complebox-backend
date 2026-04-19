@@ -70,10 +70,36 @@ solicitar(@Param('id') id: string) {
     return this.accesoService.obtenerSolicitudesPendientes();
   }
 
+ @Get('pendientes-traspaso') // 👈 ¡Ojo aquí! Que no falte ninguna letra
+async obtenerTraspasos() {
+  return await this.accesoService.obtenerPendientesTraspaso();
+}
+
+
   @Patch('aprobar/:id')
   aprobar(@Param('id', ParseIntPipe) id: number) {
     return this.accesoService.aprobarAcceso(id);
   }
 
+  @Patch('rechazar/:id')
+rechazar(@Param('id', ParseIntPipe) id: number) {
+  return this.accesoService.rechazarAcceso(id);
+}
 
+@Post('solicitar-traspaso')
+  async solicitard(@Body() data: { userId: number, conjuntoId: number }) {
+    return await this.accesoService.crearSolicitudTraspaso(data.userId, data.conjuntoId);
+  }
+
+  // Este lo llama el SuperAdmin desde notificaciones.html
+  @Post('aprobar-traspaso')
+  async aprobard(@Body() data: { userId: number, conjuntoId: number }) {
+    return await this.accesoService.ejecutarTraspasoReal(data.userId, data.conjuntoId);
+  }
+
+
+@Get('conjuntos') // GET http://localhost:3000/acceso/conjuntos
+async listarConjuntos() {
+  return await this.accesoService.obtenerConjuntos();
+}
 }
