@@ -107,7 +107,37 @@
     <p id="empresaMessage" class="message"></p>
 
     <hr>
+    <div id="empresaCard" class="empresa-card d-none">
 
+  <h3>🏢 Empresa de Seguridad</h3>
+
+  <p><strong>Nombre:</strong> <span id="empresaNombreTxt"></span></p>
+  <p><strong>NIT:</strong> <span id="empresaNitTxt"></span></p>
+  <p><strong>Teléfono:</strong> <span id="empresaTelefonoTxt"></span></p>
+  <p><strong>Correo:</strong> <span id="empresaCorreoTxt"></span></p>
+  <p><strong>Estado:</strong> <span id="empresaEstadoTxt"></span></p>
+
+  <div style="display:flex; gap:10px; margin-top:10px;">
+    <button onclick="activarEmpresa()">🟢 Activar</button>
+    <button onclick="inactivarEmpresa()">🔴 Inactivar</button>
+    <button onclick="mostrarEditarEmpresa()">✏️ Editar</button>
+  </div>
+
+  <div id="editarEmpresaForm" class="d-none">
+
+  <h4>✏️ Editar Empresa</h4>
+
+  <input id="editNombre" placeholder="Nombre">
+  <input id="editTelefono" placeholder="Teléfono">
+  <input id="editCorreo" placeholder="Correo">
+  <input id="editDireccion" placeholder="Dirección">
+
+  <button onclick="guardarEmpresa()">Guardar</button>
+  <button onclick="cancelarEdicion()">Cancelar</button>
+
+</div>
+
+</div>
     <!-- VIGILANTES -->
     <h3>Vigilantes pendientes</h3>
 

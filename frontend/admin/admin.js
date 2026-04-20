@@ -83,6 +83,7 @@ document.addEventListener('DOMContentLoaded', async () => {
 
     // 3. Cargamos el perfil (Aquí se decide qué mostrar)
     await cargarPerfilAdmin();
+    cargarEmpresa();
 });
 
 /* ==========================================
@@ -496,6 +497,85 @@ async function vincularAdminAConjunto() {
         alert("¡Vinculación exitosa!");
         location.reload();
     }
+}
+
+async function activarEmpresa() {
+    await fetch(`${API_URL}/admin/empresa/estado`, {
+        method: "POST",
+        headers: {
+            "Content-Type": "application/json",
+            "Authorization": `Bearer ${token}`
+        },
+        body: JSON.stringify({ estado: 1 })
+    });
+
+    alert("Empresa activada ✅");
+    location.reload();
+}
+
+async function inactivarEmpresa() {
+    await fetch(`${API_URL}/admin/empresa/estado`, {
+        method: "POST",
+        headers: {
+            "Content-Type": "application/json",
+            "Authorization": `Bearer ${token}`
+        },
+        body: JSON.stringify({ estado: 2 })
+    });
+
+    alert("Empresa inactivada ❌");
+    location.reload();
+}
+
+async function cargarEmpresa() {
+    const res = await fetch(`${API_URL}/admin/empresa`, {
+        headers: { Authorization: `Bearer ${token}` }
+    });
+
+    if (!res.ok) return;
+
+    const data = await res.json();
+
+    if (!data) return;
+
+    document.getElementById("empresaCard").classList.remove("d-none");
+
+    document.getElementById("empresaNombreTxt").textContent = data.nombre_empresa;
+    document.getElementById("empresaNitTxt").textContent = data.nit_empresa;
+    document.getElementById("empresaTelefonoTxt").textContent = data.telefono_empresa;
+    document.getElementById("empresaCorreoTxt").textContent = data.correo_empresa;
+
+    const estado = data.fk_estado_empresa_seguridad_conjunto === 1 ? "🟢 Activa" : "🔴 Inactiva";
+    document.getElementById("empresaEstadoTxt").textContent = estado;
+}
+
+function mostrarEditarEmpresa() {
+    document.getElementById("editarEmpresaForm").classList.remove("d-none");
+}
+
+async function guardarEmpresa() {
+    const body = {
+        nombre: editNombre.value,
+        telefono: editTelefono.value,
+        correo: editCorreo.value,
+        direccion: editDireccion.value
+    };
+
+    await fetch(`${API_URL}/admin/empresa`, {
+        method: "PUT",
+        headers: {
+            "Content-Type": "application/json",
+            "Authorization": `Bearer ${token}`
+        },
+        body: JSON.stringify(body)
+    });
+
+    alert("Empresa actualizada ✅");
+    location.reload();
+}
+
+function cancelarEdicion() {
+    document.getElementById("editarEmpresaForm").classList.add("d-none");
 }
 
 /* ==========================================

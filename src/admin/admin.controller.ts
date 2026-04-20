@@ -193,5 +193,67 @@ async vincular(@Req() req, @Body() body: { conjuntoId: number }) {
   const adminId = req.user.id; 
   return await this.adminService.vincularAdmin(adminId, body.conjuntoId);
 }
+@Post('empresa/estado')
+async cambiarEstadoEmpresa(
+  @Req() req,
+  @Body() body: { estado: number }
+) {
+  return this.adminService.cambiarEstadoEmpresa(req.user.id, body.estado);
+}
+
+@Put('empresa')
+async editarEmpresa(
+  @Req() req,
+  @Body() body: {
+    nombre?: string;
+    telefono?: string;
+    correo?: string;
+    direccion?: string;
+  }
+) {
+  return this.adminService.editarEmpresa(req.user.id, body);
+}
+
+@Get('empresa')
+async obtenerEmpresa(@Req() req) {
+  const adminId = req.user.id;
+
+  // 🔹 1. Buscar el conjunto del admin
+  const adminConjuntos = await this.prisma.adminConjunto.findMany({
+    where: { fk_cod_administrador: adminId },
+    select: { fk_cod_conjunto: true }
+  });
+
+const idsConjuntos = adminConjuntos
+  .map(a => a.fk_cod_conjunto)
+  .filter((id): id is number => id !== null);
+
+  if (idsConjuntos.length === 0) return null;
+
+  // 🔹 2. Buscar empresa ligada a ese conjunto
+  const empresa = await this.prisma.empresa_seguridad_conjunto.findFirst({
+    where: {
+      fk_cod_conjunto: {
+        in: idsConjuntos
+      }
+    },
+    include: {
+      empresa: true
+    }
+  });
+
+  if (!empresa) return null;
+
+  // 🔹 3. Retornar datos planos al frontend
+  return {
+    cod_empresa: empresa.empresa?.cod_empresa,
+    nombre_empresa: empresa.empresa?.nombre_empresa,
+    nit_empresa: empresa.empresa?.nit_empresa,
+    telefono_empresa: empresa.empresa?.telefono_empresa,
+    correo_empresa: empresa.empresa?.correo_empresa,
+    direccion_empresa: empresa.empresa?.direccion_empresa,
+    fk_estado_empresa_seguridad_conjunto: empresa.fk_estado_empresa_seguridad_conjunto
+  };
+}
 
 }

@@ -669,5 +669,90 @@ async buscarConjuntos(query: string) {
     take: 5, // Limitar a 5 resultados
   });
 }
+
+async cambiarEstadoEmpresa(adminId: number, nuevoEstado: number) {
+
+  // 1️⃣ Buscar relación admin → conjunto
+  const adminConj = await this.prisma.adminConjunto.findFirst({
+    where: { fk_cod_administrador: adminId }
+  });
+
+  if (!adminConj) {
+    throw new NotFoundException('Admin sin conjunto');
+  }
+
+  // 2️⃣ Buscar empresa del conjunto
+  const empresaConj = await this.prisma.empresa_seguridad_conjunto.findFirst({
+    where: {
+      fk_cod_conjunto: adminConj.fk_cod_conjunto
+    }
+  });
+
+  if (!empresaConj) {
+    throw new NotFoundException('No hay empresa de seguridad');
+  }
+
+  // 🔥 3️⃣ TRANSACCIÓN (CLAVE)
+  await this.prisma.$transaction([
+
+    // A. Cambiar estado de la empresa
+    this.prisma.empresa_seguridad_conjunto.update({
+      where: {
+        cod_empresa_vig_conjunto: empresaConj.cod_empresa_vig_conjunto
+      },
+      data: {
+        fk_estado_empresa_seguridad_conjunto: nuevoEstado
+      }
+    }),
+
+    // B. Cambiar TODOS los vigilantes de esa empresa
+    this.prisma.empresa_vigilante_conjunto.updateMany({
+      where: {
+        fk_cod_empresa_vig_conjunto: empresaConj.cod_empresa_vig_conjunto
+      },
+      data: {
+        fk_estado_vigilante_empresa: nuevoEstado
+      }
+    })
+
+  ]);
+
+  return { message: "Estado actualizado correctamente 🔥" };
+}
+async editarEmpresa(adminId: number, data: any) {
+
+  const adminConj = await this.prisma.adminConjunto.findFirst({
+    where: { fk_cod_administrador: adminId }
+  });
+
+  if (!adminConj) {
+    throw new NotFoundException('Admin sin conjunto');
+  }
+
+  const empresaConj = await this.prisma.empresa_seguridad_conjunto.findFirst({
+    where: {
+      fk_cod_conjunto: adminConj.fk_cod_conjunto
+    },
+    include: {
+      empresa: true
+    }
+  });
+
+  if (!empresaConj || !empresaConj.empresa) {
+    throw new NotFoundException('Empresa no encontrada');
+  }
+
+  return this.prisma.empresa.update({
+    where: {
+      cod_empresa: empresaConj.empresa.cod_empresa
+    },
+    data: {
+      nombre_empresa: data.nombre,
+      telefono_empresa: data.telefono,
+      correo_empresa: data.correo,
+      direccion_empresa: data.direccion
+    }
+  });
+}
 }
 
