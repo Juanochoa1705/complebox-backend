@@ -535,9 +535,9 @@ async function cargarEmpresa() {
     if (!res.ok) return;
 
     const data = await res.json();
-
     if (!data) return;
 
+    // 🔹 MOSTRAR CARD
     document.getElementById("empresaCard").classList.remove("d-none");
 
     document.getElementById("empresaNombreTxt").textContent = data.nombre_empresa;
@@ -545,8 +545,18 @@ async function cargarEmpresa() {
     document.getElementById("empresaTelefonoTxt").textContent = data.telefono_empresa;
     document.getElementById("empresaCorreoTxt").textContent = data.correo_empresa;
 
-    const estado = data.fk_estado_empresa_seguridad_conjunto === 1 ? "🟢 Activa" : "🔴 Inactiva";
+    const estado = data.fk_estado_empresa_seguridad_conjunto === 1 
+        ? "🟢 Activa" 
+        : "🔴 Inactiva";
+
     document.getElementById("empresaEstadoTxt").textContent = estado;
+
+    // 🔥🔥🔥 AQUI ESTA LA CLAVE 🔥🔥🔥
+    // CARGAR DATOS EN FORMULARIO DE EDICIÓN
+    document.getElementById("editNombre").value = data.nombre_empresa || "";
+    document.getElementById("editTelefono").value = data.telefono_empresa || "";
+    document.getElementById("editCorreo").value = data.correo_empresa || "";
+    document.getElementById("editDireccion").value = data.direccion_empresa || "";
 }
 
 function mostrarEditarEmpresa() {
