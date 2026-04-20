@@ -323,4 +323,38 @@ async anadiradmin(cod_user: number, cod_conjunto: number) {
     });
   });
 }
+
+async vincularAdmin(adminId: number, conjuntoId: number) {
+  // Verificamos si ya está vinculado para no duplicar
+  const existe = await this.prisma.adminConjunto.findFirst({
+    where: {
+      fk_cod_administrador: adminId,
+      fk_cod_conjunto: conjuntoId,
+    },
+  });
+
+  if (existe) {
+    throw new BadRequestException('Ya eres administrador de este conjunto');
+  }
+
+  return await this.prisma.adminConjunto.create({
+    data: {
+      fk_cod_administrador: adminId,
+      fk_cod_conjunto: conjuntoId,
+      fk_estado_admin: 1 // Estado activo directamente o 3 si quieres aprobación
+    },
+  });
+}
+
+// Endpoint para el buscador
+async buscarConjuntos(query: string) {
+  return await this.prisma.conjunto.findMany({
+    where: {
+      nombre_conjunto: {
+        contains: query, // Busca coincidencia parcial
+      },
+    },
+    take: 5, // Limitar a 5 resultados
+  });
+}
 }

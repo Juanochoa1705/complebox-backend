@@ -6,42 +6,19 @@ const token = localStorage.getItem('token');
 const estadoEspecialAdmin = localStorage.getItem("estadoEspecialAdmin");
 const mensajeAdmin = localStorage.getItem("mensajeAdmin");
 
-async function inicializarPaginaAdmin() {
-    try {
-        const respuesta = await fetch('http://localhost:3000/admin/perfil', {
-    headers: { 
-        'Authorization': `Bearer ${localStorage.getItem('token')}` 
-    }
-});
-        const data = await respuesta.json();
 
-        // Si el backend dice que está bloqueado, disparamos tu pantalla
-        if (data.bloqueado) {
-            mostrarPantallaBloqueo(data.mensaje);
-            return; // Detenemos la ejecución del resto de la página
-        }
-
-        if (!data.tieneConjunto) {
-            // Lógica para mostrar formulario de crear conjunto...
-        } else {
-            // Cargar Dashboard normal
-        }
-
-    } catch (error) {
-        console.error("Error al cargar perfil:", error);
-    }
-}
-
-// Ejecutar al cargar
-inicializarPaginaAdmin();
 
 // Función de validación mejorada
 function validarRol() {
-    if (!token) return false;
+    // 🔥 Validación extra del token
+    if (!token || token.split('.').length < 3) return false;
+
     try {
         const payload = JSON.parse(atob(token.split('.')[1]));
         return payload.rol === 'Administrador';
-    } catch (e) { return false; }
+    } catch (e) { 
+        return false; 
+    }
 }
 
 /* ==========================================
@@ -92,57 +69,73 @@ function mostrarPantallaBloqueo(msj) {
    3. INICIALIZACIÓN DE FUNCIONES
    ========================================== */
 document.addEventListener('DOMContentLoaded', async () => {
-    // Solo arrancamos si todo está OK
-    if (validarRol() && estadoEspecialAdmin !== "true") {
-        await cargarPerfilAdmin();
-        obtenerConjunto();
-        cargarVigilantesPendientes();
-        cargarVigilantes();
+    // 1. Validamos rol básico
+    if (!validarRol()) {
+        mostrarPantallaBloqueo("No tienes permisos de Administrador.");
+        return;
     }
+
+    // 2. Si tiene un estado especial (bloqueo por localStorage)
+    if (estadoEspecialAdmin === "true") {
+        mostrarPantallaBloqueo(mensajeAdmin);
+        return;
+    }
+
+    // 3. Cargamos el perfil (Aquí se decide qué mostrar)
+    await cargarPerfilAdmin();
 });
 
 /* ==========================================
-   3. PERFIL Y VALIDACIÓN
+   4. PERFIL Y CONTROL DE INTERFAZ
    ========================================== */
 async function cargarPerfilAdmin() {
     try {
         const res = await fetch(`${API_URL}/admin/perfil`, {
             headers: { 'Authorization': `Bearer ${token}` }
         });
+        
+        if (!res.ok) throw new Error("Error en la petición de perfil");
+        
         const data = await res.json();
 
-        // Si el backend dice que NO tiene conjunto
-        if (data.tieneConjunto === false) {
-            localStorage.setItem("estadoEspecialAdmin", "false"); // No bloqueamos la pantalla
-            
-            // 1. Ponemos el nombre del admin en el saludo
-            if(document.getElementById("titulo")) {
-                document.getElementById("titulo").innerText = `💼 Bienvenido: ${data.nombres}`;
-            }
+        // CASO A: El Admin está bloqueado desde el Backend
+        if (data.bloqueado) {
+            mostrarPantallaBloqueo(data.mensaje);
+            return;
+        }
 
-            // 2. Forzamos que se vea el formulario de creación
+        // Actualizamos saludo
+        if(document.getElementById("titulo")) {
+            document.getElementById("titulo").innerText = `💼 Admin: ${data.nombres}`;
+        }
+
+        // CASO B: El Admin NO tiene conjunto vinculado
+        if (data.tieneConjunto === false) {
             const formCrear = document.getElementById('crearSection');
             if(formCrear) {
                 formCrear.classList.remove('d-none');
                 formCrear.style.display = 'block';
             }
-            
-            // 3. Ocultamos la sección de info (porque está vacía)
             const infoSec = document.getElementById('infoSection');
             if(infoSec) infoSec.classList.add('d-none');
-
-            return; // Detenemos aquí para que no busque torres de un conjunto que no existe
+            
+            return; // No cargamos vigilantes ni torres si no hay conjunto
         }
 
-        // Si todo está normal
-        localStorage.setItem("estadoEspecialAdmin", "false");
-        if(document.getElementById("titulo")) document.getElementById("titulo").innerText = `💼 Admin: ${data.nombres}`;
-        
+        // CASO C: Todo normal (Tiene conjunto)
+        // Llenamos la info del conjunto con lo que ya viene en 'data.conjunto'
+        if (data.conjunto) {
+            mostrarConjunto(data.conjunto);
+        }
+
+        // Cargamos el resto de componentes del Dashboard
+        cargarVigilantesPendientes();
+        cargarVigilantes();
+
     } catch (err) {
         console.error("Error cargando perfil:", err);
     }
 }
-
 /* ==========================================
    4. GESTIÓN DE CONJUNTO
    ========================================== */
@@ -444,6 +437,65 @@ if(document.getElementById("buscarHistorial")) {
             });
         } catch (error) { console.error(error); }
     });
+}
+
+async function buscarConjuntos() {
+    const input = document.getElementById('searchConjunto').value;
+    const resultados = document.getElementById('resultadosBusqueda');
+    
+    if (input.length < 3) {
+        resultados.innerHTML = "";
+        return;
+    }
+
+    // AGREGAMOS LOS HEADERS AQUÍ:
+    const res = await fetch(`${API_URL}/admin/conjuntos/buscar?q=${input}`, {
+        method: 'GET',
+        headers: { 
+            'Authorization': `Bearer ${token}`, // <-- Esto es lo que falta
+            'Content-Type': 'application/json'
+        }
+    });
+
+    if (res.status === 401) {
+        console.error("Sesión expirada o sin permisos");
+        return;
+    }
+
+    const conjuntos = await res.json();
+
+    resultados.innerHTML = "";
+    conjuntos.forEach(c => {
+        const item = document.createElement('button');
+        item.className = "list-group-item list-group-item-action";
+        item.innerHTML = `<strong>${c.nombre_conjunto}</strong> - ${c.ciudad_conjunto}`;
+        item.onclick = () => seleccionarConjunto(c.cod_conjunto, c.nombre_conjunto);
+        resultados.appendChild(item);
+    });
+}
+
+function seleccionarConjunto(id, nombre) {
+    document.getElementById('selectedConjuntoId').value = id;
+    document.getElementById('searchConjunto').value = nombre;
+    document.getElementById('resultadosBusqueda').innerHTML = "";
+}
+
+// Función para enviar la vinculación al Backend
+async function vincularAdminAConjunto() {
+    const conjuntoId = document.getElementById('selectedConjuntoId').value;
+    
+    if (!conjuntoId) return alert("Selecciona un conjunto de la lista");
+
+    const res = await fetch(`${API_URL}/admin/vincular`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json', Authorization: `Bearer ${token}` },
+        body: JSON.stringify({ conjuntoId: Number(conjuntoId) })
+    });
+
+    if (res.ok) {
+        alert("¡Vinculación exitosa!");
+        location.reload();
+    }
 }
 
 /* ==========================================

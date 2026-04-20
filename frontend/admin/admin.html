@@ -44,7 +44,19 @@
       <input id="torres" type="number">
     </div>
 
+    
+
     <button onclick="crearConjunto()">Crear conjunto</button>
+
+    <div class="form-group">
+  <label>Buscar Conjunto Existente</label>
+  <input id="searchConjunto" placeholder="Escribe el nombre del conjunto..." oninput="buscarConjuntos()">
+  <div id="resultadosBusqueda" class="list-group position-absolute" style="z-index: 1000; width: 100%;"></div>
+</div>
+
+<input type="hidden" id="selectedConjuntoId">
+
+<button onclick="vincularAdminAConjunto()" class="btn btn-primary">Vincularme como Administrador</button>
   </div>
 
   <!-- INFO -->

@@ -159,18 +159,17 @@ async listarVigilantes(@Req() req: any) {
 
 @Get('perfil')
 async obtenerPerfil(@Req() req) {
-  const userId = req.user.id; // Extraído de tu JWT
+  const userId = req.user.id;
 
   const adminRelacion = await this.prisma.adminConjunto.findFirst({
     where: { fk_cod_administrador: userId },
+    include: { conjunto: true } // 🔥 IMPORTANTE
   });
 
-  // Si no existe, es que no tiene conjunto asignado
   if (!adminRelacion) {
     return { tieneConjunto: false };
   }
 
-  // VALIDACIÓN CLAVE: Si el estado es diferente a 1 (Activo)
   if (adminRelacion.fk_estado_admin !== 1) {
     return {
       bloqueado: true,
@@ -181,8 +180,18 @@ async obtenerPerfil(@Req() req) {
   return {
     tieneConjunto: true,
     bloqueado: false,
-    // ... otros datos del admin
+    conjunto: adminRelacion.conjunto // 🔥 AQUÍ VA LO QUE PREGUNTASTE
   };
+}
+@Get('conjuntos/buscar') // <-- Fíjate que la ruta sea exactemente esta
+async buscarConjuntos(@Query('q') query: string) {
+  return await this.adminService.buscarConjuntos(query);
+}
+@Post('vincular')
+async vincular(@Req() req, @Body() body: { conjuntoId: number }) {
+  // El adminId lo sacas del token (payload)
+  const adminId = req.user.id; 
+  return await this.adminService.vincularAdmin(adminId, body.conjuntoId);
 }
 
 }
