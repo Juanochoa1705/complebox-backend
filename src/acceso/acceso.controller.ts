@@ -107,6 +107,11 @@ rechazar(@Param('id', ParseIntPipe) id: number) {
     return await this.accesoService.ejecutarTraspasoReal(data.userId, data.conjuntoId);
   }
 
+   @Post('anadiradmin')
+  async anadir(@Body() data: { userId: number, conjuntoId: number }) {
+    return await this.accesoService.anadiradmin(data.userId, data.conjuntoId);
+  }
+
 
 @Get('conjuntos') // GET http://localhost:3000/acceso/conjuntos
 async listarConjuntos() {

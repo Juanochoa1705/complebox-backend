@@ -8,12 +8,14 @@ datasource db {
 }
 
 model apto {
-  cod_apto         Int                @id @default(autoincrement())
-  numero_apto      Int
-  fk_cod_torre     Int?
-  torre            torre?             @relation(fields: [fk_cod_torre], references: [cod_torre], onDelete: Restrict, onUpdate: Restrict, map: "apto_ibfk_1")
-  apto_propietario apto_propietario[]
-  apto_residente   apto_residente[]
+  cod_apto            Int                @id @default(autoincrement())
+  numero_apto         Int
+  fk_cod_torre        Int?
+  fecha_registro      DateTime           @default(now()) @db.Timestamp(0)
+  fecha_actualizacion DateTime           @default(now()) @db.Timestamp(0)
+  torre               torre?             @relation(fields: [fk_cod_torre], references: [cod_torre], onDelete: Restrict, onUpdate: Restrict, map: "apto_ibfk_1")
+  apto_propietario    apto_propietario[]
+  apto_residente      apto_residente[]
 
   @@unique([numero_apto, fk_cod_torre], map: "uq_apto_torre")
   @@index([fk_cod_torre], map: "fk_cod_torre")
@@ -24,6 +26,8 @@ model apto_propietario {
   fk_cod_apto                Int?
   fk_cod_propietario         Int?
   fk_estado_apto_propietario Int      @default(1)
+  fecha_registro             DateTime @default(now()) @db.Timestamp(0)
+  fecha_actualizacion        DateTime @default(now()) @db.Timestamp(0)
   apto                       apto?    @relation(fields: [fk_cod_apto], references: [cod_apto], onDelete: Restrict, onUpdate: Restrict, map: "apto_propietario_ibfk_1")
   persona                    persona? @relation(fields: [fk_cod_propietario], references: [cod_user], onDelete: Restrict, onUpdate: Restrict, map: "apto_propietario_ibfk_2")
   estado                     estado   @relation(fields: [fk_estado_apto_propietario], references: [cod_estado], onUpdate: Restrict, map: "apto_propietario_ibfk_3")
@@ -34,14 +38,15 @@ model apto_propietario {
 }
 
 model apto_residente {
-  cod_apto_residente       Int       @id @default(autoincrement())
+  cod_apto_residente       Int      @id @default(autoincrement())
   fk_cod_apto              Int?
   fk_cod_residente         Int?
-  fk_estado_apto_residente Int       @default(1)
-  fecha_actualizacion      DateTime? @default(now()) @db.DateTime(0)
-  apto                     apto?     @relation(fields: [fk_cod_apto], references: [cod_apto], onDelete: Restrict, onUpdate: Restrict, map: "apto_residente_ibfk_1")
-  persona                  persona?  @relation(fields: [fk_cod_residente], references: [cod_user], onDelete: Restrict, onUpdate: Restrict, map: "apto_residente_ibfk_2")
-  estado                   estado    @relation(fields: [fk_estado_apto_residente], references: [cod_estado], onUpdate: Restrict, map: "apto_residente_ibfk_3")
+  fk_estado_apto_residente Int      @default(1)
+  fecha_actualizacion      DateTime @default(now()) @db.Timestamp(0)
+  fecha_registro           DateTime @default(now()) @db.Timestamp(0)
+  apto                     apto?    @relation(fields: [fk_cod_apto], references: [cod_apto], onDelete: Restrict, onUpdate: Restrict, map: "apto_residente_ibfk_1")
+  persona                  persona? @relation(fields: [fk_cod_residente], references: [cod_user], onDelete: Restrict, onUpdate: Restrict, map: "apto_residente_ibfk_2")
+  estado                   estado   @relation(fields: [fk_estado_apto_residente], references: [cod_estado], onUpdate: Restrict, map: "apto_residente_ibfk_3")
 
   @@unique([fk_cod_apto, fk_cod_residente], map: "uq_apto_residente")
   @@index([fk_cod_residente], map: "fk_cod_residente")
@@ -54,6 +59,8 @@ model conjunto {
   telefono_conjunto          String?                      @db.VarChar(20)
   direccion_conjunto         String?                      @db.VarChar(20)
   ciudad_conjunto            String?                      @db.VarChar(20)
+  fecha_registro             DateTime                     @default(now()) @db.Timestamp(0)
+  fecha_actualizacion        DateTime                     @default(now()) @db.Timestamp(0)
   adminConjuntos             AdminConjunto[]
   empresa_seguridad_conjunto empresa_seguridad_conjunto[]
   torres                     torre[]
@@ -67,6 +74,8 @@ model empresa {
   telefono_empresa           String?                      @db.VarChar(20)
   correo_empresa             String?                      @db.VarChar(100)
   fk_estado_empresa          Int
+  fecha_registro             DateTime                     @default(now()) @db.Timestamp(0)
+  fecha_actualizacion        DateTime                     @default(now()) @db.Timestamp(0)
   estado                     estado                       @relation(fields: [fk_estado_empresa], references: [cod_estado], onUpdate: Restrict, map: "empresa_ibfk_1")
   empresa_mensajero          empresa_mensajero[]
   empresa_seguridad_conjunto empresa_seguridad_conjunto[]
@@ -80,6 +89,7 @@ model empresa_mensajero {
   fk_empresa_mensajero  Int?
   fk_estado_mensajero   Int?     @default(1)
   fecha_actualizacion   DateTime @default(now()) @db.Timestamp(0)
+  fecha_registro        DateTime @default(now()) @db.Timestamp(0)
   persona               persona? @relation(fields: [fk_persona_mensajero], references: [cod_user], onDelete: Restrict, onUpdate: Restrict, map: "empresa_mensajero_ibfk_1")
   empresa               empresa? @relation(fields: [fk_empresa_mensajero], references: [cod_empresa], onDelete: Restrict, onUpdate: Restrict, map: "empresa_mensajero_ibfk_2")
   estado                estado?  @relation(fields: [fk_estado_mensajero], references: [cod_estado], onDelete: Restrict, onUpdate: Restrict, map: "fk_mensajero_estado_rel")
@@ -91,10 +101,11 @@ model empresa_mensajero {
 
 model empresa_seguridad_conjunto {
   cod_empresa_vig_conjunto             Int                          @id @default(autoincrement())
-  fecha_registro                       DateTime?                    @db.Date
+  fecha_registro                       DateTime                     @default(now()) @db.Timestamp(0)
   fk_cod_conjunto                      Int?
   fk_empresa_vig                       Int?
   fk_estado_empresa_seguridad_conjunto Int                          @default(1)
+  fecha_actualizacion                  DateTime                     @default(now()) @db.Timestamp(0)
   conjunto                             conjunto?                    @relation(fields: [fk_cod_conjunto], references: [cod_conjunto], onDelete: Restrict, onUpdate: Restrict, map: "empresa_seguridad_conjunto_ibfk_1")
   empresa                              empresa?                     @relation(fields: [fk_empresa_vig], references: [cod_empresa], onDelete: Restrict, onUpdate: Restrict, map: "empresa_seguridad_conjunto_ibfk_2")
   estado                               estado                       @relation(fields: [fk_estado_empresa_seguridad_conjunto], references: [cod_estado], onUpdate: Restrict, map: "empresa_seguridad_conjunto_ibfk_3")
@@ -110,7 +121,8 @@ model empresa_vigilante_conjunto {
   fk_persona_vigilante        Int?
   fk_cod_empresa_vig_conjunto Int?
   fk_estado_vigilante_empresa Int                         @default(1)
-  fecha_actualizacion         DateTime?                   @default(now()) @db.DateTime(0)
+  fecha_actualizacion         DateTime                    @default(now()) @db.Timestamp(0)
+  fecha_registro              DateTime                    @default(now()) @db.Timestamp(0)
   persona                     persona?                    @relation(fields: [fk_persona_vigilante], references: [cod_user], onDelete: Restrict, onUpdate: Restrict, map: "empresa_vigilante_conjunto_ibfk_1")
   empresa_seguridad_conjunto  empresa_seguridad_conjunto? @relation(fields: [fk_cod_empresa_vig_conjunto], references: [cod_empresa_vig_conjunto], onDelete: Restrict, onUpdate: Restrict, map: "empresa_vigilante_conjunto_ibfk_2")
   estado                      estado                      @relation(fields: [fk_estado_vigilante_empresa], references: [cod_estado], onUpdate: Restrict, map: "empresa_vigilante_conjunto_ibfk_3")
@@ -153,6 +165,7 @@ model pedido_estado_entrega_residente {
   fk_mensajero                                                              Int?
   firma_residente                                                           String?        @db.LongText
   fk_apto_entrega                                                           Int?
+  fecha_actualizacion                                                       DateTime       @default(now()) @db.Timestamp(0)
   estado_pedido                                                             estado_pedido? @relation(fields: [fk_estado_pedido], references: [cod_estado_pedido], onDelete: Restrict, onUpdate: Restrict, map: "pedido_estado_entrega_residente_ibfk_1")
   persona_pedido_estado_entrega_residente_fk_cod_vigilante_recibeTopersona  persona?       @relation("pedido_estado_entrega_residente_fk_cod_vigilante_recibeTopersona", fields: [fk_cod_vigilante_recibe], references: [cod_user], onDelete: Restrict, onUpdate: Restrict, map: "pedido_estado_entrega_residente_ibfk_2")
   persona_pedido_estado_entrega_residente_fk_cod_vigilante_entregaTopersona persona?       @relation("pedido_estado_entrega_residente_fk_cod_vigilante_entregaTopersona", fields: [fk_cod_vigilante_entrega], references: [cod_user], onDelete: Restrict, onUpdate: Restrict, map: "pedido_estado_entrega_residente_ibfk_3")
@@ -179,6 +192,7 @@ model persona {
   fk_tipo_doc                                                                                       Int
   fk_rol                                                                                            Int
   fecha_registro                                                                                    DateTime?                         @default(now()) @db.DateTime(0)
+  fecha_actualizacion                                                                               DateTime                          @default(now()) @db.Timestamp(0)
   adminConjuntos                                                                                    AdminConjunto[]
   apto_propietario                                                                                  apto_propietario[]
   apto_residente                                                                                    apto_residente[]
@@ -210,11 +224,13 @@ model tipo_doc {
 }
 
 model torre {
-  cod_torre       Int       @id @default(autoincrement())
-  numero_torre    Int
-  fk_cod_conjunto Int?
-  apto            apto[]
-  conjunto        conjunto? @relation(fields: [fk_cod_conjunto], references: [cod_conjunto])
+  cod_torre           Int       @id @default(autoincrement())
+  numero_torre        Int
+  fk_cod_conjunto     Int?
+  fecha_registro      DateTime  @default(now()) @db.Timestamp(0)
+  fecha_actualizacion DateTime  @default(now()) @db.Timestamp(0)
+  apto                apto[]
+  conjunto            conjunto? @relation(fields: [fk_cod_conjunto], references: [cod_conjunto])
 
   @@index([fk_cod_conjunto], map: "fk_cod_conjunto")
 }
@@ -225,6 +241,7 @@ model AdminConjunto {
   fk_cod_administrador Int?
   fk_estado_admin      Int?      @default(1)
   fecha_actualizacion  DateTime  @default(now()) @db.Timestamp(0)
+  fecha_registro       DateTime  @default(now()) @db.Timestamp(0)
   admin                persona?  @relation(fields: [fk_cod_administrador], references: [cod_user])
   conjunto             conjunto? @relation(fields: [fk_cod_conjunto], references: [cod_conjunto])
   estado               estado?   @relation(fields: [fk_estado_admin], references: [cod_estado], onDelete: Restrict, onUpdate: Restrict, map: "fk_estado_admin")

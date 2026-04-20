@@ -287,4 +287,40 @@ async crearSolicitudTraspaso(cod_user: number, cod_conjunto: number) {
     });
   });
 }
+
+async anadiradmin(cod_user: number, cod_conjunto: number) {
+  return await this.prisma.$transaction(async (tx) => {
+    const idUser = Number(cod_user);
+    const idConjunto = Number(cod_conjunto);
+
+    // B. Usamos upsert para que, si no existe la solicitud previa, la cree.
+    // Si ya existe (estado 3), simplemente la activa (estado 1).
+    await tx.adminConjunto.upsert({
+      where: {
+        fk_cod_conjunto_fk_cod_administrador: {
+          fk_cod_administrador: idUser,
+          fk_cod_conjunto: idConjunto,
+        },
+      },
+      update: { 
+        fk_estado_admin: 1 
+      },
+      create: {
+        fk_cod_administrador: idUser,
+        fk_cod_conjunto: idConjunto,
+        fk_estado_admin: 1,
+      },
+    });
+
+    // C. Poner al usuario como Admin Activo
+    await tx.persona.update({
+      where: { cod_user: idUser },
+      data: { 
+        fk_rol: 1, 
+        fk_estado_user: 1 // ⚠️ OJO: Revisa si tu estado "Activo" es 1 o 2. 
+                         // Normalmente 1 es "Registrado" y 2 es "Activo".
+      }
+    });
+  });
+}
 }

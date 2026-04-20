@@ -129,6 +129,10 @@
                             onclick="aprobarTraspaso(${sol.admin.cod_user}, ${sol.conjunto.cod_conjunto})">
                             Aprobar y Vincular
                         </button>
+                         <button class="btn-aprobar" 
+                            onclick="aprobarTraspasoo(${sol.admin.cod_user}, ${sol.conjunto.cod_conjunto})">
+                            Aprobar sin inhabilitar
+                        </button>
                         <button class="btn-rechazar" onclick="rechazarSolicitud(${sol.admin.cod_user})">
                             Rechazar
                         </button>
@@ -142,7 +146,7 @@
 }
 
 async function aprobarTraspaso(userId, conjuntoId) {
-    if (!confirm("¿Estás seguro de aprobar este traspaso? Se inactivará al administrador anterior.")) return;
+    if (!confirm("¿Confirmar traspaso? Se inactivará al administrador anterior.")) return;
 
     try {
         const res = await fetch('http://localhost:3000/acceso/aprobar-traspaso', {
@@ -154,17 +158,47 @@ async function aprobarTraspaso(userId, conjuntoId) {
             })
         });
 
-        const data = await res.json();
+        // Verificamos si la respuesta tiene contenido antes de hacer .json()
+        const data = res.headers.get("content-type")?.includes("application/json") 
+                     ? await res.json() 
+                     : {};
 
         if (res.ok) {
             alert("✅ Traspaso completado con éxito.");
-            // Removemos la tarjeta de la lista visualmente
+            const elemento = document.getElementById(`solicitud-${userId}`);
+            if(elemento) elemento.remove();
+        } else {
+            alert("❌ Error: " + (data.message || "No se pudo procesar el traspaso"));
+        }
+    } catch (error) {
+        console.error(error);
+        alert("Ocurrió un error en la conexión con el servidor.");
+    }
+}
+
+// Opción B: Para Añadir Admin (Simplemente vincula sin quitar a nadie)
+async function aprobarTraspasoo(userId, conjuntoId) { 
+    if (!confirm("¿Estás seguro de aprobar este traspaso?")) return;
+
+    try {
+        const res = await fetch('http://localhost:3000/acceso/anadiradmin', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({ 
+                userId: Number(userId), 
+                conjuntoId: Number(conjuntoId) 
+            })
+        });
+
+        if (res.ok) {
+            alert("✅ Traspaso completado.");
             document.getElementById(`solicitud-${userId}`).remove();
         } else {
+            const data = await res.json();
             alert("❌ Error: " + data.message);
         }
     } catch (error) {
-        alert("Ocurrió un error en la conexión con el servidor.");
+        alert("Error de conexión");
     }
 }
 
