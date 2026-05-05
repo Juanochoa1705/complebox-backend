@@ -161,28 +161,32 @@ async listarVigilantes(@Req() req: any) {
 async obtenerPerfil(@Req() req) {
   const userId = req.user.id;
 
-  const adminRelacion = await this.prisma.adminConjunto.findFirst({
-    where: { fk_cod_administrador: userId },
-    include: { conjunto: true } // 🔥 IMPORTANTE
-  });
+  const relaciones = await this.prisma.adminConjunto.findMany({
+  where: { fk_cod_administrador: userId },
+  include: { conjunto: true }
+});
 
-  if (!adminRelacion) {
-    return { tieneConjunto: false };
-  }
+if (relaciones.length === 0) {
+  return { tieneConjunto: false };
+}
 
-  if (adminRelacion.fk_estado_admin !== 1) {
-    return {
-      bloqueado: true,
-      mensaje: "Tu acceso como administrador ha sido revocado o está inactivo."
-    };
-  }
+// validar si alguno está activo
+const relacionesActivas = relaciones.filter(r => r.fk_estado_admin === 1);
 
+if (relacionesActivas.length === 0) {
   return {
-    tieneConjunto: true,
-    bloqueado: false,
-    conjunto: adminRelacion.conjunto // 🔥 AQUÍ VA LO QUE PREGUNTASTE
+    bloqueado: true,
+    mensaje: "No tienes acceso activo a ningún conjunto."
   };
 }
+
+return {
+  tieneConjunto: true,
+  bloqueado: false,
+  conjuntos: relacionesActivas.map(r => r.conjunto)
+};
+}
+
 @Get('conjuntos/buscar') // <-- Fíjate que la ruta sea exactemente esta
 async buscarConjuntos(@Query('q') query: string) {
   return await this.adminService.buscarConjuntos(query);

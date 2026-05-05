@@ -5,12 +5,11 @@ const API_URL = 'http://localhost:3000';
 const token = localStorage.getItem('token');
 const estadoEspecialAdmin = localStorage.getItem("estadoEspecialAdmin");
 const mensajeAdmin = localStorage.getItem("mensajeAdmin");
-
+let conjuntoActivo = localStorage.getItem("conjuntoActivo");
 
 
 // Función de validación mejorada
 function validarRol() {
-    // 🔥 Validación extra del token
     if (!token || token.split('.').length < 3) return false;
 
     try {
@@ -21,14 +20,27 @@ function validarRol() {
     }
 }
 
-/* ==========================================
-   2. CONTROL DE INTERFAZ (UI)
-   ========================================== */
-if (!validarRol()) {
-    mostrarPantallaBloqueo("No tienes permisos de Administrador.");
-} else if (estadoEspecialAdmin === "true") {
-    mostrarPantallaBloqueo(mensajeAdmin);
-}
+document.addEventListener('DOMContentLoaded', async () => {
+
+    console.log("🚀 DOM listo");
+
+    if (!validarRol()) {
+        console.log("❌ no es admin");
+        mostrarPantallaBloqueo("No tienes permisos de Administrador.");
+        return;
+    }
+
+    if (estadoEspecialAdmin === "true") {
+        console.log("⚠️ admin bloqueado");
+        mostrarPantallaBloqueo(mensajeAdmin);
+        return;
+    }
+
+    console.log("✅ entrando a cargar perfil");
+
+    await cargarPerfilAdmin();
+    cargarEmpresa();
+});
 
 function mostrarPantallaBloqueo(msj) {
     // Quitamos el listener para que actúe al instante
@@ -65,26 +77,6 @@ function mostrarPantallaBloqueo(msj) {
     </div>`;
 }
 
-/* ==========================================
-   3. INICIALIZACIÓN DE FUNCIONES
-   ========================================== */
-document.addEventListener('DOMContentLoaded', async () => {
-    // 1. Validamos rol básico
-    if (!validarRol()) {
-        mostrarPantallaBloqueo("No tienes permisos de Administrador.");
-        return;
-    }
-
-    // 2. Si tiene un estado especial (bloqueo por localStorage)
-    if (estadoEspecialAdmin === "true") {
-        mostrarPantallaBloqueo(mensajeAdmin);
-        return;
-    }
-
-    // 3. Cargamos el perfil (Aquí se decide qué mostrar)
-    await cargarPerfilAdmin();
-    cargarEmpresa();
-});
 
 /* ==========================================
    4. PERFIL Y CONTROL DE INTERFAZ
@@ -92,13 +84,13 @@ document.addEventListener('DOMContentLoaded', async () => {
 async function cargarPerfilAdmin() {
     try {
         const res = await fetch(`${API_URL}/admin/perfil`, {
-            headers: { 'Authorization': `Bearer ${token}` }
+            headers: { 'Authorization': `Bearer ${token}`,"x-conjunto-id": conjuntoActivo }
         });
         
         if (!res.ok) throw new Error("Error en la petición de perfil");
         
         const data = await res.json();
-
+console.log("DATA PERFIL 👉", data);
         // CASO A: El Admin está bloqueado desde el Backend
         if (data.bloqueado) {
             mostrarPantallaBloqueo(data.mensaje);
@@ -125,9 +117,15 @@ async function cargarPerfilAdmin() {
 
         // CASO C: Todo normal (Tiene conjunto)
         // Llenamos la info del conjunto con lo que ya viene en 'data.conjunto'
-        if (data.conjunto) {
-            mostrarConjunto(data.conjunto);
-        }
+   if (data.conjuntos && data.conjuntos.length > 0) {
+
+    const conjunto = data.conjuntos[0];
+
+    conjuntoActivo = conjunto.cod_conjunto;
+    localStorage.setItem("conjuntoActivo", conjuntoActivo);
+
+    mostrarConjunto(conjunto);
+}
 
         // Cargamos el resto de componentes del Dashboard
         cargarVigilantesPendientes();
@@ -149,7 +147,7 @@ async function obtenerConjunto() {
 
     try {
         const res = await fetch(`${API_URL}/admin/conjunto`, {
-            headers: { Authorization: `Bearer ${token}` }
+            headers: { Authorization: `Bearer ${token}` ,"x-conjunto-id": conjuntoActivo}
         });
 
         if (res.status === 404) {
@@ -172,9 +170,23 @@ async function obtenerConjunto() {
 }
 
 function mostrarConjunto(data) {
-    document.getElementById('infoSection').classList.remove('d-none');
-    document.getElementById('infoNombre').textContent = data.nombre_conjunto;
-    document.getElementById('infoTelefono').textContent = data.telefono_conjunto;
+
+    console.log("ELEMENTO 👉", document.getElementById('infoSection'));
+    localStorage.getItem("token")
+
+    const infoSection = document.getElementById('infoSection');
+    const nombre = document.getElementById('infoNombre');
+    const telefono = document.getElementById('infoTelefono');
+
+    if (!infoSection || !nombre || !telefono) {
+        console.error("❌ Elementos del DOM no encontrados");
+        return;
+    }
+
+    infoSection.classList.remove('d-none');
+    nombre.textContent = data.nombre_conjunto;
+    telefono.textContent = data.telefono_conjunto;
+
     cargarCantidadTorres();
 }
 
@@ -188,7 +200,7 @@ async function crearConjunto() {
     };
     const res = await fetch(`${API_URL}/admin/conjunto`, {
         method: 'POST',
-        headers: { 'Content-Type': 'application/json', Authorization: `Bearer ${token}` },
+        headers: { 'Content-Type': 'application/json', "Authorization": `Bearer ${token}`,"x-conjunto-id": conjuntoActivo },
         body: JSON.stringify(body)
     });
     if (res.ok) location.reload();
@@ -199,15 +211,21 @@ async function crearConjunto() {
    ========================================== */
 async function cargarCantidadTorres() {
     const res = await fetch(`${API_URL}/admin/torres`, {
-        headers: { Authorization: `Bearer ${token}` }
-    });
+    headers: { 
+        "Authorization": `Bearer ${token}`,
+        "x-conjunto-id": conjuntoActivo
+    }
+});
     const data = await res.json();
     if(document.getElementById('cantidadTorres')) cantidadTorres.textContent = data.length;
 }
 
 async function verTorres() {
     const res = await fetch(`${API_URL}/admin/torres`, {
-        headers: { Authorization: `Bearer ${token}` }
+        headers: { 
+        "Authorization": `Bearer ${token}`,
+        "x-conjunto-id": conjuntoActivo
+    }
     });
     const torresData = await res.json();
     listaTorres.innerHTML = "";
@@ -227,7 +245,7 @@ async function actualizarTorre(id) {
     if (!numero) return alert("Número inválido");
     await fetch(`${API_URL}/admin/torres/${id}`, {
         method: "PUT",
-        headers: { "Content-Type": "application/json", Authorization: `Bearer ${token}` },
+        headers: { "Content-Type": "application/json", "Authorization": `Bearer ${token}`, "x-conjunto-id": conjuntoActivo },
         body: JSON.stringify({ numero_torre: numero })
     });
     alert("✅ Torre actualizada");
@@ -238,7 +256,10 @@ async function eliminarTorre(id) {
     if (!confirm("¿Eliminar torre?")) return;
     await fetch(`${API_URL}/admin/torres/${id}`, {
         method: "DELETE",
-        headers: { Authorization: `Bearer ${token}` }
+        headers: { 
+        "Authorization": `Bearer ${token}`,
+        "x-conjunto-id": conjuntoActivo
+    }
     });
     alert("🗑️ Torre eliminada");
     cargarCantidadTorres();
@@ -250,7 +271,9 @@ async function agregarTorre() {
     if (!numero) return alert('Número inválido');
     await fetch(`${API_URL}/admin/torres`, {
         method: 'POST',
-        headers: { 'Content-Type': 'application/json', Authorization: `Bearer ${token}` },
+        headers: { 'Content-Type': 'application/json', "Authorization": `Bearer ${token}`,
+     "x-conjunto-id": conjuntoActivo
+    },
         body: JSON.stringify({ numero_torre: numero })
     });
     nuevaTorre.value = '';
@@ -273,7 +296,7 @@ if(document.getElementById('empresaForm')) {
         };
         const res = await fetch(`${API_URL}/admin/crear-empresa-seguridad`, {
             method: "POST",
-            headers: { "Content-Type": "application/json", Authorization: `Bearer ${token}` },
+            headers: { "Content-Type": "application/json", "Authorization": `Bearer ${token}` , "x-conjunto-id": conjuntoActivo},
             body: JSON.stringify(data)
         });
         if (res.ok) {
@@ -285,7 +308,7 @@ if(document.getElementById('empresaForm')) {
 
 async function cargarVigilantesPendientes() {
     const res = await fetch(`${API_URL}/admin/vigilantes-pendientes`, {
-        headers: { Authorization: `Bearer ${token}` }
+        headers: { "Authorization": `Bearer ${token}`,"x-conjunto-id": conjuntoActivo }
     });
     const data = await res.json();
     if(!document.getElementById('tablaVigilantes')) return;
@@ -311,7 +334,7 @@ async function cargarVigilantesPendientes() {
 async function aprobarVigilante(id) {
     await fetch(`${API_URL}/admin/aprobar-vigilante`, {
         method: "POST",
-        headers: { "Content-Type": "application/json", Authorization: `Bearer ${token}` },
+        headers: { "Content-Type": "application/json", "Authorization": `Bearer ${token}`,"x-conjunto-id": conjuntoActivo },
         body: JSON.stringify({ cod_user: id })
     });
     alert("Aprobado");
@@ -328,7 +351,7 @@ async function rechazarVigilante(id) {
     const res = await fetch(`${API_URL}/admin/rechazar/${id}`, {
       method: "POST",
       headers: {
-        Authorization: `Bearer ${token}`
+        "Authorization": `Bearer ${token}`,"x-conjunto-id": conjuntoActivo
       }
     });
 
@@ -350,7 +373,7 @@ async function cargarVigilantes() {
     if (!contenedor) return;
     try {
         const res = await fetch(`${API_URL}/admin/mis-vigilantes`, {
-            headers: { "Authorization": `Bearer ${token}` }
+            headers: { "Authorization": `Bearer ${token}`,"x-conjunto-id": conjuntoActivo }
         });
         const data = await res.json();
         contenedor.innerHTML = ""; 
@@ -380,21 +403,19 @@ async function updateStatusVigilante(idRegistro, nuevoEstado) {
             method: "POST",
             headers: {
                 "Content-Type": "application/json",
-                "Authorization": `Bearer ${token}`
+                "Authorization": `Bearer ${token}`,
+                "x-conjunto-id": conjuntoActivo
             },
             body: JSON.stringify({ id: idRegistro, estado: nuevoEstado })
         });
 
         if (res.ok) {
             alert("✅ Estado actualizado");
-            cargarVigilantes(); // Recarga la lista
+            cargarVigilantes();
         }
     } catch (error) {
         console.error("Error al actualizar:", error);
     }
-
-  
- 
 }
 
 
@@ -408,7 +429,7 @@ if(document.getElementById("buscarHistorial")) {
         if (query.length < 2) { tablaHistorial.innerHTML = ""; return; }
         try {
             const res = await fetch(`${API_URL}/admin/historial?query=${query}`, {
-                headers: { Authorization: `Bearer ${token}` }
+                headers: { "Authorization": `Bearer ${token}` , "x-conjunto-id": conjuntoActivo}
             });
             const data = await res.json();
             tablaHistorial.innerHTML = "";
@@ -453,7 +474,7 @@ async function buscarConjuntos() {
     const res = await fetch(`${API_URL}/admin/conjuntos/buscar?q=${input}`, {
         method: 'GET',
         headers: { 
-            'Authorization': `Bearer ${token}`, // <-- Esto es lo que falta
+            'Authorization': `Bearer ${token}`,'x-conjunto-id': conjuntoActivo, // <-- Esto es lo que falta
             'Content-Type': 'application/json'
         }
     });
@@ -489,7 +510,7 @@ async function vincularAdminAConjunto() {
 
     const res = await fetch(`${API_URL}/admin/vincular`, {
         method: 'POST',
-        headers: { 'Content-Type': 'application/json', Authorization: `Bearer ${token}` },
+        headers: { 'Content-Type': 'application/json', Authorization: `Bearer ${token}`,'x-conjunto-id': conjuntoActivo },
         body: JSON.stringify({ conjuntoId: Number(conjuntoId) })
     });
 
@@ -504,7 +525,8 @@ async function activarEmpresa() {
         method: "POST",
         headers: {
             "Content-Type": "application/json",
-            "Authorization": `Bearer ${token}`
+            "Authorization": `Bearer ${token}`,
+            "x-conjunto-id": conjuntoActivo
         },
         body: JSON.stringify({ estado: 1 })
     });
@@ -518,7 +540,8 @@ async function inactivarEmpresa() {
         method: "POST",
         headers: {
             "Content-Type": "application/json",
-            "Authorization": `Bearer ${token}`
+            "Authorization": `Bearer ${token}`,
+            "x-conjunto-id": conjuntoActivo
         },
         body: JSON.stringify({ estado: 2 })
     });
@@ -526,10 +549,9 @@ async function inactivarEmpresa() {
     alert("Empresa inactivada ❌");
     location.reload();
 }
-
 async function cargarEmpresa() {
     const res = await fetch(`${API_URL}/admin/empresa`, {
-        headers: { Authorization: `Bearer ${token}` }
+        headers: { Authorization: `Bearer ${token}`,'x-conjunto-id': conjuntoActivo }
     });
 
     if (!res.ok) return;
@@ -575,7 +597,7 @@ async function guardarEmpresa() {
         method: "PUT",
         headers: {
             "Content-Type": "application/json",
-            "Authorization": `Bearer ${token}`
+            "Authorization": `Bearer ${token}`,'x-conjunto-id': conjuntoActivo
         },
         body: JSON.stringify(body)
     });
