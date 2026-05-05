@@ -119,10 +119,26 @@ console.log("DATA PERFIL 👉", data);
         // Llenamos la info del conjunto con lo que ya viene en 'data.conjunto'
    if (data.conjuntos && data.conjuntos.length > 0) {
 
-    const conjunto = data.conjuntos[0];
+    // 🔥 CASO: MÁS DE UN CONJUNTO
+    if (data.conjuntos.length > 1 && !conjuntoActivo) {
 
-    conjuntoActivo = conjunto.cod_conjunto;
-    localStorage.setItem("conjuntoActivo", conjuntoActivo);
+        mostrarSelectorConjunto(data.conjuntos);
+        return; // ⛔ no sigue cargando nada aún
+    }
+
+    // 🔥 CASO: YA TIENE UNO SELECCIONADO
+    if (!conjuntoActivo) {
+        conjuntoActivo = data.conjuntos[0].cod_conjunto;
+        localStorage.setItem("conjuntoActivo", conjuntoActivo);
+    }
+
+    const conjunto = data.conjuntos.find(c => c.cod_conjunto == conjuntoActivo);
+
+    if (!conjunto) {
+        localStorage.removeItem("conjuntoActivo");
+        location.reload();
+        return;
+    }
 
     mostrarConjunto(conjunto);
 }
@@ -134,6 +150,36 @@ console.log("DATA PERFIL 👉", data);
     } catch (err) {
         console.error("Error cargando perfil:", err);
     }
+}
+
+
+
+function mostrarSelectorConjunto(conjuntos) {
+
+    const selector = document.getElementById("selectorConjunto");
+    const lista = document.getElementById("listaConjuntos");
+
+    selector.classList.remove("d-none");
+    document.getElementById("infoSection")?.classList.add("d-none");
+    document.getElementById("crearSection")?.classList.add("d-none");
+
+    lista.innerHTML = "";
+
+    conjuntos.forEach(c => {
+        const btn = document.createElement("button");
+        btn.style.display = "block";
+        btn.style.width = "100%";
+        btn.style.marginBottom = "10px";
+
+        btn.innerText = `${c.nombre_conjunto} - ${c.ciudad_conjunto}`;
+
+        btn.onclick = () => {
+            localStorage.setItem("conjuntoActivo", c.cod_conjunto);
+            location.reload();
+        };
+
+        lista.appendChild(btn);
+    });
 }
 /* ==========================================
    4. GESTIÓN DE CONJUNTO
