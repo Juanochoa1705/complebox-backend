@@ -137,35 +137,58 @@ async entregarPedido(id: number, vigilanteId: number) {
 }
 
 async obtenerPerfilvig(codUser: number) {
-  // 1. Buscamos los datos de la persona
+
+  // 🔹 1. Buscar persona
   const persona = await this.prisma.persona.findUnique({
     where: { cod_user: codUser },
-    select: { nombres: true, apellidos: true }
+    select: {
+      nombres: true,
+      apellidos: true
+    }
   });
 
-  // 2. Buscamos la relación con la empresa/conjunto
+  if (!persona) {
+    throw new Error("Usuario no encontrado");
+  }
+
+  // 🔹 2. Buscar relación completa (CON INCLUDE 🔥)
   const relacion = await this.prisma.empresa_vigilante_conjunto.findFirst({
-    where: { fk_persona_vigilante: codUser }
+    where: { fk_persona_vigilante: codUser },
+    include: {
+      empresa_seguridad_conjunto: {
+        include: {
+          conjunto: true,
+          empresa: true
+        }
+      },
+      estado: true
+    }
   });
 
-  // 3. Validamos el estado 3 o si no existe registro
-  // Usamos 'cod_empresa_vigilante' que es el nombre real en tu modelo
+  // 🔹 3. Validar si no existe o está bloqueado
   if (!relacion || relacion.fk_estado_vigilante_empresa === 3) {
     return {
       accesoRestringido: true,
       mensaje: "Tu perfil de vigilante está inactivo o fue rechazado.",
-      nombres: persona?.nombres,
-      apellidos: persona?.apellidos
+      nombres: persona.nombres,
+      apellidos: persona.apellidos
     };
   }
 
-  // 4. Si todo está OK
+  // 🔹 4. Extraer datos seguros (evita undefined)
+  const conjunto = relacion.empresa_seguridad_conjunto?.conjunto;
+  const empresa = relacion.empresa_seguridad_conjunto?.empresa;
+
+  // 🔹 5. Retornar TODO lo necesario
   return {
-    accesoRestringido: false,
-    nombres: persona?.nombres,
-    apellidos: persona?.apellidos,
-    cod_relacion: relacion.cod_empresa_vigilante // 👈 Corregido según tu modelo
-  };
+  accesoRestringido: false,
+
+  nombres: persona.nombres,
+  apellidos: persona.apellidos,
+
+  nombre_conjunto: conjunto?.nombre_conjunto || null,
+  nombre_empresa: empresa?.nombre_empresa || null
+};
 }
 
 async historialPedidos(query: string, vigilanteId: number) {

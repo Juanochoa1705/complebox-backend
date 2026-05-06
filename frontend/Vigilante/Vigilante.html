@@ -141,7 +141,7 @@ button:active {
 <img src="../assets/logo.png" class="logo" alt="Complebox">
 
     <h2 id="titulovig"></h2>
-    <p id="ubicacionvig"></p>
+    <center><h3 id="ubicacionvig"></h3></center>
 
 
 <div id="listaPedidos"></div>
@@ -207,7 +207,17 @@ async function cargarPerfilvig() {
 
     // Si el acceso es normal, limpiamos cualquier bloqueo previo y mostramos datos
     localStorage.setItem("estadoEspecial", "false");
-    document.getElementById("datosPerfil").innerText = `${data.nombres} ${data.apellidos}`;
+    const nombreEl = document.getElementById("titulovig");
+const ubicacionEl = document.getElementById("ubicacionvig");
+
+// 👮‍♂️ Título
+nombreEl.innerText = `👮‍♂️ Vigilante ${data.nombres} ${data.apellidos}`;
+
+// 🏢 Ubicación + empresa
+ubicacionEl.innerText = [
+  data.nombre_conjunto,
+  data.nombre_empresa ? `Empresa: ${data.nombre_empresa}` : null
+].filter(Boolean).join(" - ");
 
   } catch (error) {
     console.error("Error al cargar perfil:", error);

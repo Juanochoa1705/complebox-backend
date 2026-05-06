@@ -241,7 +241,7 @@ model AdminConjunto {
   fk_cod_administrador Int?
   fk_estado_admin      Int?      @default(1)
   fecha_actualizacion  DateTime  @default(now()) @db.Timestamp(0)
-  fecha_registro       DateTime  @default(now()) @db.Timestamp(0)
+  fecha_registro       DateTime? @db.DateTime(0)
   admin                persona?  @relation(fields: [fk_cod_administrador], references: [cod_user])
   conjunto             conjunto? @relation(fields: [fk_cod_conjunto], references: [cod_conjunto])
   estado               estado?   @relation(fields: [fk_estado_admin], references: [cod_estado], onDelete: Restrict, onUpdate: Restrict, map: "fk_estado_admin")
