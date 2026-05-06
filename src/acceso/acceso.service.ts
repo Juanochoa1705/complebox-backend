@@ -234,19 +234,39 @@ async obtenerConjuntos() {
 }
 async crearSolicitudTraspaso(cod_user: number, cod_conjunto: number) {
   return await this.prisma.$transaction(async (tx) => {
-    // 1. Cambiamos el estado del usuario a "En espera" (estado 3)
+
+    // 1. Cambiar estado del usuario (opcional según tu lógica)
     await tx.persona.update({
       where: { cod_user: Number(cod_user) },
-      data: { fk_estado_user: 4 } 
+      data: { fk_estado_user: 4 }
     });
 
-    // 2. Creamos la relación en admin_conjunto con estado "Pendiente" (estado 3)
-    // Esto guarda el conjunto que el usuario seleccionó
+    // 2. Verificar si ya existe relación en admin_conjunto
+    const existe = await tx.adminConjunto.findFirst({
+      where: {
+        fk_cod_administrador: Number(cod_user),
+        fk_cod_conjunto: Number(cod_conjunto)
+      }
+    });
+
+    // 3. Si existe → UPDATE
+    if (existe) {
+      return await tx.adminConjunto.update({
+        where: {
+          cod_admin_conjunto: existe.cod_admin_conjunto // usa tu PK real
+        },
+        data: {
+          fk_estado_admin: 3
+        }
+      });
+    }
+
+    // 4. Si NO existe → CREATE
     return await tx.adminConjunto.create({
       data: {
         fk_cod_administrador: Number(cod_user),
         fk_cod_conjunto: Number(cod_conjunto),
-        fk_estado_admin: 3 // <-- 3 significa "Esperando que el SuperAdmin me apruebe"
+        fk_estado_admin: 3
       }
     });
   });
