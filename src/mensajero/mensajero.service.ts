@@ -40,7 +40,7 @@ async buscarResidente(query: string) {
       AND: [
         {
           fk_rol: {
-            in: [2, 3] // 🔥 propietario y residente
+            in: [1,2,3,4,5,6] // 🔥 propietario y residente
           }
         },
         {
