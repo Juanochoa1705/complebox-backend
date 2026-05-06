@@ -105,11 +105,6 @@ async crearEmpresa(
 @Post('rechazar/:id')
 rechazarVigilante(@Param('id') id: number, @Request() req) {
 
-  // 🔐 opcional pero recomendado
-  if (req.user.rol !== 'Administrador') {
-    throw new UnauthorizedException('No tienes permisos');
-  }
-
   return this.adminService.rechazarVigilante(Number(id));
 }
 

@@ -31,10 +31,6 @@ async perfil(@Request() req) {
 @Post('rechazar/:id')
 rechazarResidente(@Param('id') id: number, @Request() req) {
 
-  // 🔐 opcional pero recomendado
-  if (req.user.rol !== 'Propietario') {
-    throw new UnauthorizedException('No tienes permisos');
-  }
 
   return this.propietarioService.rechazarResidente(Number(id));
 }

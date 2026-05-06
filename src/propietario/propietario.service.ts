@@ -107,30 +107,53 @@ export class PropietarioService {
 }
 
 async rechazarResidente(residenteId: number) {
-
   const residente = await this.prisma.persona.findUnique({
-    where: { cod_user: residenteId }
+    where: { cod_user: residenteId },
   });
 
   if (!residente) {
     throw new NotFoundException('El residente no existe');
   }
 
-  // 🔥 1. eliminar relación primero
-  await this.prisma.apto_residente.deleteMany({
-    where: {
-      fk_cod_residente: residenteId
-    }
-  });
+  return await this.prisma.$transaction(async (tx) => {
+    // 1. Borramos el vínculo con el apartamento
+    await tx.apto_residente.deleteMany({
+      where: { fk_cod_residente: residenteId }
+    });
 
-  // 🔥 2. ahora sí eliminar persona
-  return this.prisma.persona.delete({
-    where: {
-      cod_user: residenteId
+    // 2. Consultamos TODAS las relaciones posibles de la persona
+    const personaConRoles = await tx.persona.findUnique({
+      where: { cod_user: residenteId },
+      include: {
+        adminConjuntos: true,
+        apto_propietario: true,
+        empresa_mensajero: true,
+        empresa_vigilante_conjunto: true,
+        // Estas son las relaciones de pedidos (basadas en tu schema)
+        pedido_estado_entrega_residente_pedido_estado_entrega_residente_fk_residenteTopersona: true,
+      }
+    });
+
+    // 3. Verificamos si queda algún rastro en otras tablas
+    const tieneOtrasRelaciones = 
+      (personaConRoles?.adminConjuntos?.length ?? 0) > 0 || 
+      (personaConRoles?.apto_propietario?.length ?? 0) > 0 ||
+      (personaConRoles?.empresa_mensajero?.length ?? 0) > 0 ||
+      (personaConRoles?.empresa_vigilante_conjunto?.length ?? 0) > 0 ||
+      (personaConRoles?.pedido_estado_entrega_residente_pedido_estado_entrega_residente_fk_residenteTopersona?.length ?? 0) > 0;
+
+    if (!tieneOtrasRelaciones) {
+      // 4. Si está totalmente limpio, borramos la persona
+      await tx.persona.delete({
+        where: { cod_user: residenteId }
+      });
+      return { message: 'Residente y perfil de usuario eliminados permanentemente.' };
+    } else {
+      // 5. Si tiene otros roles (ej. es admin o vigilante), solo quitamos el rol de residente
+      return { message: 'Vínculo de apartamento eliminado. El perfil se conserva por otros roles activos.' };
     }
   });
 }
-
 async obtenerResidentesPropietario(propietarioId: number) {
   return this.prisma.apto_propietario.findMany({
     where: { 

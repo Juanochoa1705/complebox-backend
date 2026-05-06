@@ -106,4 +106,17 @@ getPerfil(@Param('id') id: string) {
 updatePerfil(@Param('id') id: string, @Body() dto: any) {
   return this.authService.updatePerfil(Number(id), dto);
 }
+
+@Post('recuperar-password')
+async recuperarPassword(@Body('correo') correo: string) {
+  return this.authService.enviarCodigoRecuperacion(correo);
+}
+@Post('reset-password')
+async resetPassword(
+  @Body('correo') correo: string,
+  @Body('codigo') codigo: string,
+  @Body('nuevaPassword') nuevaPassword: string
+) {
+  return this.authService.cambiarPasswordConCodigo(correo, codigo, nuevaPassword);
+}
 }

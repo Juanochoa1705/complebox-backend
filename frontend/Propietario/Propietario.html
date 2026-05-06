@@ -252,13 +252,26 @@ async function aprobarResidente(codUser){
     actualizarTodo();
 }
 
-async function rechazarResidente(codUser){
+async function rechazarResidente(codUser) {
     if (!confirm("¿Eliminar solicitud?")) return;
-    await fetch(`${API}/propietario/rechazar/${codUser}`, {
+    
+    const response = await fetch(`${API}/propietario/rechazar/${codUser}`, {
         method: "POST",
-        headers: { Authorization: `Bearer ${token}` }
+        headers: { 
+            "Authorization": `Bearer ${token}`,
+            "Content-Type": "application/json" 
+        }
     });
-    actualizarTodo();
+
+    const data = await response.json();
+    console.log("Respuesta del servidor:", data); // ESTO TE DIRÁ EL ERROR REAL
+
+    if (response.ok) {
+        alert("Solicitud eliminada correctamente");
+        actualizarTodo();
+    } else {
+        alert("Error al rechazar: " + data.message);
+    }
 }
 
 async function cambiarEstado(id, estado) {

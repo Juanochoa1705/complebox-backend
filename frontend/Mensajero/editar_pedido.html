@@ -70,8 +70,15 @@ button {
 
 <script>
 
+//const params = new URLSearchParams(window.location.search);
+//const id = params.get("id");
+
+console.log("URL completa:", window.location.href);
+
 const params = new URLSearchParams(window.location.search);
 const id = params.get("id");
+
+console.log("ID recibido:", id);
 
 let residenteSeleccionado = null;
 
@@ -172,6 +179,8 @@ function volver() {
 }
 
 cargarPedido();
+
+
 
 </script>
 

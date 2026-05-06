@@ -500,6 +500,7 @@ if(document.getElementById("buscarHistorial")) {
             ? `Torre ${p.numero_torre} - Apto ${p.numero_apto}`
             : "❌ No asignado"
         }<br>
+        
                     <hr>`;
                 tablaHistorial.appendChild(div);
             });

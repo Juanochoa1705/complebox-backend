@@ -111,32 +111,59 @@
 
 <body>
 
-  <div class="mobile">
+ <div class="mobile">
     <img src="assets/logo.png" class="logo" alt="Complebox">
-    <h2>Iniciar sesión</h2>
+    
+    <div id="contenedor-login">
+        <h2>Iniciar sesión</h2>
+        <form id="loginForm">
+            <div class="form-group">
+                <label>Usuario</label>
+                <input id="usuario" required>
+            </div>
 
-    <form id="loginForm">
+            <div class="form-group">
+                <label>Contraseña</label>
+                <input type="password" id="password" required>
+            </div>
 
-      <div class="form-group">
-        <label>Usuario</label>
-        <input id="usuario" required>
-      </div>
+            <button type="submit">Entrar</button>
+        </form>
 
-      <div class="form-group">
-        <label>Contraseña</label>
-        <input type="password" id="password" required>
-      </div>
+        <div class="link">
+            ¿No tienes cuenta? <a href="register.html">Regístrate</a>
+        </div>
 
-      <button type="submit">Entrar</button>
-    </form>
+        <div class="link">
+            <a href="#" onclick="manejarOlvidoContrasena()">¿Olvidaste tu contraseña?</a>
+        </div>
+    </div>
 
-    <div class="link">
-      ¿No tienes cuenta?
-      <a href="register.html">Regístrate</a>
+    <div id="seccion-reset" style="display:none;">
+        <h2 style="font-size: 20px;">Recuperar Cuenta</h2>
+        <p style="text-align: center; font-size: 13px; color: #666; margin-bottom: 20px;">
+            Ingresa el código enviado a tu correo y tu nueva contraseña.
+        </p>
+
+        <div class="form-group">
+            <label>Código de verificación</label>
+            <input type="text" id="input-codigo" placeholder="Ej: 123456" maxlength="6">
+        </div>
+
+        <div class="form-group">
+            <label>Nueva Contraseña</label>
+            <input type="password" id="input-nueva-pass" placeholder="Mínimo 6 caracteres">
+        </div>
+
+        <button type="button" onclick="enviarNuevaPassword()">Cambiar Contraseña</button>
+        
+        <div class="link">
+            <a href="#" onclick="window.location.reload()">Volver al Login</a>
+        </div>
     </div>
 
     <div id="message" class="message"></div>
-  </div>
+</div>
 
 <script>
 const form = document.getElementById('loginForm');
@@ -215,6 +242,75 @@ form.addEventListener('submit', async (e) => {
     message.className = 'message error';
   }
 });
+const API_URL = "http://localhost:3000";
+let correoAuxiliar = ""; // Variable para recordar a quién le cambiamos la clave
+
+async function manejarOlvidoContrasena() {
+    const correo = prompt("Ingresa tu correo electrónico:");
+    if (!correo) return;
+
+    try {
+        const response = await fetch(`${API_URL}/auth/recuperar-password`, {
+            method: "POST",
+            headers: { "Content-Type": "application/json" },
+            body: JSON.stringify({ correo: correo })
+        });
+
+        const data = await response.json();
+
+        if (response.ok) {
+            alert("¡Código enviado! Revisa tu bandeja de Mailtrap.");
+            
+            // 1. Guardamos el correo para el siguiente paso
+            correoAuxiliar = correo; 
+            
+            // 2. Ocultamos el formulario de login y mostramos el de reset
+            document.getElementById('loginForm').style.display = 'none';
+            document.querySelectorAll('.link').forEach(el => el.style.display = 'none');
+            document.getElementById('seccion-reset').style.display = 'block';
+            
+        } else {
+            alert("Error: " + (data.message || "No se pudo enviar"));
+        }
+    } catch (error) {
+        console.error("Error en la petición:", error);
+        alert("No se pudo conectar con el servidor.");
+    }
+}
+
+// Esta es la función que dispara el botón del nuevo formulario
+async function enviarNuevaPassword() {
+    const codigo = document.getElementById('input-codigo').value;
+    const passNueva = document.getElementById('input-nueva-pass').value;
+
+    if (!codigo || !passNueva) {
+        alert("Por favor completa los campos.");
+        return;
+    }
+
+    try {
+        const response = await fetch(`${API_URL}/auth/reset-password`, {
+            method: "POST",
+            headers: { "Content-Type": "application/json" },
+            body: JSON.stringify({ 
+                correo: correoAuxiliar, 
+                codigo: codigo, 
+                nuevaPassword: passNueva 
+            })
+        });
+
+        const data = await response.json();
+
+        if (response.ok) {
+            alert("¡Éxito! Contraseña cambiada. Ahora inicia sesión.");
+            window.location.reload(); // Recarga la página para volver al login normal
+        } else {
+            alert("Error: " + data.message);
+        }
+    } catch (error) {
+        alert("Error al conectar con el servidor.");
+    }
+}
 </script>
 
 

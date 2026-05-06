@@ -140,12 +140,12 @@ async eliminarPedido(id: number, mensajeroId: number) {
   async editarPedido(id: number, dto: any, mensajeroId: number) {
 
     const pedido = await this.prisma.pedido_estado_entrega_residente.findFirst({
-      where: {
-        cod_pedido_estado_entrega: id,
-        fk_mensajero: mensajeroId,
-        fk_estado_pedido: 1 // 🔥 SOLO REGISTRADO
-      }
-    });
+  where: {
+    cod_pedido_estado_entrega: id,
+    fk_estado_pedido: 1
+  }
+});
+    
 
     if (!pedido) {
       throw new BadRequestException('No puedes editar este pedido');

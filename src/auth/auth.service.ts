@@ -2,6 +2,7 @@ import {
   Injectable,
   ConflictException,
   UnauthorizedException,
+  NotFoundException
 } from '@nestjs/common';
 import { JwtService } from '@nestjs/jwt';
 import { PrismaService } from '../prisma/prisma.service';
@@ -9,12 +10,14 @@ import { RegisterDto } from './dto/register.dto';
 import { LoginDto } from './dto/login.dto';
 import * as bcrypt from 'bcrypt';
 import { CrearVigilanteDto } from './dto/crear-vigilante.dto';
+import { MailerService } from '@nestjs-modules/mailer'; // 👈 Importa esto
 
 @Injectable()
 export class AuthService {
   constructor(
     private prisma: PrismaService,
     private jwtService: JwtService,
+    private readonly mailerService: MailerService,
   ) {}
 
   // =========================
@@ -449,5 +452,74 @@ async updatePerfil(id: number, dto: any) {
       telefono: dto.telefono
     }
   });
+}
+
+async enviarCodigoRecuperacion(correo: string) {
+  // 1. Buscamos al usuario por su correo
+  const usuario = await this.prisma.persona.findFirst({
+    where: { correo: correo }
+  });
+
+  if (!usuario) {
+    throw new NotFoundException('El correo no está registrado');
+  }
+
+  // 2. Generamos el código de 6 dígitos
+  const codigo = Math.floor(100000 + Math.random() * 900000).toString();
+
+  // 3. Guardamos el código (SIN COMENTARIOS)
+  // Usamos await para asegurar que se registre antes de enviar el mail
+  await this.prisma.persona.update({
+    where: { cod_user: usuario.cod_user },
+    data: { 
+        codigo_recuperacion: codigo,
+        fecha_codigo: new Date() 
+    }
+  });
+
+  // 4. Enviamos el correo
+  await this.mailerService.sendMail({
+    to: correo,
+    subject: 'Recupera tu contraseña',
+    html: `
+      <div style="font-family: sans-serif; border: 1px solid #ddd; padding: 20px; border-radius: 10px;">
+        <h3 style="color: #1976d2;">Hola ${usuario.nombres}</h3>
+        <p>Has solicitado recuperar tu cuenta en Complebox.</p>
+        <p>Tu código de seguridad es: <b style="font-size: 20px; background: #eee; padding: 5px 10px;">${codigo}</b></p>
+        <p style="font-size: 12px; color: #888;">Si no solicitaste esto, ignora este mensaje.</p>
+      </div>
+    `
+  });
+
+  return { status: 'success', message: 'Código enviado y registrado' };
+}
+async cambiarPasswordConCodigo(correo: string, codigo: string, nuevaPassword: string) {
+  // 1. Validar el código (como ya lo tienes)
+  const usuario = await this.prisma.persona.findFirst({
+    where: { 
+      correo: correo,
+      codigo_recuperacion: codigo 
+    },
+  });
+
+  if (!usuario) {
+    throw new UnauthorizedException('El código es incorrecto.');
+  }
+
+  // 2. ENCRIPTAR la nueva contraseña antes de guardarla
+  const salt = await bcrypt.genSalt();
+  const passwordEncriptada = await bcrypt.hash(nuevaPassword, salt);
+
+  // 3. Guardar en la DB
+  await this.prisma.persona.update({
+    where: { cod_user: usuario.cod_user },
+    data: { 
+      contrase_a: passwordEncriptada, // Ahora guardamos el hash
+      codigo_recuperacion: null,       // Limpiamos el código
+      fecha_codigo: null 
+    },
+  });
+
+  return { message: 'Contraseña actualizada y encriptada con éxito' };
 }
 }

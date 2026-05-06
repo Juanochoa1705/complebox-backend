@@ -453,11 +453,11 @@ inputHistorial.addEventListener("input", async () => {
   <b>👮 Recibe:</b> ${p.nombre_vigilante_recibe || ''} ${p.apellido_vigilante_recibe || ''}<br>
   <b>👮 Entrega:</b> ${p.nombre_vigilante_entrega || ''} ${p.apellido_vigilante_entrega || ''}<br>
 
-   <b>🏢 Apto:</b> ${
-          p.numero_torre && p.numero_apto
-            ? `Torre ${p.numero_torre} - Apto ${p.numero_apto}`
-            : "❌ No asignado"
-        }<br>
+  <b>🏢 Apto:</b> ${
+    p.numero_torre && p.numero_apto
+      ? `Torre ${p.numero_torre} - Apto ${p.numero_apto}`
+      : "❌ No asignado"
+  }<br>
 
   <b>✍️ Firma:</b><br>
   ${
@@ -465,6 +465,8 @@ inputHistorial.addEventListener("input", async () => {
       ? `<img src="${p.firma_residente}" style="width:120px; border-radius:10px; margin-top:5px;">`
       : `<span style="color:red;">❌ No registrada</span>`
   }
+
+  ${acciones}
 
   <hr>
 `;
@@ -500,9 +502,10 @@ async function eliminarPedido(id) {
 // ✏️ EDITAR PEDIDO
 // ==========================
 function editarPedido(id) {
+  console.log("ID que llega al botón:", id);
+
   window.location.href = `editar_pedido.html?id=${id}`;
 }
-
 
 // ==========================
 // 🔄 CAMBIAR A RESIDENTE
