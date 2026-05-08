@@ -5,6 +5,8 @@ import { CrearEmpresaDto } from './dto/crear-empresa.dto';
 import * as XLSX from 'xlsx';
 import * as bcrypt from 'bcrypt';
 import { BadRequestException } from '@nestjs/common';
+import { UnauthorizedException } from '@nestjs/common';
+
 
 @Injectable()
 export class AdminService {
@@ -575,21 +577,22 @@ async eliminarTorre(codAdmin: number, codTorre: number) {
 // Obtener vigilantes del conjunto
 // src/admin/admin.service.ts
 
-async obtenerVigilantesPorAdmin(adminId: number) {
-  // 1. Buscar el conjunto del admin (Ojo a las mayúsculas/minúsculas)
-  const relacionAdmin = await this.prisma.adminConjunto.findFirst({
-    where: { fk_cod_administrador: adminId }
+// Cambia obtenerVigilantesPorAdmin para que sea específico por conjunto
+async obtenerVigilantesPorConjunto(adminId: number, conjuntoId: number) {
+  // Validamos que ese admin realmente gestione ese conjunto por seguridad
+  const relacion = await this.prisma.adminConjunto.findFirst({
+    where: { 
+      fk_cod_administrador: adminId,
+      fk_cod_conjunto: conjuntoId 
+    }
   });
 
-  console.log("Relación encontrada:", relacionAdmin); // Mira esto en la terminal de Nest
+  if (!relacion) throw new UnauthorizedException('No gestionas este conjunto');
 
-  if (!relacionAdmin) return [];
-
-  // 2. Buscar vigilantes
   return this.prisma.empresa_vigilante_conjunto.findMany({
     where: {
       empresa_seguridad_conjunto: {
-        fk_cod_conjunto: relacionAdmin.fk_cod_conjunto
+        fk_cod_conjunto: conjuntoId // Filtro estricto por el conjunto seleccionado
       }
     },
     include: {
@@ -758,4 +761,3 @@ async editarEmpresa(adminId: number, data: any) {
   });
 }
 }
-

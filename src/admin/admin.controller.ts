@@ -17,11 +17,12 @@ import {
 import { AdminService } from './admin.service';
 import { CreateConjuntoDto } from './dto/create-conjunto.dto';
 import { JwtAuthGuard } from '../auth/jwt-auth.guard';
-import { UseInterceptors, UploadedFile } from '@nestjs/common';
+import { UseInterceptors, UploadedFile , Headers as NestHeaders} from '@nestjs/common';
 import { FileInterceptor } from '@nestjs/platform-express';
 import { CrearEmpresaDto } from './dto/crear-empresa.dto';
 import type { Response } from 'express';
 import { PrismaService } from '../prisma/prisma.service';
+
 
 
 
@@ -139,12 +140,10 @@ async eliminarTorre(
     Number(id)
   );
 }
-@Get('mis-vigilantes')
+@Get('mis-vigilantes/:conjuntoId')
 @UseGuards(JwtAuthGuard)
-async listarVigilantes(@Req() req: any) {
-  // Solo extraemos el ID del token y se lo pasamos al servicio
-  const adminId = req.user.id; 
-  return this.adminService.obtenerVigilantesPorAdmin(adminId);
+async listarVigilantes(@Req() req: any, @Param('conjuntoId') conjuntoId: string) {
+  return this.adminService.obtenerVigilantesPorConjunto(req.user.id, Number(conjuntoId));
 }
 
   @Post('cambiar-estado-vigilante')
@@ -215,35 +214,41 @@ async editarEmpresa(
 
 @Get('empresa')
 async obtenerEmpresa(@Req() req) {
+  // Extraemos el ID directamente de los headers del request
+  const conjuntoIdHeader = req.headers['x-conjunto-id'];
   const adminId = req.user.id;
 
-  // 🔹 1. Buscar el conjunto del admin
-  const adminConjuntos = await this.prisma.adminConjunto.findMany({
-    where: { fk_cod_administrador: adminId },
-    select: { fk_cod_conjunto: true }
+  // Convertimos a número
+  const conjuntoId = conjuntoIdHeader ? parseInt(conjuntoIdHeader) : null;
+
+  console.log("🚀 Buscando empresa para el conjunto ID:", conjuntoId);
+
+  if (!conjuntoId) {
+    console.log("⚠️ No se recibió x-conjunto-id en los headers");
+    return null;
+  }
+
+  // 1. Verificamos que el admin tenga permiso sobre ese conjunto
+  const vinculacion = await this.prisma.adminConjunto.findFirst({
+    where: { 
+      fk_cod_administrador: adminId,
+      fk_cod_conjunto: conjuntoId 
+    }
   });
 
-const idsConjuntos = adminConjuntos
-  .map(a => a.fk_cod_conjunto)
-  .filter((id): id is number => id !== null);
+  if (!vinculacion) {
+    console.log("🚫 El admin no tiene acceso a este conjunto");
+    return null;
+  }
 
-  if (idsConjuntos.length === 0) return null;
-
-  // 🔹 2. Buscar empresa ligada a ese conjunto
+  // 2. Buscamos la empresa vinculada a ese ID específico
   const empresa = await this.prisma.empresa_seguridad_conjunto.findFirst({
-    where: {
-      fk_cod_conjunto: {
-        in: idsConjuntos
-      }
-    },
-    include: {
-      empresa: true
-    }
+    where: { fk_cod_conjunto: conjuntoId },
+    include: { empresa: true }
   });
 
   if (!empresa) return null;
 
-  // 🔹 3. Retornar datos planos al frontend
   return {
     cod_empresa: empresa.empresa?.cod_empresa,
     nombre_empresa: empresa.empresa?.nombre_empresa,
@@ -254,5 +259,4 @@ const idsConjuntos = adminConjuntos
     fk_estado_empresa_seguridad_conjunto: empresa.fk_estado_empresa_seguridad_conjunto
   };
 }
-
 }

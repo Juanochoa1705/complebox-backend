@@ -1,17 +1,17 @@
 /* ==========================================
-   1. SEGURIDAD Y VARIABLES (SIN BLOQUEOS FATALES)
+   1. SEGURIDAD Y VARIABLES
    ========================================== */
 const API_URL = 'http://localhost:3000';
 const token = localStorage.getItem('token');
 const estadoEspecialAdmin = localStorage.getItem("estadoEspecialAdmin");
 const mensajeAdmin = localStorage.getItem("mensajeAdmin");
+
+// Declaramos las variables globales una sola vez
 let conjuntoActivo = localStorage.getItem("conjuntoActivo");
+let conjuntoSeleccionadoId = null; 
 
-
-// Función de validación mejorada
 function validarRol() {
     if (!token || token.split('.').length < 3) return false;
-
     try {
         const payload = JSON.parse(atob(token.split('.')[1]));
         return payload.rol === 'Administrador';
@@ -21,62 +21,21 @@ function validarRol() {
 }
 
 document.addEventListener('DOMContentLoaded', async () => {
-
     console.log("🚀 DOM listo");
 
     if (!validarRol()) {
-        console.log("❌ no es admin");
         mostrarPantallaBloqueo("No tienes permisos de Administrador.");
         return;
     }
 
     if (estadoEspecialAdmin === "true") {
-        console.log("⚠️ admin bloqueado");
         mostrarPantallaBloqueo(mensajeAdmin);
         return;
     }
 
-    console.log("✅ entrando a cargar perfil");
-
+    // Iniciamos la carga del perfil
     await cargarPerfilAdmin();
-    cargarEmpresa();
 });
-
-function mostrarPantallaBloqueo(msj) {
-    // Quitamos el listener para que actúe al instante
-    document.body.innerHTML = `
-    <style>
-        .iconos-flotantes { position: absolute; top: 15px; right: 15px; display: flex; flex-direction: column; gap: 10px; z-index: 9999; }
-        .modo-switch { background: white; border-radius: 50%; width: 45px; height: 45px; display: flex; justify-content: center; align-items: center; font-size: 20px; cursor: pointer; box-shadow: 0 4px 10px rgba(0,0,0,0.2); }
-    </style>
-    <div style="margin: 0; height: 100vh; background: #f0f2f5; display: flex; justify-content: center; align-items: center; font-family: sans-serif; position: relative;">
-        <div style="width: 100%; max-width: 450px; height: 100vh; background: #fff; border-left: 30px solid #0d47a1; border-right: 30px solid #0d47a1; display: flex; flex-direction: column; align-items: center; padding: 40px 20px; box-sizing: border-box;">
-            <div style="text-align: center; margin-bottom: 30px;">
-                <h1 style="margin: 0; color: #003366; font-size: 24px; font-weight: bold;">Complebox</h1>
-            </div>
-            <div style="text-align: center; margin-bottom: 40px;">
-                <h2 style="color: #0d47a1; font-size: 26px;">🚫 Acceso Denegado</h2>
-                <div style="background: #f8f9fa; border-radius: 15px; padding: 20px; border: 1px solid #dee2e6;">
-                    <p style="color: #555; font-size: 18px;">${msj}</p>
-                </div>
-            </div>
-            <div class="iconos-flotantes">
-                <div class="modo-switch" onclick="irModoResidente()" title="Modo Residente">🏠</div>
-                <div class="modo-switch" onclick="irModoMensajero()" title="Modo Mensajero">🚚</div>
-                <div class="modo-switch" onclick="irModoVigilante()" title="Modo Vigilante">👮‍♂️</div>
-                <div class="modo-switch" onclick="irModoPropietario()" title="Modo Propietario">🔑</div>
-                <div class="modo-switch" onclick="irModoAdministrador()" title="Modo Administrador">⚙️</div>
-            </div>
-            <button onclick="cerrarSesion()" style="width: 100%; background: #1976d2; color: white; border: none; padding: 16px; border-radius: 15px; font-weight: bold; cursor: pointer;">
-                Cerrar sesión
-            </button>
-            <button onclick="solicitaradmin()" style="width: 100%; background: #1976d2; color: white; border: none; padding: 16px; border-radius: 15px; font-weight: bold; cursor: pointer;">
-                ¿Eres administrador de un conjunto?
-            </button>
-        </div>
-    </div>`;
-}
-
 
 /* ==========================================
    4. PERFIL Y CONTROL DE INTERFAZ
@@ -84,71 +43,79 @@ function mostrarPantallaBloqueo(msj) {
 async function cargarPerfilAdmin() {
     try {
         const res = await fetch(`${API_URL}/admin/perfil`, {
-            headers: { 'Authorization': `Bearer ${token}`,"x-conjunto-id": conjuntoActivo }
+            headers: { 
+                'Authorization': `Bearer ${token}`,
+                "x-conjunto-id": conjuntoActivo 
+            }
         });
         
         if (!res.ok) throw new Error("Error en la petición de perfil");
         
         const data = await res.json();
-console.log("DATA PERFIL 👉", data);
-        // CASO A: El Admin está bloqueado desde el Backend
+        console.log("DATA PERFIL 👉", data);
+
         if (data.bloqueado) {
             mostrarPantallaBloqueo(data.mensaje);
             return;
         }
 
-        // Actualizamos saludo
-        if(document.getElementById("titulo")) {
-            document.getElementById("titulo").innerText = `💼 Admin: ${data.nombres}`;
+        const titulo = document.getElementById("titulo");
+        if(titulo) {
+            titulo.innerText = `💼 Admin: ${data.nombres || 'Usuario'}`;
         }
 
-        // CASO B: El Admin NO tiene conjunto vinculado
-        if (data.tieneConjunto === false) {
-            const formCrear = document.getElementById('crearSection');
-            if(formCrear) {
-                formCrear.classList.remove('d-none');
-                formCrear.style.display = 'block';
-            }
-            const infoSec = document.getElementById('infoSection');
-            if(infoSec) infoSec.classList.add('d-none');
-            
-            return; // No cargamos vigilantes ni torres si no hay conjunto
+        // Si no tiene conjuntos
+        if (!data.conjuntos || data.conjuntos.length === 0) {
+            document.getElementById('crearSection')?.classList.remove('d-none');
+            document.getElementById('infoSection')?.classList.add('d-none');
+            document.getElementById('selectorConjunto')?.classList.add('d-none');
+            return;
         }
 
-        // CASO C: Todo normal (Tiene conjunto)
-        // Llenamos la info del conjunto con lo que ya viene en 'data.conjunto'
-   if (data.conjuntos && data.conjuntos.length > 0) {
+        const conjuntos = data.conjuntos;
 
-    // 🔥 CASO: MÁS DE UN CONJUNTO
-    if (data.conjuntos.length > 1 && !conjuntoActivo) {
+        // Si tiene varios y no hay uno activo, mostrar selector
+        if (conjuntos.length > 1 && !conjuntoActivo) {
+            mostrarSelectorConjunto(conjuntos);
+            return; 
+        }
 
-        mostrarSelectorConjunto(data.conjuntos);
-        return; // ⛔ no sigue cargando nada aún
-    }
+        // Si solo tiene uno, seleccionarlo automáticamente
+        if (!conjuntoActivo && conjuntos.length === 1) {
+            conjuntoActivo = conjuntos[0].cod_conjunto;
+            localStorage.setItem("conjuntoActivo", conjuntoActivo);
+        }
 
-    // 🔥 CASO: YA TIENE UNO SELECCIONADO
-    if (!conjuntoActivo) {
-        conjuntoActivo = data.conjuntos[0].cod_conjunto;
-        localStorage.setItem("conjuntoActivo", conjuntoActivo);
-    }
+        const conjuntoActual = conjuntos.find(c => c.cod_conjunto == conjuntoActivo);
 
-    const conjunto = data.conjuntos.find(c => c.cod_conjunto == conjuntoActivo);
+        if (!conjuntoActual) {
+            localStorage.removeItem("conjuntoActivo");
+            location.reload();
+            return;
+        }
 
-    if (!conjunto) {
-        localStorage.removeItem("conjuntoActivo");
-        location.reload();
-        return;
-    }
+        mostrarConjunto(conjuntoActual);
 
-    mostrarConjunto(conjunto);
-}
-
-        // Cargamos el resto de componentes del Dashboard
-        cargarVigilantesPendientes();
-        cargarVigilantes();
+        // Cargar datos del conjunto seleccionado
+        cargarVigilantes(); // Esta es la función que corregimos antes
+        cargarCantidadTorres();
+        cargarEmpresa(); 
 
     } catch (err) {
         console.error("Error cargando perfil:", err);
+    }
+}
+
+// Función auxiliar para activar la vista del conjunto
+function mostrarConjunto(conjunto) {
+    document.getElementById('selectorConjunto')?.classList.add('d-none');
+    document.getElementById('crearSection')?.classList.add('d-none');
+    
+    const infoSec = document.getElementById('infoSection');
+    if (infoSec) {
+        infoSec.classList.remove('d-none');
+        document.getElementById("infoNombre").innerText = conjunto.nombre_conjunto;
+        document.getElementById("infoTelefono").innerText = conjunto.telefono_conjunto;
     }
 }
 
@@ -352,29 +319,54 @@ if(document.getElementById('empresaForm')) {
     });
 }
 
-async function cargarVigilantesPendientes() {
-    const res = await fetch(`${API_URL}/admin/vigilantes-pendientes`, {
-        headers: { "Authorization": `Bearer ${token}`,"x-conjunto-id": conjuntoActivo }
-    });
-    const data = await res.json();
-    if(!document.getElementById('tablaVigilantes')) return;
-    tablaVigilantes.innerHTML = "";
-    if (data.length === 0) {
-        mensajeVacio.style.display = "block";
+async function cargarVigilantes() {
+    const contenedor = document.getElementById("contenedorVigilantes");
+    if (!contenedor) return;
+
+    // VALIDACIÓN PREVIA: Si no hay conjuntoActivo, ni siquiera hacemos la petición
+    if (!conjuntoActivo) {
+        console.warn("⚠️ No hay conjunto activo para cargar vigilantes.");
+        contenedor.innerHTML = "<p>Seleccione un conjunto.</p>";
         return;
     }
-    mensajeVacio.style.display = "none";
-    data.forEach(v => {
-        tablaVigilantes.innerHTML += `
-        <tr>
-            <td>${v.nombres} ${v.apellidos}</td>
-            <td>${v.cedula}</td>
-            <td>
-                <button onclick="aprobarVigilante(${v.cod_user})">✅ Aprobar</button>
-                <button onclick="rechazarVigilante(${v.cod_user})">❌ Rechazar</button>
-            </td>
-        </tr>`;
-    });
+
+    try {
+        // CORRECCIÓN RUTA: Aseguramos que lleve el ID del conjunto
+        const url = `${API_URL}/admin/mis-vigilantes/${conjuntoActivo}`;
+        console.log("📡 Pidiendo vigilantes a:", url);
+
+        const res = await fetch(url, {
+            headers: { "Authorization": `Bearer ${token}` }
+        });
+
+        // Si el servidor responde 404 o 500, salimos elegantemente
+        if (!res.ok) {
+            const errorData = await res.json();
+            console.error("❌ Error del servidor:", errorData);
+            contenedor.innerHTML = "<p>No se encontraron vigilantes para este conjunto.</p>";
+            return;
+        }
+
+        const data = await res.json();
+
+        // VALIDACIÓN DE DATOS: Verificamos si es un Array antes del forEach
+        contenedor.innerHTML = ""; 
+        if (Array.isArray(data) && data.length > 0) {
+            data.forEach(item => {
+                const p = item.persona;
+                contenedor.innerHTML += `
+                    <div style="border:1px solid #eee; padding:10px; margin-bottom:5px; border-radius:8px;">
+                        <b>${p.nombres} ${p.apellidos}</b><br>
+                        <span>Estado: ${item.fk_estado_vigilante_empresa === 1 ? "🟢 Activo" : "🔴 Inactivo"}</span>
+                    </div>`;
+            });
+        } else {
+            contenedor.innerHTML = "<p>Este conjunto aún no tiene vigilantes asignados.</p>";
+        }
+
+    } catch (err) { 
+        console.error("🔥 Error crítico en cargarVigilantes:", err);
+    }
 }
 
 async function aprobarVigilante(id) {
@@ -412,35 +404,6 @@ async function rechazarVigilante(id) {
   } catch (err) {
     alert(err.message);
   }
-}
-
-async function cargarVigilantes() {
-    const contenedor = document.getElementById("contenedorVigilantes");
-    if (!contenedor) return;
-    try {
-        const res = await fetch(`${API_URL}/admin/mis-vigilantes`, {
-            headers: { "Authorization": `Bearer ${token}`,"x-conjunto-id": conjuntoActivo }
-        });
-        const data = await res.json();
-        contenedor.innerHTML = ""; 
-        if (!data || data.length === 0) {
-            contenedor.innerHTML = "<p>No hay vigilantes vinculados.</p>";
-            return;
-        }
-        data.forEach(item => {
-            const p = item.persona;
-            contenedor.innerHTML += `
-                <div style="border:1px solid #eee; padding:15px; border-radius:10px; margin-bottom:10px; background:#fff;">
-                    <b>${p.nombres} ${p.apellidos}</b><br>
-                    <small>Cédula: ${p.cedula || 'N/A'}</small><br>
-                    <span>Estado: ${item.fk_estado_vigilante_empresa === 1 ? "🟢 Activo" : "🔴 Inactivo"}</span>
-                    <div style="margin-top:10px; display:flex; gap:10px;">
-                        <button onclick="updateStatusVigilante(${item.cod_empresa_vigilante}, 1)">Activar</button>
-                        <button onclick="updateStatusVigilante(${item.cod_empresa_vigilante}, 2)">Inactivar</button>
-                    </div>
-                </div>`;
-        });
-    } catch (err) { console.error(err); }
 }
 
 async function updateStatusVigilante(idRegistro, nuevoEstado) {
@@ -597,35 +560,49 @@ async function inactivarEmpresa() {
     location.reload();
 }
 async function cargarEmpresa() {
-    const res = await fetch(`${API_URL}/admin/empresa`, {
-        headers: { Authorization: `Bearer ${token}`,'x-conjunto-id': conjuntoActivo }
-    });
+    if (!conjuntoActivo) return;
+    
+    try {
+        const res = await fetch(`${API_URL}/admin/empresa`, {
+            headers: { 
+                'Authorization': `Bearer ${token}`,
+                'x-conjunto-id': conjuntoActivo 
+            }
+        });
 
-    if (!res.ok) return;
+        if (!res.ok) return;
 
-    const data = await res.json();
-    if (!data) return;
+        const data = await res.json();
+        if (!data) return;
 
-    // 🔹 MOSTRAR CARD
-    document.getElementById("empresaCard").classList.remove("d-none");
+        // 1. Mostrar la tarjeta de información (la que ya tenías)
+        const empresaCard = document.getElementById("empresaCard");
+        if (empresaCard) {
+            empresaCard.classList.remove("d-none");
+            document.getElementById("empresaNombreTxt").textContent = data.nombre_empresa;
+            document.getElementById("empresaNitTxt").textContent = data.nit_empresa;
+            document.getElementById("empresaTelefonoTxt").textContent = data.telefono_empresa;
+            document.getElementById("empresaCorreoTxt").textContent = data.correo_empresa;
+            document.getElementById("empresaEstadoTxt").textContent = 
+                data.fk_estado_empresa_seguridad_conjunto === 1 ? "🟢 Activa" : "🔴 Inactiva";
+        }
 
-    document.getElementById("empresaNombreTxt").textContent = data.nombre_empresa;
-    document.getElementById("empresaNitTxt").textContent = data.nit_empresa;
-    document.getElementById("empresaTelefonoTxt").textContent = data.telefono_empresa;
-    document.getElementById("empresaCorreoTxt").textContent = data.correo_empresa;
+        // 2. LLENAR EL FORMULARIO DE EDICIÓN (Aquí está lo que buscas)
+        // Usamos el operador ?. por seguridad por si el elemento no existe en el DOM
+        if (document.getElementById("editNombre")) {
+            document.getElementById("editNombre").value = data.nombre_empresa || "";
+            document.getElementById("editTelefono").value = data.telefono_empresa || "";
+            document.getElementById("editCorreo").value = data.correo_empresa || "";
+            document.getElementById("editDireccion").value = data.direccion_empresa || "";
+            // Si tienes un campo oculto para el NIT que no se edita pero quieres mostrar:
+            if(document.getElementById("editNit")) document.getElementById("editNit").value = data.nit_empresa || "";
+        }
 
-    const estado = data.fk_estado_empresa_seguridad_conjunto === 1 
-        ? "🟢 Activa" 
-        : "🔴 Inactiva";
+        console.log("✅ Formulario de edición precargado con:", data.nombre_empresa);
 
-    document.getElementById("empresaEstadoTxt").textContent = estado;
-
-    // 🔥🔥🔥 AQUI ESTA LA CLAVE 🔥🔥🔥
-    // CARGAR DATOS EN FORMULARIO DE EDICIÓN
-    document.getElementById("editNombre").value = data.nombre_empresa || "";
-    document.getElementById("editTelefono").value = data.telefono_empresa || "";
-    document.getElementById("editCorreo").value = data.correo_empresa || "";
-    document.getElementById("editDireccion").value = data.direccion_empresa || "";
+    } catch (error) {
+        console.error("❌ Error al precargar datos de empresa:", error);
+    }
 }
 
 function mostrarEditarEmpresa() {
