@@ -323,49 +323,46 @@ async function cargarVigilantes() {
     const contenedor = document.getElementById("contenedorVigilantes");
     if (!contenedor) return;
 
-    // VALIDACIÓN PREVIA: Si no hay conjuntoActivo, ni siquiera hacemos la petición
     if (!conjuntoActivo) {
-        console.warn("⚠️ No hay conjunto activo para cargar vigilantes.");
-        contenedor.innerHTML = "<p>Seleccione un conjunto.</p>";
+        contenedor.innerHTML = "<p>Seleccione un conjunto para ver vigilantes.</p>";
         return;
     }
 
     try {
-        // CORRECCIÓN RUTA: Aseguramos que lleve el ID del conjunto
-        const url = `${API_URL}/admin/mis-vigilantes/${conjuntoActivo}`;
-        console.log("📡 Pidiendo vigilantes a:", url);
-
-        const res = await fetch(url, {
+        // Usamos la ruta con el ID del conjunto para que traiga los correctos
+        const res = await fetch(`${API_URL}/admin/mis-vigilantes/${conjuntoActivo}`, {
             headers: { "Authorization": `Bearer ${token}` }
         });
 
-        // Si el servidor responde 404 o 500, salimos elegantemente
-        if (!res.ok) {
-            const errorData = await res.json();
-            console.error("❌ Error del servidor:", errorData);
-            contenedor.innerHTML = "<p>No se encontraron vigilantes para este conjunto.</p>";
+        if (!res.ok) throw new Error("Error al obtener vigilantes");
+
+        const data = await res.json();
+        contenedor.innerHTML = ""; 
+
+        if (!data || data.length === 0) {
+            contenedor.innerHTML = "<p>No hay vigilantes vinculados a este conjunto.</p>";
             return;
         }
 
-        const data = await res.json();
-
-        // VALIDACIÓN DE DATOS: Verificamos si es un Array antes del forEach
-        contenedor.innerHTML = ""; 
-        if (Array.isArray(data) && data.length > 0) {
-            data.forEach(item => {
-                const p = item.persona;
-                contenedor.innerHTML += `
-                    <div style="border:1px solid #eee; padding:10px; margin-bottom:5px; border-radius:8px;">
-                        <b>${p.nombres} ${p.apellidos}</b><br>
-                        <span>Estado: ${item.fk_estado_vigilante_empresa === 1 ? "🟢 Activo" : "🔴 Inactivo"}</span>
-                    </div>`;
-            });
-        } else {
-            contenedor.innerHTML = "<p>Este conjunto aún no tiene vigilantes asignados.</p>";
-        }
+        // Diseño exacto solicitado
+        data.forEach(item => {
+            const p = item.persona;
+            contenedor.innerHTML += `
+                <div style="border:1px solid #eee; padding:15px; border-radius:10px; margin-bottom:10px; background:#fff;">
+                    <b>${p.nombres} ${p.apellidos}</b><br>
+                    <small>Cédula: ${p.cedula || 'N/A'}</small><br>
+                    <span>Estado: ${item.fk_estado_vigilante_empresa === 1 ? "🟢 Activo" : "🔴 Inactivo"}</span>
+                    
+                    <div style="margin-top:10px; display:flex; gap:10px;">
+                        <button style="cursor:pointer; padding:5px 10px;" onclick="updateStatusVigilante(${item.cod_empresa_vigilante}, 1)">Activar</button>
+                        <button style="cursor:pointer; padding:5px 10px;" onclick="updateStatusVigilante(${item.cod_empresa_vigilante}, 2)">Inactivar</button>
+                    </div>
+                </div>`;
+        });
 
     } catch (err) { 
-        console.error("🔥 Error crítico en cargarVigilantes:", err);
+        console.error("Error cargando vigilantes:", err);
+        contenedor.innerHTML = "<p>Error al cargar la lista.</p>";
     }
 }
 
@@ -432,42 +429,91 @@ async function updateStatusVigilante(idRegistro, nuevoEstado) {
 /* ==========================================
    7. HISTORIAL Y BUSQUEDA
    ========================================== */
-if(document.getElementById("buscarHistorial")) {
+
+if (document.getElementById("buscarHistorial")) {
+    const buscarHistorial = document.getElementById("buscarHistorial");
+    const tablaHistorial = document.getElementById("tablaHistorial");
+
     buscarHistorial.addEventListener("input", async () => {
         const query = buscarHistorial.value.trim();
-        if (query.length < 2) { tablaHistorial.innerHTML = ""; return; }
+        
+        // Si el buscador está vacío, puedes decidir si limpiar o traer todo
+        // Aquí lo dejamos para que limpie si hay menos de 2 caracteres
+        if (query.length < 2) { 
+            tablaHistorial.innerHTML = ""; 
+            return; 
+        }
+        
         try {
-            const res = await fetch(`${API_URL}/admin/historial?query=${query}`, {
-                headers: { "Authorization": `Bearer ${token}` , "x-conjunto-id": conjuntoActivo}
+            const res = await fetch(`${API_URL}/admin/historial?query=${encodeURIComponent(query)}`, {
+                headers: { 
+                    "Authorization": `Bearer ${token}`,
+                    "x-conjunto-id": conjuntoActivo 
+                }
             });
+            
+            if (!res.ok) throw new Error("Error al obtener el historial");
+
             const data = await res.json();
             tablaHistorial.innerHTML = "";
+            
             data.forEach(p => {
-                const div = document.createElement("div");
-                div.innerHTML = `
-        <b>📦 Pedido:</b> ${p.nombre_pedido || "❌ No registrado"}<br>
-        <b>🔢 Guía:</b> ${p.numero_guia || "❌ No registrada"}<br>
-        <b>📌 Estado:</b> ${p.estado_pedido || "⚪ Sin estado"}<br>
+    const div = document.createElement("div");
+    
+    // Estilo del contenedor
+    div.style = `
+        border: 1px solid #e0e0e0; 
+        border-radius: 12px; 
+        padding: 20px; 
+        margin-bottom: 15px; 
+        background: #ffffff; 
+        box-shadow: 0 2px 4px rgba(0,0,0,0.05);
+        line-height: 1.6;
+    `;
+    
+    // Lógica para la firma
+    const seccionFirma = p.firma_residente 
+        ? `<div style="margin-top: 15px;">
+             <b>✍️ Firma del Residente:</b><br>
+             <img src="${p.firma_residente}" style="max-width: 200px; height: auto; border: 1px solid #eee; border-radius: 4px; background: #fafafa;">
+           </div>`
+        : `<div style="margin-top: 15px; color: #888;"><b>✍️ Firma:</b> <i>Pendiente de entrega</i></div>`;
 
-        <b>📅 Recibido:</b> ${p.fecha_recibido ? new Date(p.fecha_recibido).toLocaleString("es-CO") : "❌ No registrado"}<br>
-        <b>📅 Entregado:</b> ${p.fecha_entregado ? new Date(p.fecha_entregado).toLocaleString("es-CO") : "⏳ Pendiente"}<br>
+    div.innerHTML = `
+        <div style="display: flex; justify-content: space-between; border-bottom: 1px solid #f0f0f0; padding-bottom: 8px; margin-bottom: 10px;">
+            <span style="font-size: 1.1em; color: #333;">📦 <b>${p.nombre_pedido || 'Pedido'}</b></span>
+            <span style="background: #e3f2fd; color: #1976d2; padding: 2px 8px; border-radius: 12px; font-size: 0.85em; font-weight: bold;">
+                ${p.estado_pedido}
+            </span>
+        </div>
 
-        <b>👮 Recibe:</b> ${p.nombre_vigilante_recibe || ""} ${p.apellido_vigilante_recibe || ""}<br>
-        <b>👮 Entrega:</b> ${p.nombre_vigilante_entrega || "⏳ Pendiente"} ${p.apellido_vigilante_entrega || ""}<br>
+        <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 10px;">
+            <div>
+                <b>🔢 Guía:</b> ${p.numero_guia || 'N/A'}<br>
+                <b>📅 Recibido:</b> ${new Date(p.fecha_recibido).toLocaleString()}<br>
+                <b>👮 Recibe:</b> ${p.nombre_vigilante_recibe} ${p.apellido_vigilante_recibe}
+            </div>
+            <div>
+                <b>🏠 Residente:</b> ${p.nombre_residente} ${p.apellido_residente}<br>
+                <b>🏢 Apto:</b> T${p.numero_torre} - ${p.numero_apto}<br>
+                <b>🪪 Cédula:</b> ${p.cedula || 'N/A'}
+            </div>
+        </div>
 
-        <b>🏠 Residente:</b> ${p.nombre_residente || ""} ${p.apellido_residente || ""}<br>
-        <b>🆔 Cédula:</b> ${p.cedula || "❌ No registrada"}<br>
+        <div style="margin-top: 10px; border-top: 1px solid #f0f0f0; pt: 10px;">
+            <b>🚚 Mensajería:</b> ${p.nombre_empresa || 'Particular'} (${p.nombre_mensajero || 'N/A'})<br>
+            <b>📅 Entregado:</b> ${p.fecha_entregado ? new Date(p.fecha_entregado).toLocaleString() : '⏳ En custodia'}<br>
+            <b>👮 Entrega:</b> ${p.nombre_vigilante_entrega ? `${p.nombre_vigilante_entrega} ${p.apellido_vigilante_entrega}` : '---'}
+        </div>
 
-        <b>🏢 Apto:</b> ${
-          p.numero_torre && p.numero_apto
-            ? `Torre ${p.numero_torre} - Apto ${p.numero_apto}`
-            : "❌ No asignado"
-        }<br>
-        
-                    <hr>`;
-                tablaHistorial.appendChild(div);
-            });
-        } catch (error) { console.error(error); }
+        ${seccionFirma}
+    `;
+    
+    tablaHistorial.appendChild(div);
+});
+        } catch (error) { 
+            console.error("Error en búsqueda:", error); 
+        }
     });
 }
 

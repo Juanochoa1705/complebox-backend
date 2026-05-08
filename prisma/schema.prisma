@@ -1,5 +1,6 @@
 generator client {
-  provider = "prisma-client-js"
+  provider        = "prisma-client-js"
+  previewFeatures = ["views"]
 }
 
 datasource db {
@@ -193,6 +194,8 @@ model persona {
   fk_rol                                                                                            Int
   fecha_registro                                                                                    DateTime?                         @default(now()) @db.DateTime(0)
   fecha_actualizacion                                                                               DateTime                          @default(now()) @db.Timestamp(0)
+  codigo_recuperacion                                                                               String?                           @db.VarChar(6)
+  fecha_codigo                                                                                      DateTime?
   adminConjuntos                                                                                    AdminConjunto[]
   apto_propietario                                                                                  apto_propietario[]
   apto_residente                                                                                    apto_residente[]
@@ -205,13 +208,11 @@ model persona {
   estado                                                                                            estado                            @relation(fields: [fk_estado_user], references: [cod_estado], onUpdate: Restrict, map: "persona_ibfk_1")
   tipo_doc                                                                                          tipo_doc                          @relation(fields: [fk_tipo_doc], references: [cod_tipo_doc], onUpdate: Restrict, map: "persona_ibfk_2")
   rol                                                                                               rol                               @relation(fields: [fk_rol], references: [cod_rol], onUpdate: Restrict, map: "persona_ibfk_3")
-  codigo_recuperacion String?   @db.VarChar(6)
-  fecha_codigo        DateTime?
 
+  @@unique([cedula, fk_tipo_doc], map: "unique_cedula_tipo")
   @@index([fk_estado_user], map: "fk_estado_user")
   @@index([fk_rol], map: "fk_rol")
   @@index([fk_tipo_doc], map: "fk_tipo_doc")
-  @@unique([cedula, fk_tipo_doc], map: "unique_cedula_tipo")
 }
 
 model rol {
@@ -243,8 +244,8 @@ model AdminConjunto {
   fk_cod_conjunto      Int?
   fk_cod_administrador Int?
   fk_estado_admin      Int?      @default(1)
-  fecha_actualizacion  DateTime  @default(dbgenerated("CURRENT_TIMESTAMP")) @db.Timestamp(0)
-  fecha_registro         DateTime  @default(dbgenerated("CURRENT_TIMESTAMP")) @db.Timestamp(0)
+  fecha_actualizacion  DateTime  @default(now()) @db.Timestamp(0)
+  fecha_registro       DateTime  @default(now()) @db.Timestamp(0)
   admin                persona?  @relation(fields: [fk_cod_administrador], references: [cod_user])
   conjunto             conjunto? @relation(fields: [fk_cod_conjunto], references: [cod_conjunto])
   estado               estado?   @relation(fields: [fk_estado_admin], references: [cod_estado], onDelete: Restrict, onUpdate: Restrict, map: "fk_estado_admin")
@@ -253,4 +254,32 @@ model AdminConjunto {
   @@index([fk_cod_administrador], map: "admin_conjunto_fk_cod_administrador_fkey")
   @@index([fk_estado_admin], map: "fk_estado_admin")
   @@map("admin_conjunto")
+}
+
+view vista_historial_pedidos {
+  cod_pedido_estado_entrega  Int       @unique @default(0)
+  numero_guia                String?   @db.VarChar(50)
+  nombre_pedido              String?   @db.VarChar(100)
+  descripcion_pedido         String?   @db.Text
+  cod_residente              Int?
+  fecha_recibido             DateTime? @db.DateTime(0)
+  fecha_entregado            DateTime? @db.DateTime(0)
+  estado_pedido              String?   @db.VarChar(50)
+  nombre_vigilante_recibe    String?   @db.VarChar(60)
+  apellido_vigilante_recibe  String?   @db.VarChar(60)
+  nombre_vigilante_entrega   String?   @db.VarChar(60)
+  apellido_vigilante_entrega String?   @db.VarChar(60)
+  nombre_residente           String?   @db.VarChar(60)
+  apellido_residente         String?   @db.VarChar(60)
+  cedula                     String?   @db.VarChar(15)
+  numero_apto                Int?
+  numero_torre               Int?
+  cod_conjunto               Int?      @default(0)
+  nombre_conjunto            String?   @db.VarChar(100)
+  nombre_mensajero           String?   @db.VarChar(60)
+  apellido_mensajero         String?   @db.VarChar(60)
+  nombre_empresa             String?   @db.VarChar(100)
+  firma_residente            String?   @db.LongText
+
+  @@map("vista_historial_pedidos")
 }

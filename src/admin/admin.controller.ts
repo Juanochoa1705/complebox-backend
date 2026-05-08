@@ -110,13 +110,30 @@ rechazarVigilante(@Param('id') id: number, @Request() req) {
 }
 
 @Get('historial')
-@UseGuards(JwtAuthGuard)
-async historial(@Query('query') query: string, @Req() req: any) {
+async obtenerHistorial(@Req() req, @Query('query') query: string) {
+  const conjuntoIdHeader = req.headers['x-conjunto-id'];
+  const conjuntoId = conjuntoIdHeader ? parseInt(conjuntoIdHeader as string) : null;
 
-  const userId = req.user.id;
-  const rol = req.user.rol;
+  if (!conjuntoId) return [];
 
-  return this.adminService.historial(query || '', userId, rol);
+  // Consultamos directamente a la vista de la base de datos
+  return await (this.prisma as any).vista_historial_pedidos.findMany({
+    where: {
+      cod_conjunto: conjuntoId,
+      ...(query ? {
+        OR: [
+          { numero_guia: { contains: query } },
+          { nombre_pedido: { contains: query } },
+          { nombre_residente: { contains: query } },
+          { apellido_residente: { contains: query } },
+          { cedula: { contains: query } }
+        ]
+      } : {})
+    },
+    orderBy: {
+      fecha_recibido: 'desc' // Para que lo más nuevo salga primero
+    }
+  });
 }
 @Put('torres/:id')
 async actualizarTorre(
