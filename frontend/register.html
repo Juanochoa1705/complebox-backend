@@ -166,7 +166,13 @@ select:focus {
 
       <div class="form-group">
         <label>Cédula</label>
-        <input id="cedula" required>
+        <input
+  id="cedula"
+  type="text"
+  inputmode="numeric"
+  pattern="[0-9]*"
+  required
+>
       </div>
 
      <div class="form-group">
@@ -187,7 +193,12 @@ select:focus {
 
   <div class="form-group">
     <label>NIT</label>
-    <input id="nit_empresa">
+   <input
+  id="nit_empresa"
+  type="text"
+  inputmode="text"
+  maxlength="20"
+>
   </div>
 
   <div class="form-group">
@@ -202,12 +213,17 @@ select:focus {
 
   <div class="form-group">
     <label>Teléfono Empresa</label>
-    <input id="telefono_empresa">
+     <input
+  id="telefono_empresa"
+  type="text"
+  inputmode="numeric"
+  pattern="[0-9]*"
+>
   </div>
 
   <div class="form-group">
     <label>Correo Empresa</label>
-    <input id="correo_empresa">
+    <input type="email" id="correo_empresa">
   </div>
 
 </div> 
@@ -235,18 +251,33 @@ select:focus {
 
       <div class="form-group">
         <label>Teléfono personal</label>
-        <input id="telefono" required>
+         <input
+  id="telefono"
+  type="text"
+  inputmode="numeric"
+  pattern="[0-9]*"
+  required
+>
       </div>
 
-      <div class="form-group">
-        <label>Usuario</label>
-        <input id="usuario" required>
-      </div>
+    <div class="form-group">
+  <label>Usuario</label>
+  <input id="usuario" required>
 
-      <div class="form-group">
-        <label>Contraseña</label>
-        <input type="password" id="password" required>
-      </div>
+ <div style="font-size:12px; color:#666; margin-top:4px;">
+  5 a 10 caracteres, solo letras y números, sin espacios
+</div>
+</div>
+
+    <div class="form-group">
+  <label>Contraseña</label>
+
+  <input type="password" id="password" required>
+
+  <div style="font-size:12px; color:#666; margin-top:4px;">
+    Mínimo 8 caracteres, 1 mayúscula, 1 número y 1 carácter especial
+  </div>
+</div>
 
       <div class="form-group" id="aptoGroup" style="display:none;">
   <label>Seleccione su apartamento</label>
@@ -272,6 +303,8 @@ select:focus {
 // ==============================
 // VARIABLES GLOBALES
 // ==============================
+
+
 const form = document.getElementById('registerForm');
 const message = document.getElementById('message');
 const rolSelect = document.getElementById("fk_rol");
@@ -297,6 +330,24 @@ if (rolSelect) {
     if (empresaGroup) empresaGroup.style.display = "none";
 
     const rol = Number(this.value);
+
+    const camposMensajero = [
+  "nit_empresa",
+  "telefono_empresa",
+  "correo_empresa"
+];
+
+// quitar required a todos primero
+camposMensajero.forEach(id => {
+  document.getElementById(id)?.removeAttribute("required");
+});
+
+// si es mensajero → activar required
+if (rol === 5) {
+  camposMensajero.forEach(id => {
+    document.getElementById(id)?.setAttribute("required", true);
+  });
+}
 
     // 🔵 RESIDENTE
     if (rol === 3 && aptoGroup) {
@@ -454,6 +505,122 @@ if (form) {
   form.addEventListener('submit', async (e) => {
     e.preventDefault();
 
+    console.log("VALIDANDO...");
+
+  message.textContent = '';
+  message.className = 'message';
+    const nombres = document.getElementById('nombres').value.trim();
+const apellidos = document.getElementById('apellidos').value.trim();
+const usuario = document.getElementById('usuario').value.trim();
+
+const password =
+  document.getElementById('password').value.trim();
+
+  if (password.length < 8) {
+
+  message.textContent =
+    'La contraseña debe tener mínimo 8 caracteres';
+
+  message.className = 'message error';
+  return;
+}
+
+if (!/[A-Z]/.test(password)) {
+
+  message.textContent =
+    'La contraseña debe incluir al menos una letra mayúscula';
+
+  message.className = 'message error';
+  return;
+}
+
+if (!/\d/.test(password)) {
+
+  message.textContent =
+    'La contraseña debe incluir al menos un número';
+
+  message.className = 'message error';
+  return;
+}
+
+if (!/[!@#$%^&*(),.?":{}|<>]/.test(password)) {
+
+  message.textContent =
+    'La contraseña debe incluir un carácter especial';
+
+  message.className = 'message error';
+  return;
+}
+
+//usuario
+if (usuario.length < 5 || usuario.length > 10) {
+
+  message.textContent =
+    'El usuario debe tener entre 5 y 10 caracteres';
+
+  message.className = 'message error';
+  return;
+}
+
+// sin espacios
+if (/\s/.test(usuario)) {
+
+  message.textContent =
+    'El usuario no puede contener espacios';
+
+  message.className = 'message error';
+  return;
+}
+
+// solo letras y números
+if (!/^[a-zA-Z0-9]+$/.test(usuario)) {
+
+  message.textContent =
+    'El usuario solo puede contener letras y números';
+
+  message.className = 'message error';
+  return;
+}
+// ✅ NOMBRES
+if (!soloLetras(nombres)) {
+
+  message.textContent =
+    'Los nombres no pueden contener números';
+
+  message.className = 'message error';
+  return;
+}
+
+// ✅ APELLIDOS
+if (!soloLetras(apellidos)) {
+
+  message.textContent =
+    'Los apellidos no pueden contener números';
+
+  message.className = 'message error';
+  return;
+}
+
+const nitEmpresa =
+  document.getElementById('nit_empresa')?.value.trim();
+
+if (Number(rolSelect.value) === 5) {
+
+  // ✅ FORMATO NIT
+  // Ejemplo válido: 900123456-7
+
+  const regexNit = /^\d{6,15}-?\d{0,2}$/;
+
+  if (!regexNit.test(nitEmpresa)) {
+
+    message.textContent =
+      'Formato de NIT inválido';
+
+    message.className = 'message error';
+    return;
+  }
+
+}
     const rolValue = Number(rolSelect.value);
 
     const data = {
@@ -512,6 +679,7 @@ if (form) {
       });
 
       const result = await res.json();
+      console.log("ERROR BACK:", result);
 
       if (!res.ok) throw new Error(result.message);
 
@@ -523,7 +691,9 @@ if (form) {
       empresaSeleccionada = null;
 
     } catch (err) {
-      message.textContent = err.message || 'Error de conexión';
+      message.innerHTML = `
+  ❌ ${err.message || 'Error de conexión'}
+`;
       message.className = 'message error';
     }
   });
@@ -533,6 +703,14 @@ if (form) {
 // AUTOCOMPLETE EMPRESA MENSAJERO
 // ==============================
 const nitInput = document.getElementById("nit_empresa");
+
+nitInput.addEventListener("input", () => {
+
+  nitInput.value = nitInput.value
+    .replace(/[^0-9-]/g, '')
+    .replace(/(?!^)-/g, '');
+
+});
 
 if (nitInput) {
   nitInput.addEventListener("blur", async () => {
@@ -578,6 +756,10 @@ function habilitarCamposEmpresa() {
       el.value = "";
     }
   });
+}
+
+function soloLetras(texto) {
+  return /^[A-Za-zÁÉÍÓÚáéíóúÑñ\s]+$/.test(texto);
 }
 
 // ==============================

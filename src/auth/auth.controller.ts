@@ -89,7 +89,6 @@ buscarEmpresa(@Param('nit') nit: string) {
 }
 
 @Post('register-mensajero')
- @UseGuards(JwtAuthGuard)
 async registerMensajero(@Body() dto: any) {
   return this.authService.registerMensajero(dto);
 }

@@ -20,11 +20,44 @@ export class AuthService {
     private readonly mailerService: MailerService,
   ) {}
 
+  async validarUsuarioCorreo(dto: RegisterDto) {
+
+  const usuarioExiste = await this.prisma.persona.findFirst({
+    where: {
+      usuario: dto.usuario
+    }
+  });
+
+  if (usuarioExiste) {
+    throw new ConflictException(
+      'El usuario ya existe'
+    );
+  }
+
+  const correoExiste = await this.prisma.persona.findFirst({
+    where: {
+      correo: dto.correo
+    }
+  });
+
+  if (correoExiste) {
+    throw new ConflictException(
+      'El correo ya existe'
+    );
+  }
+}
+
   // =========================
   // REGISTER GENERAL
   // =========================
   async register(dto: RegisterDto) {
-
+    
+    await this.validarUsuarioCorreo(dto);
+    await this.validarCedula(
+  dto.fk_tipo_doc,
+  dto.cedula
+);
+    
     const userExists = await this.prisma.persona.findFirst({
       where: {
         OR: [{ usuario: dto.usuario }, { correo: dto.correo },{ cedula: dto.usuario }],
@@ -68,6 +101,12 @@ export class AuthService {
 
   //register admin
     async registeradmin(dto: RegisterDto) {
+
+      await this.validarUsuarioCorreo(dto);
+    await this.validarCedula(
+  dto.fk_tipo_doc,
+  dto.cedula
+);
 
   const userExists = await this.prisma.persona.findFirst({
     where: {
@@ -118,6 +157,11 @@ export class AuthService {
   // REGISTER RESIDENTE
   // =========================
   async registerResidente(dto: RegisterDto) {
+    await this.validarUsuarioCorreo(dto);
+    await this.validarCedula(
+  dto.fk_tipo_doc,
+  dto.cedula
+);
 
     const userExists = await this.prisma.persona.findFirst({
       where: {
@@ -297,7 +341,10 @@ const token = this.jwtService.sign(payload);
 
   async registrarVigilante(dto: CrearVigilanteDto) {
 
-
+await this.validarCedula(
+  dto.fk_tipo_doc,
+  dto.cedula
+);
 
   // 1️⃣ Crear persona INACTIVA
   const persona = await this.prisma.persona.create({
@@ -352,6 +399,11 @@ async buscarEmpresaPorNit(nit: string) {
 // REGISTER MENSAJERO
 // =========================
 async registerMensajero(dto: any) {
+  await this.validarUsuarioCorreo(dto);
+  await this.validarCedula(
+  dto.fk_tipo_doc,
+  dto.cedula
+);
 
   let empresa = await this.prisma.empresa.findUnique({
     where: { nit_empresa: dto.nit_empresa }
@@ -369,7 +421,7 @@ async registerMensajero(dto: any) {
       }
     });
   }
-
+  console.log("DTO MENSAJERO:", dto);
   const persona = await this.prisma.persona.create({
     data: {
       nombres: dto.nombres,
@@ -521,5 +573,26 @@ async cambiarPasswordConCodigo(correo: string, codigo: string, nuevaPassword: st
   });
 
   return { message: 'Contraseña actualizada y encriptada con éxito' };
+}
+
+async validarCedula(
+  tipoDoc: number,
+  cedula?: string
+) {
+
+  if (!cedula) return;
+
+  const persona = await this.prisma.persona.findFirst({
+    where: {
+      cedula: cedula,
+      fk_tipo_doc: tipoDoc
+    }
+  });
+
+  if (persona) {
+    throw new ConflictException(
+      'La persona ya se encuentra registrada'
+    );
+  }
 }
 }

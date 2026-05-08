@@ -183,7 +183,7 @@ model persona {
   cod_user                                                                                          Int                               @id @default(autoincrement())
   nombres                                                                                           String                            @db.VarChar(60)
   apellidos                                                                                         String                            @db.VarChar(60)
-  cedula                                                                                            String?                           @unique(map: "unique_cedula") @db.VarChar(15)
+  cedula                                                                                            String?                           @db.VarChar(15)
   correo                                                                                            String?                           @db.VarChar(90)
   telefono                                                                                          String                            @db.VarChar(50)
   usuario                                                                                           String                            @unique(map: "unique_usuario") @db.VarChar(50)
@@ -211,6 +211,7 @@ model persona {
   @@index([fk_estado_user], map: "fk_estado_user")
   @@index([fk_rol], map: "fk_rol")
   @@index([fk_tipo_doc], map: "fk_tipo_doc")
+  @@unique([cedula, fk_tipo_doc], map: "unique_cedula_tipo")
 }
 
 model rol {

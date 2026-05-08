@@ -196,9 +196,12 @@ async processExcel(file: Express.Multer.File) {
       // ==========================
       // 🔹 CREAR O BUSCAR PERSONA
       // ==========================
-      let persona = await this.prisma.persona.findUnique({
-        where: { cedula: cedulaStr }
-      });
+    let persona = await this.prisma.persona.findFirst({
+  where: {
+    cedula: cedulaStr,
+    fk_tipo_doc: tipoDoc.cod_tipo_doc
+  }
+});
 
       if (!persona) {
         const hash = await bcrypt.hash('123456', 10);
