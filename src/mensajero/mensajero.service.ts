@@ -84,8 +84,37 @@ async obtenerPerfilmen(codUser: number) {
 async historialMensajero(query: string, mensajeroId: number) {
 
   return this.prisma.$queryRaw`
-    SELECT *
+    SELECT 
+      v.cod_pedido_estado_entrega,
+      v.numero_guia,
+      v.nombre_pedido,
+      v.descripcion_pedido,
+
+      v.nombre_residente,
+      v.apellido_residente,
+      v.cedula,
+
+      v.estado_pedido,
+      v.nombre_conjunto,
+
+      v.fecha_recibido,
+      v.fecha_entregado,
+
+      v.nombre_vigilante_recibe,
+      v.apellido_vigilante_recibe,
+
+      v.nombre_vigilante_entrega,
+      v.apellido_vigilante_entrega,
+
+      v.numero_torre,
+      v.numero_apto,
+
+      v.firma_residente,
+
+      p.fk_estado_pedido
+
     FROM vista_historial_pedidos v
+
     INNER JOIN pedido_estado_entrega_residente p 
       ON p.cod_pedido_estado_entrega = v.cod_pedido_estado_entrega
 
@@ -98,6 +127,7 @@ async historialMensajero(query: string, mensajeroId: number) {
         OR v.nombre_pedido LIKE ${'%' + query + '%'}
         OR v.numero_guia LIKE ${'%' + query + '%'}
       )
+
     ORDER BY v.cod_pedido_estado_entrega DESC
   `;
 }

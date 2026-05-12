@@ -95,7 +95,7 @@ async buscarPedidos(query: string, vigilanteId: number) {
   return this.prisma.pedido_estado_entrega_residente.findMany({
     where: {
       fk_estado_pedido: {
-        in: [2, 3]
+        in: [2, 3, 4]
       },
       persona_pedido_estado_entrega_residente_fk_residenteTopersona: {
         OR: [
