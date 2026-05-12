@@ -114,29 +114,66 @@ button:active {
   <form id="formEmpresa">
 
     <div class="form-group">
-      <label>NIT</label>
-      <input id="nit_empresa" required>
-    </div>
+  <label>NIT</label>
+  <input 
+    id="nit_empresa"
+    type="text"
+    required
+    maxlength="15"
+    pattern="[0-9]+"
+    inputmode="numeric"
+    placeholder="Ej: 900123456"
+    title="Ingrese solo números"
+  >
+</div>
 
-    <div class="form-group">
-      <label>Nombre empresa</label>
-      <input id="nombre_empresa" required>
-    </div>
+<div class="form-group">
+  <label>Nombre empresa</label>
+  <input 
+    id="nombre_empresa"
+    type="text"
+    required
+    minlength="3"
+    maxlength="100"
+    pattern="[A-Za-zÁÉÍÓÚáéíóúÑñ0-9 ]+"
+    placeholder="Ej: Seguridad Total SAS"
+    title="Solo letras y números"
+  >
+</div>
 
-    <div class="form-group">
-      <label>Dirección</label>
-      <input id="direccion_empresa">
-    </div>
+<div class="form-group">
+  <label>Dirección</label>
+  <input 
+    id="direccion_empresa"
+    type="text"
+    minlength="5"
+    maxlength="120"
+    placeholder="Ej: Calle 10 # 20-30"
+  >
+</div>
 
-    <div class="form-group">
-      <label>Teléfono</label>
-      <input id="telefono_empresa">
-    </div>
+<div class="form-group">
+  <label>Teléfono</label>
+  <input 
+    id="telefono_empresa"
+    type="tel"
+    maxlength="10"
+    pattern="[0-9]{7,10}"
+    inputmode="numeric"
+    placeholder="Ej: 3001234567"
+    title="Debe contener entre 7 y 10 números"
+  >
+</div>
 
-    <div class="form-group">
-      <label>Correo</label>
-      <input type="email" id="correo_empresa">
-    </div>
+<div class="form-group">
+  <label>Correo</label>
+  <input 
+    type="email"
+    id="correo_empresa"
+    maxlength="100"
+    placeholder="Ej: empresa@gmail.com"
+  >
+</div>
 
     <button type="submit">Guardar cambios</button>
 
