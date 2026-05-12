@@ -28,7 +28,8 @@ async crearPedido(dto: any, mensajeroId: number)
 
       fk_estado_pedido: 1,
       fk_residente: residente.cod_user,
-      fk_mensajero: mensajeroId
+      fk_mensajero: mensajeroId,
+      foto_pedido: dto.foto_paquete
     }
   });
 }

@@ -240,6 +240,20 @@ button:active {
     "></div>
   </div>
 
+ <div class="form-group">
+    <label>Foto del Paquete</label>
+    <div id="camera-container" style="display: none; text-align: center;">
+        <video id="video" width="100%" style="border-radius: 12px; background: #000;" autoplay></video>
+        <canvas id="canvas" style="display: none;"></canvas>
+        <button type="button" onclick="tomarFoto()" style="background: #4caf50;">📸 Capturar Foto</button>
+    </div>
+    
+    <div id="preview-container" style="text-align: center; margin-top: 10px;">
+        <img id="photo-preview" src="" style="width: 100%; border-radius: 12px; display: none; border: 1px solid #ccc;">
+        <button type="button" id="btn-abrir-camara" onclick="iniciarCamara()">📷 Abrir Cámara</button>
+    </div>
+</div>
+
 <button onclick="crearPedido()">Registrar Pedido</button>
 <h2>📊 Historial de pedidos</h2>
 <input type="text" id="buscarHistorial" placeholder="Buscar...">
@@ -418,12 +432,15 @@ async function crearPedido() {
     return;
   }
 
+  
+
   // 🔥 DATA
   const data = {
     numero_guia: numeroGuia,
     nombre_pedido: nombrePedido,
     descripcion_pedido: descripcionPedido,
-    fk_residente: residenteSeleccionado
+    fk_residente: residenteSeleccionado,
+    foto_paquete: imageBase64
   };
 
   try {
@@ -657,6 +674,53 @@ function irModoMensajero() { window.location.href = "../mensajero/mensajero.html
 // 🚀 INICIO
 // ==========================
 validarModoMensajero();
+
+let imageBase64 = null;
+
+async function iniciarCamara() {
+    const video = document.getElementById('video');
+    const container = document.getElementById('camera-container');
+    const btnAbrir = document.getElementById('btn-abrir-camara');
+
+    try {
+        const stream = await navigator.mediaDevices.getUserMedia({ 
+            video: { facingMode: "environment" }, // Prioriza cámara trasera en móviles
+            audio: false 
+        });
+        video.srcObject = stream;
+        container.style.display = 'block';
+        btnAbrir.style.display = 'none';
+    } catch (err) {
+        alert("❌ No se pudo acceder a la cámara: " + err.message);
+    }
+}
+
+function tomarFoto() {
+    const video = document.getElementById('video');
+    const canvas = document.getElementById('canvas');
+    const preview = document.getElementById('photo-preview');
+    const container = document.getElementById('camera-container');
+    const btnAbrir = document.getElementById('btn-abrir-camara');
+
+    // Dibujar el frame del video en el canvas
+    canvas.width = video.videoWidth;
+    canvas.height = video.videoHeight;
+    canvas.getContext('2d').drawImage(video, 0, 0);
+
+    // Convertir a Base64
+    imageBase64 = canvas.toDataURL('image/jpeg');
+
+    // Detener cámara
+    const stream = video.srcObject;
+    stream.getTracks().forEach(track => track.stop());
+
+    // Mostrar vista previa y limpiar interfaz
+    preview.src = imageBase64;
+    preview.style.display = 'block';
+    container.style.display = 'none';
+    btnAbrir.innerText = "🔄 Cambiar Foto";
+    btnAbrir.style.display = 'block';
+}
 
 </script>
 </body>

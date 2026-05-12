@@ -159,6 +159,10 @@ model pedido_estado_entrega_residente {
   numero_guia                                                               String?        @db.VarChar(50)
   nombre_pedido                                                             String?        @db.VarChar(100)
   descripcion_pedido                                                        String?        @db.Text
+
+  // 🔥 NUEVO CAMPO FOTO
+  foto_pedido                                                               String?        @db.LongText
+
   fk_estado_pedido                                                          Int?
   fk_cod_vigilante_recibe                                                   Int?
   fk_cod_vigilante_entrega                                                  Int?
@@ -167,10 +171,15 @@ model pedido_estado_entrega_residente {
   firma_residente                                                           String?        @db.LongText
   fk_apto_entrega                                                           Int?
   fecha_actualizacion                                                       DateTime       @default(now()) @db.Timestamp(0)
+
   estado_pedido                                                             estado_pedido? @relation(fields: [fk_estado_pedido], references: [cod_estado_pedido], onDelete: Restrict, onUpdate: Restrict, map: "pedido_estado_entrega_residente_ibfk_1")
+
   persona_pedido_estado_entrega_residente_fk_cod_vigilante_recibeTopersona  persona?       @relation("pedido_estado_entrega_residente_fk_cod_vigilante_recibeTopersona", fields: [fk_cod_vigilante_recibe], references: [cod_user], onDelete: Restrict, onUpdate: Restrict, map: "pedido_estado_entrega_residente_ibfk_2")
+
   persona_pedido_estado_entrega_residente_fk_cod_vigilante_entregaTopersona persona?       @relation("pedido_estado_entrega_residente_fk_cod_vigilante_entregaTopersona", fields: [fk_cod_vigilante_entrega], references: [cod_user], onDelete: Restrict, onUpdate: Restrict, map: "pedido_estado_entrega_residente_ibfk_3")
+
   persona_pedido_estado_entrega_residente_fk_residenteTopersona             persona?       @relation("pedido_estado_entrega_residente_fk_residenteTopersona", fields: [fk_residente], references: [cod_user], onDelete: Restrict, onUpdate: Restrict, map: "pedido_estado_entrega_residente_ibfk_4")
+
   persona_pedido_estado_entrega_residente_fk_mensajeroTopersona             persona?       @relation("pedido_estado_entrega_residente_fk_mensajeroTopersona", fields: [fk_mensajero], references: [cod_user], onDelete: Restrict, onUpdate: Restrict, map: "pedido_estado_entrega_residente_ibfk_5")
 
   @@index([fk_cod_vigilante_entrega], map: "fk_cod_vigilante_entrega")
