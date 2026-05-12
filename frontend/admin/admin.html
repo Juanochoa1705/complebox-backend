@@ -90,15 +90,25 @@
       </div>
 
       <div class="form-group">
-        <input id="empresaNit" placeholder="NIT">
+   <input 
+  id="empresaNit" 
+  placeholder="NIT"
+  type="text"
+  inputmode="numeric"
+  maxlength="20"
+  oninput="this.value = this.value.replace(/[^0-9-]/g, '')"
+/>
       </div>
 
       <div class="form-group">
-        <input id="empresaTelefono" placeholder="Teléfono">
+        <input id="empresaTelefono" placeholder="Teléfono" type="text"
+  inputmode="numeric"
+  pattern="[0-9]*"
+  required>
       </div>
 
       <div class="form-group">
-        <input id="empresaCorreo" placeholder="Correo">
+        <input id="empresaCorreo" placeholder="Correo" type="email" i required>
       </div>
 
       <div class="form-group">
@@ -172,7 +182,7 @@
     </div>
 </div>
     <button onclick="solicitaradmin()" style="width: 100%; background: #1976d2; color: white; border: none; padding: 16px; border-radius: 15px; font-weight: bold; cursor: pointer;">
-                ¿Eres admisnitrador de otro conjunto?
+                ¿Eres administrador de otro conjunto?
             </button>
     <button onclick="cerrarSesion()">Cerrar sesión</button>
 
