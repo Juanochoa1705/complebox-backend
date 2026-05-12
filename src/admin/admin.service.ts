@@ -717,21 +717,28 @@ async buscarConjuntos(query: string) {
   });
 }
 
-async cambiarEstadoEmpresa(adminId: number, nuevoEstado: number) {
+async cambiarEstadoEmpresa(
+  adminId: number,
+  estado: number,
+  conjuntoId: number
+) {
 
-  // 1️⃣ Buscar relación admin → conjunto
+  // 1️⃣ Buscar relación admin → conjunto ACTIVO
   const adminConj = await this.prisma.adminConjunto.findFirst({
-    where: { fk_cod_administrador: adminId }
+    where: {
+      fk_cod_administrador: adminId,
+      fk_cod_conjunto: conjuntoId
+    }
   });
 
   if (!adminConj) {
-    throw new NotFoundException('Admin sin conjunto');
+    throw new NotFoundException('Admin sin acceso a este conjunto');
   }
 
   // 2️⃣ Buscar empresa del conjunto
   const empresaConj = await this.prisma.empresa_seguridad_conjunto.findFirst({
     where: {
-      fk_cod_conjunto: adminConj.fk_cod_conjunto
+      fk_cod_conjunto: conjuntoId
     }
   });
 
@@ -739,32 +746,35 @@ async cambiarEstadoEmpresa(adminId: number, nuevoEstado: number) {
     throw new NotFoundException('No hay empresa de seguridad');
   }
 
-  // 🔥 3️⃣ TRANSACCIÓN (CLAVE)
+  // 3️⃣ Actualizar empresa + vigilantes
   await this.prisma.$transaction([
 
-    // A. Cambiar estado de la empresa
+    // Empresa
     this.prisma.empresa_seguridad_conjunto.update({
       where: {
         cod_empresa_vig_conjunto: empresaConj.cod_empresa_vig_conjunto
       },
       data: {
-        fk_estado_empresa_seguridad_conjunto: nuevoEstado
+        fk_estado_empresa_seguridad_conjunto: estado
       }
     }),
 
-    // B. Cambiar TODOS los vigilantes de esa empresa
+    // Vigilantes
     this.prisma.empresa_vigilante_conjunto.updateMany({
       where: {
         fk_cod_empresa_vig_conjunto: empresaConj.cod_empresa_vig_conjunto
       },
       data: {
-        fk_estado_vigilante_empresa: nuevoEstado
+        fk_estado_vigilante_empresa: estado
       }
     })
 
   ]);
 
-  return { message: "Estado actualizado correctamente 🔥" };
+  return {
+    message: "Estado actualizado correctamente 🔥"
+  };
+
 }
 async editarEmpresa(adminId: number, data: any) {
 

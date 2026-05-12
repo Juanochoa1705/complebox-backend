@@ -216,9 +216,16 @@ async vincular(@Req() req, @Body() body: { conjuntoId: number }) {
 @Post('empresa/estado')
 async cambiarEstadoEmpresa(
   @Req() req,
-  @Body() body: { estado: number }
+  @Body() body: { estado: number },
+  @Headers('x-conjunto-id') conjuntoId: string
 ) {
-  return this.adminService.cambiarEstadoEmpresa(req.user.id, body.estado);
+
+  return this.adminService.cambiarEstadoEmpresa(
+    req.user.id,
+    body.estado,
+    Number(conjuntoId)
+  );
+
 }
 
 @Put('empresa')
