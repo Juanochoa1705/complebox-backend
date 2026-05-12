@@ -35,6 +35,7 @@ document.addEventListener('DOMContentLoaded', async () => {
 
     // Iniciamos la carga del perfil
     await cargarPerfilAdmin();
+    
 });
 
 /* ==========================================
@@ -97,7 +98,8 @@ async function cargarPerfilAdmin() {
         mostrarConjunto(conjuntoActual);
 
         // Cargar datos del conjunto seleccionado
-        cargarVigilantes(); // Esta es la función que corregimos antes
+        cargarVigilantes(); 
+        cargarVigilantesPendientes();// Esta es la función que corregimos antes
         cargarCantidadTorres();
         cargarEmpresa(); 
 
@@ -345,20 +347,48 @@ async function cargarVigilantes() {
         }
 
         // Diseño exacto solicitado
-        data.forEach(item => {
-            const p = item.persona;
-            contenedor.innerHTML += `
-                <div style="border:1px solid #eee; padding:15px; border-radius:10px; margin-bottom:10px; background:#fff;">
-                    <b>${p.nombres} ${p.apellidos}</b><br>
-                    <small>Cédula: ${p.cedula || 'N/A'}</small><br>
-                    <span>Estado: ${item.fk_estado_vigilante_empresa === 1 ? "🟢 Activo" : "🔴 Inactivo"}</span>
-                    
-                    <div style="margin-top:10px; display:flex; gap:10px;">
-                        <button style="cursor:pointer; padding:5px 10px;" onclick="updateStatusVigilante(${item.cod_empresa_vigilante}, 1)">Activar</button>
-                        <button style="cursor:pointer; padding:5px 10px;" onclick="updateStatusVigilante(${item.cod_empresa_vigilante}, 2)">Inactivar</button>
-                    </div>
-                </div>`;
-        });
+       data.forEach(item => {
+
+    const p = item.persona;
+
+    let estadoTexto = "🔴 Inactivo";
+
+    if (item.fk_estado_vigilante_empresa === 1) {
+        estadoTexto = "🟢 Activo";
+    }
+
+    if (item.fk_estado_vigilante_empresa === 3) {
+        estadoTexto = "🟡 Pendiente";
+    }
+
+    contenedor.innerHTML += `
+        <div style="border:1px solid #eee; padding:15px; border-radius:10px; margin-bottom:10px; background:#fff;">
+
+            <b>${p.nombres} ${p.apellidos}</b><br>
+
+            <small>Cédula: ${p.cedula || 'N/A'}</small><br>
+
+            <span>Estado: ${estadoTexto}</span>
+
+            <div style="margin-top:10px; display:flex; gap:10px;">
+
+                <button 
+                    style="cursor:pointer; padding:5px 10px;" 
+                    onclick="updateStatusVigilante(${item.cod_empresa_vigilante}, 1)">
+                    Activar
+                </button>
+
+                <button 
+                    style="cursor:pointer; padding:5px 10px;" 
+                    onclick="updateStatusVigilante(${item.cod_empresa_vigilante}, 2)">
+                    Inactivar
+                </button>
+
+            </div>
+
+        </div>
+    `;
+});
 
     } catch (err) { 
         console.error("Error cargando vigilantes:", err);
@@ -674,6 +704,55 @@ async function guardarEmpresa() {
 
     alert("Empresa actualizada ✅");
     location.reload();
+}
+
+async function cargarVigilantesPendientes() {
+
+    const tabla = document.getElementById("tablaVigilantes");
+    const mensaje = document.getElementById("mensajeVacio");
+
+    try {
+
+        const res = await fetch(`${API_URL}/admin/vigilantes-pendientes`, {
+            headers: {
+                "Authorization": `Bearer ${token}`,
+                "x-conjunto-id": conjuntoActivo
+            }
+        });
+
+        const data = await res.json();
+
+        tabla.innerHTML = "";
+
+        if (!data || data.length === 0) {
+            mensaje.style.display = "block";
+            return;
+        }
+
+        mensaje.style.display = "none";
+
+        data.forEach(v => {
+
+            tabla.innerHTML += `
+                <tr>
+                    <td>${v.nombres} ${v.apellidos}</td>
+                    <td>${v.cedula}</td>
+                    <td>
+                        <button onclick="aprobarVigilante(${v.cod_user})">
+                            ✅ Aprobar
+                        </button>
+
+                        <button onclick="rechazarVigilante(${v.cod_user})">
+                            ❌ Rechazar
+                        </button>
+                    </td>
+                </tr>
+            `;
+        });
+
+    } catch (err) {
+        console.error(err);
+    }
 }
 
 function cancelarEdicion() {

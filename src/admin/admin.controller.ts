@@ -13,6 +13,7 @@ import {
   Delete,
   Res,
   HttpStatus,
+  Headers,
 } from '@nestjs/common';
 import { AdminService } from './admin.service';
 import { CreateConjuntoDto } from './dto/create-conjunto.dto';
@@ -50,11 +51,19 @@ async obtenerConjuntoAdmin(@Request() req){
   return this.adminService.obtenerConjuntoAdmin(req.user.id);
 }
 
-  @Get('torres')
-  async obtenerTorres(@Req() req: any) {
-    const codAdmin = req.user.id;
-    return this.adminService.obtenerTorresAdmin(codAdmin);
-  }
+ @Get('torres')
+async obtenerTorres(
+  @Req() req,
+  @Headers('x-conjunto-id') conjuntoId: string
+) {
+
+  const codAdmin = req.user.id;
+
+  return this.adminService.obtenerTorresAdmin(
+    codAdmin,
+    Number(conjuntoId)
+  );
+}
 
   @Post('torres')
   async crearTorre(
@@ -89,12 +98,16 @@ async crearEmpresa(
 }
 
   @UseGuards(JwtAuthGuard)
-  @Get('vigilantes-pendientes')
-  async vigilantesPendientes(@Request() req) {
-
-      
-    return this.adminService.vigilantesPendientes(req.user.id);
-  }
+ @Get('vigilantes-pendientes')
+async vigilantesPendientes(
+  @Req() req,
+  @Headers('x-conjunto-id') conjuntoId: string
+) {
+  return this.adminService.vigilantesPendientes(
+    req.user.id,
+    Number(conjuntoId)
+  );
+}
 
   @UseGuards(JwtAuthGuard)
   @Post('aprobar-vigilante')

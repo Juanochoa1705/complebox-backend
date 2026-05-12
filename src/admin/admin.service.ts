@@ -61,24 +61,33 @@ export class AdminService {
 
 }
 
-  async obtenerTorresAdmin(codAdmin: number) {
-    const adminConjunto = await this.prisma.adminConjunto.findFirst({
-      where: { fk_cod_administrador: codAdmin },
-    });
+  async obtenerTorresAdmin(
+  adminId: number,
+  conjuntoId: number
+) {
 
-    if (!adminConjunto) {
-      throw new NotFoundException('ADMIN_SIN_CONJUNTO');
+  // validar que el admin sí pertenezca al conjunto
+  const adminConjunto = await this.prisma.adminConjunto.findFirst({
+    where: {
+      fk_cod_administrador: adminId,
+      fk_cod_conjunto: conjuntoId
     }
+  });
 
-    return this.prisma.torre.findMany({
-      where: {
-        fk_cod_conjunto: adminConjunto.fk_cod_conjunto,
-      },
-      orderBy: {
-        numero_torre: 'asc',
-      },
-    });
+  if (!adminConjunto) {
+    throw new Error('No autorizado para este conjunto');
   }
+
+  return this.prisma.torre.findMany({
+    where: {
+      fk_cod_conjunto: conjuntoId
+    },
+    orderBy: {
+      numero_torre: 'asc'
+    }
+  });
+
+}
 
   async crearTorre(codAdmin: number, numero: number) {
     const adminConjunto = await this.prisma.adminConjunto.findFirst({
@@ -352,33 +361,48 @@ async crearEmpresaSeguridad(adminId: number, dto: CrearEmpresaDto) {
   };
 }
 
-async vigilantesPendientes(adminId: number) {
+async vigilantesPendientes(
+  adminId: number,
+  conjuntoId: number
+) {
 
-  // 1️⃣ buscar conjunto del admin
+  console.log("🚀 CONJUNTO RECIBIDO:", conjuntoId);
+
+  // 1️⃣ validar que el admin pertenezca al conjunto
   const adminConj = await this.prisma.adminConjunto.findFirst({
     where: {
-      fk_cod_administrador: adminId
+      fk_cod_administrador: adminId,
+      fk_cod_conjunto: Number(conjuntoId)
     }
   });
+
+  console.log("ADMIN CONJ:", adminConj);
 
   if (!adminConj) return [];
 
-  // 2️⃣ buscar empresa de seguridad del conjunto
+  // 2️⃣ buscar empresa del conjunto ACTIVO
   const empresa = await this.prisma.empresa_seguridad_conjunto.findFirst({
     where: {
-      fk_cod_conjunto: adminConj.fk_cod_conjunto
+      fk_cod_conjunto: Number(conjuntoId)
     }
   });
+
+  console.log("EMPRESA:", empresa);
 
   if (!empresa) return [];
 
-  // 3️⃣ buscar vigilantes de esa empresa
-  const vigiConjunto = await this.prisma.empresa_vigilante_conjunto.findMany({
-    where: {
-      fk_cod_empresa_vig_conjunto: empresa.cod_empresa_vig_conjunto,
-      fk_estado_vigilante_empresa: 3
-    }
-  });
+  // 3️⃣ buscar vigilantes pendientes
+  const vigiConjunto =
+    await this.prisma.empresa_vigilante_conjunto.findMany({
+      where: {
+        fk_cod_empresa_vig_conjunto:
+          empresa.cod_empresa_vig_conjunto,
+
+        fk_estado_vigilante_empresa: 3
+      }
+    });
+
+  console.log("VIGILANTES:", vigiConjunto);
 
   const vigilantes: any[] = [];
 
@@ -386,11 +410,11 @@ async vigilantesPendientes(adminId: number) {
 
     if (!ar.fk_persona_vigilante) continue;
 
-    const persona = await this.prisma.persona.findUnique({
-      where: {
-        cod_user: ar.fk_persona_vigilante
-      }
-    });
+const persona = await this.prisma.persona.findUnique({
+  where: {
+    cod_user: ar.fk_persona_vigilante
+  }
+});
 
     if (persona) {
       vigilantes.push({
@@ -400,11 +424,9 @@ async vigilantesPendientes(adminId: number) {
         cedula: persona.cedula
       });
     }
-
   }
 
   return vigilantes;
-
 }
 
   async aprobarVigilante(codUser: number) {
@@ -579,29 +601,41 @@ async eliminarTorre(codAdmin: number, codTorre: number) {
 
 // Cambia obtenerVigilantesPorAdmin para que sea específico por conjunto
 async obtenerVigilantesPorConjunto(adminId: number, conjuntoId: number) {
-  // Validamos que ese admin realmente gestione ese conjunto por seguridad
+
+  // validar admin
   const relacion = await this.prisma.adminConjunto.findFirst({
-    where: { 
+    where: {
       fk_cod_administrador: adminId,
-      fk_cod_conjunto: conjuntoId 
+      fk_cod_conjunto: conjuntoId
     }
   });
 
-  if (!relacion) throw new UnauthorizedException('No gestionas este conjunto');
+  if (!relacion) {
+    throw new UnauthorizedException('No gestionas este conjunto');
+  }
 
   return this.prisma.empresa_vigilante_conjunto.findMany({
+
     where: {
+
+      fk_estado_vigilante_empresa: {
+        in: [1, 2]
+      },
+
       empresa_seguridad_conjunto: {
-        fk_cod_conjunto: conjuntoId // Filtro estricto por el conjunto seleccionado
+        fk_cod_conjunto: conjuntoId
       }
+
     },
+
     include: {
       persona: true,
       estado: true
     }
-  });
-}
 
+  });
+
+}
 // Cambiar estado del vigilante
 async cambiarEstadoVigilante(idRegistro: number, nuevoEstado: number) {
   return this.prisma.empresa_vigilante_conjunto.update({
