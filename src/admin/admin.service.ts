@@ -309,12 +309,19 @@ if (!existeResidente) {
   return { message: '✅ Carga masiva completada correctamente' };
 }
 
-async crearEmpresaSeguridad(adminId: number, dto: CrearEmpresaDto) {
+async crearEmpresaSeguridad(
+  adminId: number,
+  dto: CrearEmpresaDto,
+  conjuntoId: number
+) {
 
   // 🔹 1️⃣ Buscar el admin correctamente
   const adminConjunto = await this.prisma.adminConjunto.findFirst({
-    where: { fk_cod_administrador: adminId },
-  });
+  where: {
+    fk_cod_administrador: adminId,
+    fk_cod_conjunto: conjuntoId
+  },
+});
 
   if (!adminConjunto) {
     throw new NotFoundException('Administrador no tiene conjunto asignado');

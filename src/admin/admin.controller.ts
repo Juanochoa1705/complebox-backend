@@ -90,21 +90,13 @@ async uploadPropietarios(@UploadedFile() file: Express.Multer.File) {
 @UseGuards(JwtAuthGuard)
 async crearEmpresa(
   @Req() req,
-  @Body() dto: CrearEmpresaDto
-) {
-  const adminId = req.user.id;
-
-  return this.adminService.crearEmpresaSeguridad(req.user.id, dto);
-}
-
-  @UseGuards(JwtAuthGuard)
- @Get('vigilantes-pendientes')
-async vigilantesPendientes(
-  @Req() req,
+  @Body() dto: CrearEmpresaDto,
   @Headers('x-conjunto-id') conjuntoId: string
 ) {
-  return this.adminService.vigilantesPendientes(
+
+  return this.adminService.crearEmpresaSeguridad(
     req.user.id,
+    dto,
     Number(conjuntoId)
   );
 }
@@ -288,5 +280,19 @@ async obtenerEmpresa(@Req() req) {
     direccion_empresa: empresa.empresa?.direccion_empresa,
     fk_estado_empresa_seguridad_conjunto: empresa.fk_estado_empresa_seguridad_conjunto
   };
+}
+
+@Get('vigilantes-pendientes')
+@UseGuards(JwtAuthGuard)
+async vigilantesPendientes(
+  @Req() req,
+  @Headers('x-conjunto-id') conjuntoId: string
+) {
+
+  return this.adminService.vigilantesPendientes(
+    req.user.id,
+    Number(conjuntoId)
+  );
+
 }
 }

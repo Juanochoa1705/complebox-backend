@@ -314,10 +314,38 @@ if(document.getElementById('empresaForm')) {
             headers: { "Content-Type": "application/json", "Authorization": `Bearer ${token}` , "x-conjunto-id": conjuntoActivo},
             body: JSON.stringify(data)
         });
-        if (res.ok) {
-            empresaMessage.textContent = "Empresa creada ✅";
-            empresaForm.reset();
-        }
+        const result = await res.json();
+
+if (!res.ok) {
+
+    empresaMessage.innerHTML = `
+        <div style="
+            background:#ffe5e5;
+            color:#b30000;
+            padding:10px;
+            border-radius:8px;
+            margin-top:10px;
+        ">
+            ❌ ${result.message}
+        </div>
+    `;
+
+    return;
+}
+
+empresaMessage.innerHTML = `
+    <div style="
+        background:#e7ffe7;
+        color:#008000;
+        padding:10px;
+        border-radius:8px;
+        margin-top:10px;
+    ">
+        ✅ Empresa creada correctamente
+    </div>
+`;
+
+empresaForm.reset();
     });
 }
 
