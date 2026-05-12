@@ -148,33 +148,97 @@ button:active {
 <h3>Registrar Pedido</h3>
 
 <div class="form-group">
-  <label>Número de guía</label>
-  <input id="numero_guia" required>
-</div>
+    <label>Número de guía</label>
 
-<div class="form-group">
-  <label>Nombre del pedido</label>
-  <input id="nombre_pedido" required>
-</div>
+    <input 
+      id="numero_guia"
+      required
+      type="text"
+      inputmode="text"
+      maxlength="30"
+      minlength="4"
 
-<div class="form-group">
-  <label>Descripción</label>
-  <input id="descripcion_pedido" required>
-</div>
+      placeholder="Ej: TCC-928282"
 
-<div class="form-group">
-  <label>Buscar residente</label>
-  <input id="buscar_residente" placeholder="Nombre o cédula">
+      pattern="[A-Za-z0-9-]+"
 
-  <div id="resultados" style="
-    background:#fff;
-    border:1px solid #ccc;
-    border-radius:10px;
-    margin-top:5px;
-    max-height:150px;
-    overflow-y:auto;
-  "></div>
-</div>
+      oninput="
+        this.value = this.value
+        .replace(/[^A-Za-z0-9-]/g, '')
+        .toUpperCase()
+      "
+
+      title="Solo letras, números y guiones"
+    >
+  </div>
+
+  <!-- Nombre pedido -->
+  <div class="form-group">
+    <label>Nombre del pedido</label>
+
+    <input 
+      id="nombre_pedido"
+      required
+      type="text"
+      maxlength="50"
+      minlength="3"
+
+      placeholder="Ej: Audífonos"
+
+      oninput="
+        this.value = this.value
+        .replace(/[^A-Za-zÁÉÍÓÚáéíóúÑñ0-9 ]/g, '')
+      "
+    >
+  </div>
+
+  <!-- Descripción -->
+  <div class="form-group">
+    <label>Descripción</label>
+
+    <input 
+      id="descripcion_pedido"
+      required
+      type="text"
+      maxlength="120"
+      minlength="5"
+
+      placeholder="Descripción breve del paquete"
+
+      oninput="
+        this.value = this.value
+        .replace(/[^A-Za-zÁÉÍÓÚáéíóúÑñ0-9 ,.()-]/g, '')
+      "
+    >
+  </div>
+
+  <!-- Buscar residente -->
+  <div class="form-group">
+    <label>Buscar residente</label>
+
+    <input 
+      id="buscar_residente"
+      required
+      type="text"
+      maxlength="60"
+
+      placeholder="Nombre o cédula"
+
+      oninput="
+        this.value = this.value
+        .replace(/[^A-Za-zÁÉÍÓÚáéíóúÑñ0-9 ]/g, '')
+      "
+    >
+
+    <div id="resultados" style="
+      background:#fff;
+      border:1px solid #ccc;
+      border-radius:10px;
+      margin-top:5px;
+      max-height:150px;
+      overflow-y:auto;
+    "></div>
+  </div>
 
 <button onclick="crearPedido()">Registrar Pedido</button>
 <h2>📊 Historial de pedidos</h2>
@@ -302,19 +366,72 @@ async function cargarPerfilmen() {
 // ==========================
 async function crearPedido() {
 
-  if (!residenteSeleccionado) {
-    alert("Selecciona un residente");
+  const numeroGuia = document.getElementById("numero_guia").value.trim();
+  const nombrePedido = document.getElementById("nombre_pedido").value.trim();
+  const descripcionPedido = document.getElementById("descripcion_pedido").value.trim();
+  const residenteInput = document.getElementById("buscar_residente").value.trim();
+
+  // 🔥 VALIDACIONES
+
+  if (!numeroGuia) {
+    alert("⚠️ Debes ingresar el número de guía");
     return;
   }
 
+  if (numeroGuia.length < 4) {
+    alert("⚠️ El número de guía es demasiado corto");
+    return;
+  }
+
+  if (!/^[A-Z0-9-]+$/i.test(numeroGuia)) {
+    alert("⚠️ La guía solo puede contener letras, números y guiones");
+    return;
+  }
+
+  if (!nombrePedido) {
+    alert("⚠️ Debes ingresar el nombre del pedido");
+    return;
+  }
+
+  if (nombrePedido.length < 3) {
+    alert("⚠️ El nombre del pedido es muy corto");
+    return;
+  }
+
+  if (!descripcionPedido) {
+    alert("⚠️ Debes ingresar la descripción");
+    return;
+  }
+
+  if (descripcionPedido.length < 5) {
+    alert("⚠️ La descripción es demasiado corta");
+    return;
+  }
+
+  if (!residenteInput) {
+    alert("⚠️ Debes buscar un residente");
+    return;
+  }
+
+  if (!residenteSeleccionado) {
+    alert("⚠️ Debes seleccionar un residente de la lista");
+    return;
+  }
+
+  // 🔥 DATA
   const data = {
-    numero_guia: document.getElementById("numero_guia").value,
-    nombre_pedido: document.getElementById("nombre_pedido").value,
-    descripcion_pedido: document.getElementById("descripcion_pedido").value,
+    numero_guia: numeroGuia,
+    nombre_pedido: nombrePedido,
+    descripcion_pedido: descripcionPedido,
     fk_residente: residenteSeleccionado
   };
 
   try {
+
+    const boton = document.querySelector("button[onclick='crearPedido()']");
+    boton.disabled = true;
+    boton.innerText = "Registrando...";
+
     const res = await fetch("http://localhost:3000/mensajero/crear-pedido", {
       method: "POST",
       headers: {
@@ -326,9 +443,11 @@ async function crearPedido() {
 
     const result = await res.json();
 
-    if (!res.ok) throw new Error(result.message);
+    if (!res.ok) {
+      throw new Error(result.message || "Error al registrar pedido");
+    }
 
-    // limpiar formulario
+    // 🔥 LIMPIAR
     document.getElementById("numero_guia").value = "";
     document.getElementById("nombre_pedido").value = "";
     document.getElementById("descripcion_pedido").value = "";
@@ -337,10 +456,18 @@ async function crearPedido() {
     residenteSeleccionado = null;
     document.getElementById("resultados").innerHTML = "";
 
-    alert("✅ Pedido registrado");
+    alert("✅ Pedido registrado correctamente");
 
   } catch (err) {
-    alert(err.message);
+
+    alert("❌ " + err.message);
+
+  } finally {
+
+    const boton = document.querySelector("button[onclick='crearPedido()']");
+    boton.disabled = false;
+    boton.innerText = "Registrar Pedido";
+
   }
 }
 
