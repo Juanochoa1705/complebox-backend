@@ -227,7 +227,6 @@ ubicacionEl.innerText = [
 // 🔥 CARGAR PEDIDOS (LISTA PRINCIPAL)
 // ==========================
 async function cargarPedidos() {
-
   const res = await fetch("http://localhost:3000/vigilante/pedidos", {
     headers: {
       "Authorization": "Bearer " + localStorage.getItem("token")
@@ -245,8 +244,8 @@ async function cargarPedidos() {
   }
 
   pedidos.forEach(p => {
-
     const div = document.createElement("div");
+    div.className = "card"; // Asumiendo que usas la clase card para el estilo
 
     // 🔥 BOTONES DINÁMICOS
     let htmlBotones = "";
@@ -257,18 +256,30 @@ async function cargarPedidos() {
           ✅ Aprobar
         </button>
 
-        <button onclick="rechazarPedido(${p.cod_pedido_estado_entrega})">
+        <button onclick="rechazarPedido(${p.cod_pedido_estado_entrega})" style="background:#e74c3c; margin-top:5px;">
           ❌ No aprobar
         </button>
       `;
     }
 
+    // 📸 LÓGICA PARA MOSTRAR LA FOTO DEL PAQUETE
+    const htmlFoto = p.foto_pedido 
+      ? `<div style="margin: 10px 0;">
+           <small style="color: #666;">📷 Evidencia del Mensajero:</small><br>
+           <img src="${p.foto_pedido}" style="width:100%; max-width:150px; border-radius:8px; border: 1px solid #ddd; margin-top:5px;">
+         </div>`
+      : `<div style="margin: 10px 0;"><small style="color:gray;">📷 Sin foto adjunta</small></div>`;
+
     div.innerHTML = `
       <b>Guía:</b> ${p.numero_guia}<br>
       <b>Pedido:</b> ${p.nombre_pedido}<br>
-      <b>Residente:</b> ${p.persona_pedido_estado_entrega_residente_fk_residenteTopersona.nombres}<br><br>
+      <b>Residente:</b> ${p.persona_pedido_estado_entrega_residente_fk_residenteTopersona.nombres}<br>
+      
+      ${htmlFoto}
 
-      ${htmlBotones}
+      <div style="margin-top:10px;">
+        ${htmlBotones}
+      </div>
       <hr>
     `;
 
