@@ -43,12 +43,18 @@ document.addEventListener('DOMContentLoaded', async () => {
    ========================================== */
 async function cargarPerfilAdmin() {
     try {
-        const res = await fetch(`${API_URL}/admin/perfil`, {
-            headers: { 
-                'Authorization': `Bearer ${token}`,
-                "x-conjunto-id": conjuntoActivo 
-            }
-        });
+        const headers = {
+    'Authorization': `Bearer ${token}`
+};
+
+// SOLO enviar si existe
+if (conjuntoActivo) {
+    headers["x-conjunto-id"] = conjuntoActivo;
+}
+
+const res = await fetch(`${API_URL}/admin/perfil`, {
+    headers
+});
         
         if (!res.ok) throw new Error("Error en la petición de perfil");
         
@@ -64,15 +70,30 @@ async function cargarPerfilAdmin() {
         if(titulo) {
             titulo.innerText = `💼 Admin: ${data.nombres || 'Usuario'}`;
         }
+// ✅ AQUI sí existe data
+        console.log("DATA PERFIL 👉", data);
+        console.log("CONJUNTOS 👉", data.conjuntos);
+       // ===============================
+// 🚨 NO TIENE CONJUNTOS
+// ===============================
+if (!data.conjuntos || data.conjuntos.length === 0) {
 
-        // Si no tiene conjuntos
-        if (!data.conjuntos || data.conjuntos.length === 0) {
-            document.getElementById('crearSection')?.classList.remove('d-none');
-            document.getElementById('infoSection')?.classList.add('d-none');
-            document.getElementById('selectorConjunto')?.classList.add('d-none');
-            return;
-        }
+    // Mostrar sección para crear o vincularse
+    const crearSection = document.getElementById('crearSection');
+    crearSection?.classList.remove('d-none');
 
+    // Ocultar info admin
+    document.getElementById('infoSection')?.classList.add('d-none');
+
+    // Ocultar selector
+    document.getElementById('selectorConjunto')?.classList.add('d-none');
+
+    // 🔥 IMPORTANTE
+    // limpiar conjunto activo
+    localStorage.removeItem("conjuntoActivo");
+
+    return;
+}
         const conjuntos = data.conjuntos;
 
         // Si tiene varios y no hay uno activo, mostrar selector
@@ -184,26 +205,7 @@ async function obtenerConjunto() {
     }
 }
 
-function mostrarConjunto(data) {
 
-    console.log("ELEMENTO 👉", document.getElementById('infoSection'));
-    localStorage.getItem("token")
-
-    const infoSection = document.getElementById('infoSection');
-    const nombre = document.getElementById('infoNombre');
-    const telefono = document.getElementById('infoTelefono');
-
-    if (!infoSection || !nombre || !telefono) {
-        console.error("❌ Elementos del DOM no encontrados");
-        return;
-    }
-
-    infoSection.classList.remove('d-none');
-    nombre.textContent = data.nombre_conjunto;
-    telefono.textContent = data.telefono_conjunto;
-
-    cargarCantidadTorres();
-}
 
 async function crearConjunto() {
     const body = {
@@ -785,6 +787,156 @@ async function cargarVigilantesPendientes() {
 
 function cancelarEdicion() {
     document.getElementById("editarEmpresaForm").classList.add("d-none");
+}
+
+function mostrarPantallaBloqueo(mensaje) {
+
+    document.body.innerHTML = `
+    
+    <div style="
+        min-height:100vh;
+        background:#f5f7fb;
+        display:flex;
+        justify-content:center;
+        align-items:center;
+        padding:20px;
+        font-family:sans-serif;
+        position:relative;
+    ">
+
+        <div style="
+            background:white;
+            width:100%;
+            max-width:420px;
+            padding:30px;
+            border-radius:20px;
+            text-align:center;
+            box-shadow:0 4px 20px rgba(0,0,0,0.1);
+        ">
+
+            <h2 style="
+                margin-bottom:15px;
+                color:#d32f2f;
+            ">
+                🚫 Acceso bloqueado
+            </h2>
+
+            <p style="
+                color:#555;
+                margin-bottom:25px;
+                line-height:1.5;
+            ">
+                ${mensaje}
+            </p>
+
+            <button 
+                onclick="solicitaradmin()" 
+                style="
+                    width:100%;
+                    background:#1976d2;
+                    color:white;
+                    border:none;
+                    padding:16px;
+                    border-radius:15px;
+                    font-weight:bold;
+                    cursor:pointer;
+                    margin-bottom:12px;
+                "
+            >
+                🛡️ Solicitar permiso de administrador
+            </button>
+
+            <button 
+                onclick="cerrarSesion()" 
+                style="
+                    width:100%;
+                    background:#ef5350;
+                    color:white;
+                    border:none;
+                    padding:16px;
+                    border-radius:15px;
+                    font-weight:bold;
+                    cursor:pointer;
+                "
+            >
+                🔒 Cerrar sesión
+            </button>
+
+        </div>
+
+        <!-- ICONOS FLOTANTES -->
+        <div style="
+            position:fixed;
+top:20px;
+right:20px;
+display:flex;
+flex-direction:row;
+        ">
+
+            <div onclick="irModoResidente()" style="
+                width:55px;
+                height:55px;
+                background:white;
+                border-radius:50%;
+                display:flex;
+                justify-content:center;
+                align-items:center;
+                cursor:pointer;
+                font-size:24px;
+                box-shadow:0 4px 10px rgba(0,0,0,0.15);
+            ">
+                🏠
+            </div>
+
+            <div onclick="irModoMensajero()" style="
+                width:55px;
+                height:55px;
+                background:white;
+                border-radius:50%;
+                display:flex;
+                justify-content:center;
+                align-items:center;
+                cursor:pointer;
+                font-size:24px;
+                box-shadow:0 4px 10px rgba(0,0,0,0.15);
+            ">
+                🚚
+            </div>
+
+            <div onclick="irModoVigilante()" style="
+                width:55px;
+                height:55px;
+                background:white;
+                border-radius:50%;
+                display:flex;
+                justify-content:center;
+                align-items:center;
+                cursor:pointer;
+                font-size:24px;
+                box-shadow:0 4px 10px rgba(0,0,0,0.15);
+            ">
+                👮‍♂️
+            </div>
+
+            <div onclick="irModoPropietario()" style="
+                width:55px;
+                height:55px;
+                background:white;
+                border-radius:50%;
+                display:flex;
+                justify-content:center;
+                align-items:center;
+                cursor:pointer;
+                font-size:24px;
+                box-shadow:0 4px 10px rgba(0,0,0,0.15);
+            ">
+                🔑
+            </div>
+
+        </div>
+
+    </div>
+    `;
 }
 
 /* ==========================================

@@ -401,41 +401,86 @@ async function guardarFirma() {
 
 function cerrarSesion() { localStorage.clear(); window.location.href = '../login.html'; }
 
-const estadoEspecial = localStorage.getItem("estadoEspecial");
-const mensaje = localStorage.getItem("mensajeEstado");
+async function iniciarResidente() {
 
-if (estadoEspecial === "true") {
+  const estadoEspecial = localStorage.getItem("estadoEspecialResidente");
+  const mensaje = localStorage.getItem("mensajeEstadoResidente");
 
-  document.body.innerHTML = `
-    <div style="
-      height:100vh;
-      display:flex;
-      justify-content:center;
-      align-items:center;
-      text-align:center;
-      padding:20px;
-      font-family:sans-serif;
-    ">
-      <div>
-        <h2 style="color:#d32f2f;">⚠️ Acceso restringido</h2>
-        <p>${mensaje}</p>
-        <div class="iconos-flotantes">
-                <div class="modo-switch" onclick="irModoResidente()" title="Modo Residente">🏠</div>
-                <div class="modo-switch" onclick="irModoMensajero()" title="Modo Mensajero">🚚</div>
-                <div class="modo-switch" onclick="irModoVigilante()" title="Modo Vigilante">👮‍♂️</div>
-                <div class="modo-switch" onclick="irModoPropietario()" title="Modo Propietario">🔑</div>
-                <div class="modo-switch" onclick="irModoAdministrador()" title="Modo Administrador">⚙️</div>
-            </div>
-        <button onclick="cerrarSesion()">Cerrar sesión</button>
-        <a href="../cambiar-apto.html">¿Deseas registrarte en otro Apartamento/conjunto?</a>
+  // 🔥 SI YA ESTÁ BLOQUEADO → MUESTRA PANTALLA
+  if (estadoEspecial === "true") {
+
+    document.body.innerHTML = `
+  <div style="
+    height:100vh;
+    display:flex;
+    justify-content:center;
+    align-items:center;
+    text-align:center;
+    padding:20px;
+    font-family:sans-serif;
+    background: linear-gradient(180deg, #0d47a1, #1976d2);
+    color:white;
+    position:relative;
+  ">
+    
+    <div class="iconos-flotantes">
+
+      <div class="modo-switch" onclick="irModoResidente()" title="Modo Residente">
+        🏠
       </div>
-    </div>
-  `;
 
-} else {
-  // 🔥 AQUÍ ESTÁ LA MAGIA
+      <div class="modo-switch" onclick="irModoMensajero()" title="Modo Mensajero">
+        🚚
+      </div>
+
+      <div class="modo-switch" onclick="irModoVigilante()" title="Modo Vigilante">
+        👮‍♂️
+      </div>
+
+      <div class="modo-switch" onclick="irModoPropietario()" title="Modo Propietario">
+        🔑
+      </div>
+
+      <div class="modo-switch" onclick="irModoAdministrador()" title="Modo Administrador">
+        ⚙️
+      </div>
+
+    </div>
+
+    <div>
+
+      <h2 style="color:#ff5252;">
+        ⚠️ Acceso restringido
+      </h2>
+
+      <p style="margin-top:15px;">
+        ${mensaje || "Tu acceso fue restringido"}
+      </p>
+
+      <button onclick="cerrarSesion()">
+        Cerrar sesión
+      </button>
+
+      <a href="../cambiar-apto.html" 
+         style="
+           display:block;
+           margin-top:15px;
+           color:white;
+         ">
+        ¿Deseas registrarte en otro Apartamento/conjunto?
+      </a>
+
+    </div>
+  </div>
+`;
+    return;
+  }
+
+  // ✅ VALIDAR NORMAL
   validarModoResidente();
 }
+
+iniciarResidente();
 const input = document.getElementById("buscarHistorial");
 const contenedorHistorial = document.getElementById("tablaHistorial");
 
@@ -495,6 +540,7 @@ div.innerHTML = `
 async function validarModoResidente() {
 
   try {
+
     const res = await fetch("http://localhost:3000/acceso/validar-residente", {
       headers: {
         Authorization: "Bearer " + localStorage.getItem("token")
@@ -503,24 +549,30 @@ async function validarModoResidente() {
 
     const data = await res.json();
 
-    // 🔥 SI NO TIENE ACCESO → MISMO BLOQUE QUE YA TIENES
+    // 🚫 SIN ACCESO
     if (!data.acceso) {
 
-      localStorage.setItem("estadoEspecial", "true");
-      localStorage.setItem("mensajeEstado", data.mensaje);
+      localStorage.setItem("estadoEspecialResidente", "true");
 
-      location.reload(); // 🔥 reutiliza tu lógica
+      localStorage.setItem(
+        "mensajeEstadoResidente",
+        data.mensaje || "Tu acceso está restringido"
+      );
+
+      iniciarResidente();
       return;
     }
 
-    // ✅ acceso normal
+    // ✅ ACCESO NORMAL
+    localStorage.removeItem("estadoEspecialResidente");
+    localStorage.removeItem("mensajeEstadoResidente");
+
     cargarPerfilres();
     cargarPedidos();
 
   } catch (err) {
     console.error(err);
   }
-
 }
 function irModoMensajero() { window.location.href = "../mensajero/mensajero.html"; }
 function irModoVigilante() { window.location.href = "../vigilante/vigilante.html"; }

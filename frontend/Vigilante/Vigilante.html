@@ -180,7 +180,6 @@ button:active {
   ⚙️
   </div>
 </div>
-</div>
 <script>
 
 // ==========================
@@ -197,14 +196,13 @@ async function cargarPerfilvig() {
 
     // Si el backend dice que el acceso está restringido (Estado 3)
     if (data.accesoRestringido) {
-        localStorage.setItem("estadoEspecial", "true");
-        localStorage.setItem("mensajeEstado", data.mensaje);
-        
-        // Recargamos para que se ejecute tu lógica de bloqueo que limpia la pantalla
-        location.reload(); 
-        return;
-    }
 
+    localStorage.setItem("estadoEspecialVigilante", "true");
+    localStorage.setItem("mensajeEstadoVigilante", data.mensaje);
+
+    location.reload();
+    return;
+}
     // Si el acceso es normal, limpiamos cualquier bloqueo previo y mostramos datos
     localStorage.setItem("estadoEspecial", "false");
     const nombreEl = document.getElementById("titulovig");
@@ -308,7 +306,7 @@ async function aprobar(id) {
 // ==========================
 async function rechazarPedido(id) {
 
-  const confirmar = confirm("¿Seguro que deseas rechazar y eliminar este pedido?");
+  const conar = confirm("¿Seguro que deseas rechazar y eliminar este pedido?");
   if (!confirmar) return;
 
   try {
@@ -448,8 +446,9 @@ function cerrarSesion() {
 // ==========================
 // 🚨 VALIDAR ESTADO
 // ==========================
-const estadoEspecial = localStorage.getItem("estadoEspecial");
-const mensaje = localStorage.getItem("mensajeEstado");
+
+const estadoEspecial = localStorage.getItem("estadoEspecialVigilante");
+const mensaje = localStorage.getItem("mensajeEstadoVigilante");
 
 if (estadoEspecial === "true") {
 
@@ -573,11 +572,9 @@ ${
 });
 
 function irModoResidente() {
-  localStorage.setItem("modo", "residente");
 
-  // 🔥 LIMPIA ESTADO ANTERIOR
-  localStorage.removeItem("estadoEspecial");
-  localStorage.removeItem("mensajeEstado");
+  localStorage.removeItem("estadoEspecialVigilante");
+  localStorage.removeItem("mensajeEstadoVigilante");
 
   window.location.href = "../residente/Residente.html";
 }
