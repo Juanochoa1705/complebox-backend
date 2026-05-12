@@ -293,8 +293,6 @@ async function cargarPerfilres() {
   }
 }
 
-// 1. CARGAR PEDIDOS
-// 1. CARGAR PEDIDOS
 async function cargarPedidos() {
   const res = await fetch("http://localhost:3000/residente/mis-pedidos", {
     headers: { "Authorization": "Bearer " + localStorage.getItem("token") }
@@ -306,6 +304,10 @@ async function cargarPedidos() {
   // 🔥 FILTRAR LOS QUE NO SEAN ESTADO 5
   const pedidosFiltrados = pedidos.filter(p => p.fk_estado_pedido !== 5);
 
+  // CORRECCIÓN AQUÍ: Usamos "listaPedidos" que es el ID real en tu HTML
+  const contenedorPedidos = document.getElementById("listaPedidos"); 
+  
+  if (!contenedorPedidos) return; // Seguridad por si el elemento no existe
   contenedorPedidos.innerHTML = "";
 
   pedidosFiltrados.forEach(p => {
@@ -321,11 +323,22 @@ async function cargarPedidos() {
       htmlBotones = `<button class="btn btn-firmar" onclick="abrirFirma(${p.cod_pedido_estado_entrega})">✍️ Firmar Entrega</button>`;
     }
 
+    // Mostrar foto si existe
+    const htmlFoto = p.foto_pedido 
+      ? `<div style="margin-top:10px;">
+           <small>📷 Foto del paquete:</small><br>
+           <img src="${p.foto_pedido}" style="width:100%; max-width:200px; border-radius:10px; margin-top:5px; border: 1px solid #ddd;">
+         </div>`
+      : `<div style="margin-top:10px;"><small style="color:gray;">📷 Sin foto registrada</small></div>`;
+
     div.innerHTML = `
-      <strong>${p.nombre_pedido}</strong><br>
+      <b>📦 Pedido:</b> ${p.nombre_pedido}<br>
       <small>Guía: ${p.numero_guia}</small><br>
       <span>Estado: ${getEstado(p.fk_estado_pedido)}</span>
-      ${htmlBotones}
+      ${htmlFoto}
+      <div style="margin-top:10px;">
+        ${htmlBotones}
+      </div>
     `;
 
     contenedorPedidos.appendChild(div);
