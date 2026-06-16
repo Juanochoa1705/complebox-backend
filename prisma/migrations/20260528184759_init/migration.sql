@@ -3,6 +3,8 @@ CREATE TABLE `apto` (
     `cod_apto` INTEGER NOT NULL AUTO_INCREMENT,
     `numero_apto` INTEGER NOT NULL,
     `fk_cod_torre` INTEGER NULL,
+    `fecha_registro` TIMESTAMP(0) NOT NULL DEFAULT CURRENT_TIMESTAMP(0),
+    `fecha_actualizacion` TIMESTAMP(0) NOT NULL DEFAULT CURRENT_TIMESTAMP(0),
 
     INDEX `fk_cod_torre`(`fk_cod_torre`),
     UNIQUE INDEX `uq_apto_torre`(`numero_apto`, `fk_cod_torre`),
@@ -15,6 +17,8 @@ CREATE TABLE `apto_propietario` (
     `fk_cod_apto` INTEGER NULL,
     `fk_cod_propietario` INTEGER NULL,
     `fk_estado_apto_propietario` INTEGER NOT NULL DEFAULT 1,
+    `fecha_registro` TIMESTAMP(0) NOT NULL DEFAULT CURRENT_TIMESTAMP(0),
+    `fecha_actualizacion` TIMESTAMP(0) NOT NULL DEFAULT CURRENT_TIMESTAMP(0),
 
     INDEX `fk_cod_propietario`(`fk_cod_propietario`),
     INDEX `fk_estado_apto_propietario`(`fk_estado_apto_propietario`),
@@ -28,6 +32,8 @@ CREATE TABLE `apto_residente` (
     `fk_cod_apto` INTEGER NULL,
     `fk_cod_residente` INTEGER NULL,
     `fk_estado_apto_residente` INTEGER NOT NULL DEFAULT 1,
+    `fecha_actualizacion` TIMESTAMP(0) NOT NULL DEFAULT CURRENT_TIMESTAMP(0),
+    `fecha_registro` TIMESTAMP(0) NOT NULL DEFAULT CURRENT_TIMESTAMP(0),
 
     INDEX `fk_cod_residente`(`fk_cod_residente`),
     INDEX `fk_estado_apto_residente`(`fk_estado_apto_residente`),
@@ -40,6 +46,10 @@ CREATE TABLE `conjunto` (
     `cod_conjunto` INTEGER NOT NULL AUTO_INCREMENT,
     `nombre_conjunto` VARCHAR(100) NULL,
     `telefono_conjunto` VARCHAR(20) NULL,
+    `direccion_conjunto` VARCHAR(20) NULL,
+    `ciudad_conjunto` VARCHAR(20) NULL,
+    `fecha_registro` TIMESTAMP(0) NOT NULL DEFAULT CURRENT_TIMESTAMP(0),
+    `fecha_actualizacion` TIMESTAMP(0) NOT NULL DEFAULT CURRENT_TIMESTAMP(0),
 
     PRIMARY KEY (`cod_conjunto`)
 ) DEFAULT CHARACTER SET utf8mb4 COLLATE utf8mb4_unicode_ci;
@@ -53,6 +63,8 @@ CREATE TABLE `empresa` (
     `telefono_empresa` VARCHAR(20) NULL,
     `correo_empresa` VARCHAR(100) NULL,
     `fk_estado_empresa` INTEGER NOT NULL,
+    `fecha_registro` TIMESTAMP(0) NOT NULL DEFAULT CURRENT_TIMESTAMP(0),
+    `fecha_actualizacion` TIMESTAMP(0) NOT NULL DEFAULT CURRENT_TIMESTAMP(0),
 
     UNIQUE INDEX `nit_empresa`(`nit_empresa`),
     INDEX `fk_estado_empresa`(`fk_estado_empresa`),
@@ -64,19 +76,24 @@ CREATE TABLE `empresa_mensajero` (
     `cod_empresa_mensajero` INTEGER NOT NULL AUTO_INCREMENT,
     `fk_persona_mensajero` INTEGER NULL,
     `fk_empresa_mensajero` INTEGER NULL,
+    `fk_estado_mensajero` INTEGER NULL DEFAULT 1,
+    `fecha_actualizacion` TIMESTAMP(0) NOT NULL DEFAULT CURRENT_TIMESTAMP(0),
+    `fecha_registro` TIMESTAMP(0) NOT NULL DEFAULT CURRENT_TIMESTAMP(0),
 
     INDEX `fk_empresa_mensajero`(`fk_empresa_mensajero`),
     INDEX `fk_persona_mensajero`(`fk_persona_mensajero`),
+    INDEX `fk_mensajero_estado_rel`(`fk_estado_mensajero`),
     PRIMARY KEY (`cod_empresa_mensajero`)
 ) DEFAULT CHARACTER SET utf8mb4 COLLATE utf8mb4_unicode_ci;
 
 -- CreateTable
 CREATE TABLE `empresa_seguridad_conjunto` (
     `cod_empresa_vig_conjunto` INTEGER NOT NULL AUTO_INCREMENT,
-    `fecha_registro` DATE NULL,
+    `fecha_registro` TIMESTAMP(0) NOT NULL DEFAULT CURRENT_TIMESTAMP(0),
     `fk_cod_conjunto` INTEGER NULL,
     `fk_empresa_vig` INTEGER NULL,
     `fk_estado_empresa_seguridad_conjunto` INTEGER NOT NULL DEFAULT 1,
+    `fecha_actualizacion` TIMESTAMP(0) NOT NULL DEFAULT CURRENT_TIMESTAMP(0),
 
     INDEX `fk_cod_conjunto`(`fk_cod_conjunto`),
     INDEX `fk_empresa_vig`(`fk_empresa_vig`),
@@ -90,6 +107,8 @@ CREATE TABLE `empresa_vigilante_conjunto` (
     `fk_persona_vigilante` INTEGER NULL,
     `fk_cod_empresa_vig_conjunto` INTEGER NULL,
     `fk_estado_vigilante_empresa` INTEGER NOT NULL DEFAULT 1,
+    `fecha_actualizacion` TIMESTAMP(0) NOT NULL DEFAULT CURRENT_TIMESTAMP(0),
+    `fecha_registro` TIMESTAMP(0) NOT NULL DEFAULT CURRENT_TIMESTAMP(0),
 
     INDEX `fk_cod_empresa_vig_conjunto`(`fk_cod_empresa_vig_conjunto`),
     INDEX `fk_estado_vigilante_empresa`(`fk_estado_vigilante_empresa`),
@@ -121,6 +140,7 @@ CREATE TABLE `pedido_estado_entrega_residente` (
     `numero_guia` VARCHAR(50) NULL,
     `nombre_pedido` VARCHAR(100) NULL,
     `descripcion_pedido` TEXT NULL,
+    `foto_pedido` LONGTEXT NULL,
     `fk_estado_pedido` INTEGER NULL,
     `fk_cod_vigilante_recibe` INTEGER NULL,
     `fk_cod_vigilante_entrega` INTEGER NULL,
@@ -128,6 +148,7 @@ CREATE TABLE `pedido_estado_entrega_residente` (
     `fk_mensajero` INTEGER NULL,
     `firma_residente` LONGTEXT NULL,
     `fk_apto_entrega` INTEGER NULL,
+    `fecha_actualizacion` TIMESTAMP(0) NOT NULL DEFAULT CURRENT_TIMESTAMP(0),
 
     INDEX `fk_cod_vigilante_entrega`(`fk_cod_vigilante_entrega`),
     INDEX `fk_cod_vigilante_recibe`(`fk_cod_vigilante_recibe`),
@@ -150,12 +171,16 @@ CREATE TABLE `persona` (
     `fk_estado_user` INTEGER NOT NULL,
     `fk_tipo_doc` INTEGER NOT NULL,
     `fk_rol` INTEGER NOT NULL,
+    `fecha_registro` DATETIME(0) NULL DEFAULT CURRENT_TIMESTAMP(0),
+    `fecha_actualizacion` TIMESTAMP(0) NOT NULL DEFAULT CURRENT_TIMESTAMP(0),
+    `codigo_recuperacion` VARCHAR(6) NULL,
+    `fecha_codigo` DATETIME(3) NULL,
 
-    UNIQUE INDEX `unique_cedula`(`cedula`),
     UNIQUE INDEX `unique_usuario`(`usuario`),
     INDEX `fk_estado_user`(`fk_estado_user`),
     INDEX `fk_rol`(`fk_rol`),
     INDEX `fk_tipo_doc`(`fk_tipo_doc`),
+    UNIQUE INDEX `unique_cedula_tipo`(`cedula`, `fk_tipo_doc`),
     PRIMARY KEY (`cod_user`)
 ) DEFAULT CHARACTER SET utf8mb4 COLLATE utf8mb4_unicode_ci;
 
@@ -180,6 +205,8 @@ CREATE TABLE `torre` (
     `cod_torre` INTEGER NOT NULL AUTO_INCREMENT,
     `numero_torre` INTEGER NOT NULL,
     `fk_cod_conjunto` INTEGER NULL,
+    `fecha_registro` TIMESTAMP(0) NOT NULL DEFAULT CURRENT_TIMESTAMP(0),
+    `fecha_actualizacion` TIMESTAMP(0) NOT NULL DEFAULT CURRENT_TIMESTAMP(0),
 
     INDEX `fk_cod_conjunto`(`fk_cod_conjunto`),
     PRIMARY KEY (`cod_torre`)
@@ -190,7 +217,12 @@ CREATE TABLE `admin_conjunto` (
     `cod_admin_conjunto` INTEGER NOT NULL AUTO_INCREMENT,
     `fk_cod_conjunto` INTEGER NULL,
     `fk_cod_administrador` INTEGER NULL,
+    `fk_estado_admin` INTEGER NULL DEFAULT 1,
+    `fecha_actualizacion` TIMESTAMP(0) NOT NULL DEFAULT CURRENT_TIMESTAMP(0),
+    `fecha_registro` TIMESTAMP(0) NOT NULL DEFAULT CURRENT_TIMESTAMP(0),
 
+    INDEX `admin_conjunto_fk_cod_administrador_fkey`(`fk_cod_administrador`),
+    INDEX `fk_estado_admin`(`fk_estado_admin`),
     UNIQUE INDEX `uq_admin_conjunto`(`fk_cod_conjunto`, `fk_cod_administrador`),
     PRIMARY KEY (`cod_admin_conjunto`)
 ) DEFAULT CHARACTER SET utf8mb4 COLLATE utf8mb4_unicode_ci;
@@ -224,6 +256,9 @@ ALTER TABLE `empresa_mensajero` ADD CONSTRAINT `empresa_mensajero_ibfk_1` FOREIG
 
 -- AddForeignKey
 ALTER TABLE `empresa_mensajero` ADD CONSTRAINT `empresa_mensajero_ibfk_2` FOREIGN KEY (`fk_empresa_mensajero`) REFERENCES `empresa`(`cod_empresa`) ON DELETE RESTRICT ON UPDATE RESTRICT;
+
+-- AddForeignKey
+ALTER TABLE `empresa_mensajero` ADD CONSTRAINT `fk_mensajero_estado_rel` FOREIGN KEY (`fk_estado_mensajero`) REFERENCES `estado`(`cod_estado`) ON DELETE RESTRICT ON UPDATE RESTRICT;
 
 -- AddForeignKey
 ALTER TABLE `empresa_seguridad_conjunto` ADD CONSTRAINT `empresa_seguridad_conjunto_ibfk_1` FOREIGN KEY (`fk_cod_conjunto`) REFERENCES `conjunto`(`cod_conjunto`) ON DELETE RESTRICT ON UPDATE RESTRICT;
@@ -268,10 +303,13 @@ ALTER TABLE `persona` ADD CONSTRAINT `persona_ibfk_2` FOREIGN KEY (`fk_tipo_doc`
 ALTER TABLE `persona` ADD CONSTRAINT `persona_ibfk_3` FOREIGN KEY (`fk_rol`) REFERENCES `rol`(`cod_rol`) ON DELETE RESTRICT ON UPDATE RESTRICT;
 
 -- AddForeignKey
-ALTER TABLE `torre` ADD CONSTRAINT `torre_ibfk_1` FOREIGN KEY (`fk_cod_conjunto`) REFERENCES `conjunto`(`cod_conjunto`) ON DELETE RESTRICT ON UPDATE RESTRICT;
+ALTER TABLE `torre` ADD CONSTRAINT `torre_fk_cod_conjunto_fkey` FOREIGN KEY (`fk_cod_conjunto`) REFERENCES `conjunto`(`cod_conjunto`) ON DELETE SET NULL ON UPDATE CASCADE;
+
+-- AddForeignKey
+ALTER TABLE `admin_conjunto` ADD CONSTRAINT `admin_conjunto_fk_cod_administrador_fkey` FOREIGN KEY (`fk_cod_administrador`) REFERENCES `persona`(`cod_user`) ON DELETE SET NULL ON UPDATE CASCADE;
 
 -- AddForeignKey
 ALTER TABLE `admin_conjunto` ADD CONSTRAINT `admin_conjunto_fk_cod_conjunto_fkey` FOREIGN KEY (`fk_cod_conjunto`) REFERENCES `conjunto`(`cod_conjunto`) ON DELETE SET NULL ON UPDATE CASCADE;
 
 -- AddForeignKey
-ALTER TABLE `admin_conjunto` ADD CONSTRAINT `admin_conjunto_fk_cod_administrador_fkey` FOREIGN KEY (`fk_cod_administrador`) REFERENCES `persona`(`cod_user`) ON DELETE SET NULL ON UPDATE CASCADE;
+ALTER TABLE `admin_conjunto` ADD CONSTRAINT `fk_estado_admin` FOREIGN KEY (`fk_estado_admin`) REFERENCES `estado`(`cod_estado`) ON DELETE RESTRICT ON UPDATE RESTRICT;

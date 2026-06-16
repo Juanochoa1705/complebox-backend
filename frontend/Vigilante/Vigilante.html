@@ -398,7 +398,14 @@ else if (p.fk_estado_pedido === 3) {
         <b>${p.nombre_pedido}</b><br>
         Guía: ${p.numero_guia}<br>
         Residente: ${p.residente || ''}<br>
+        Cedula:${p.cedula || ''}<br>
         Estado: ${p.estado || ''}<br><br>
+         <b>🖼️ Foto:</b><br>
+  ${
+    p.foto_pedido
+      ? `<img src="${p.foto_pedido}" style="width:120px; border-radius:10px; margin-top:5px;">`
+      : `<span style="color:red;">❌ No registrada</span>`
+  }
 
         ${htmlBotones}
         <hr>
@@ -566,10 +573,15 @@ ${
              border-radius:6px;
              object-fit:contain;
              margin-top:4px;
-           " />`
-    : `<span style="color:red;">❌ No registrada</span>`
+           " /><br>`
+    : `<span style="color:red;">❌ No registrada</span><br>`
 }
-
+<b>🖼️ Foto:</b><br>
+  ${
+    p.foto_pedido
+      ? `<img src="${p.foto_pedido}" style="width:120px; border-radius:10px; margin-top:5px;">`
+      : `<span style="color:red;">❌ No registrada</span>`
+  }
         <hr>
       `;
 

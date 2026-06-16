@@ -112,7 +112,8 @@ async historialMensajero(query: string, mensajeroId: number) {
 
       v.firma_residente,
 
-      p.fk_estado_pedido
+      p.fk_estado_pedido,
+      p.foto_pedido
 
     FROM vista_historial_pedidos v
 

@@ -113,7 +113,9 @@ async buscarPedidos(query: string, vigilanteId: number) {
     numero_guia: p.numero_guia,
     nombre_pedido: p.nombre_pedido,
     estado: p.estado_pedido?.nombre_pedido || "Sin estado",
+    cedula: p.persona_pedido_estado_entrega_residente_fk_residenteTopersona?.cedula || "Sin cedula",
     fk_estado_pedido: p.fk_estado_pedido,
+    foto_pedido: p.foto_pedido,
     residente: p.persona_pedido_estado_entrega_residente_fk_residenteTopersona?.nombres || "Sin residente"
   })));
 

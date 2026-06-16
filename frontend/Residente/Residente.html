@@ -538,10 +538,15 @@ div.innerHTML = `
   <b>✍️ Firma:</b><br>
   ${
     p.firma_residente
-      ? `<img src="${p.firma_residente}" style="width:120px; border-radius:10px; margin-top:5px;">`
-      : `<span style="color:red;">❌ No registrada</span>`
+      ? `<img src="${p.firma_residente}" style="width:120px; border-radius:10px; margin-top:5px;"><br>`
+      : `<span style="color:red;">❌ No registrada</span><br>`
   }
-
+    <b>🖼️ Foto:</b><br>
+  ${
+    p.foto_pedido
+      ? `<img src="${p.foto_pedido}" style="width:120px; border-radius:10px; margin-top:5px;"><br>`
+      : `<span style="color:red;">❌ No registrada</span><br>`
+  }
   <hr>
 `;
 

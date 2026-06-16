@@ -269,16 +269,16 @@ if (user.rol.nombre_rol === 'Residente') {
   user.estado.cod_estado === 2
 ) {
   return {
-    primerLogin: true,
-    estadoEspecial,
-    mensaje,
-    user: {
-      id: user.cod_user,
-      usuario: user.usuario,
-      rol: user.rol.nombre_rol,
-    },
-    message: 'Debe cambiar la contraseña antes de continuar',
-  };
+  primerLogin: true,
+  estadoEspecial,
+  mensaje,
+  user: {
+    cod_user: user.cod_user,
+    usuario: user.usuario,
+    rol: user.rol.nombre_rol,
+  },
+  message: 'Debe cambiar la contraseña antes de continuar',
+};
 }
   // =========================
   // LOGIN NORMAL
@@ -296,7 +296,7 @@ const token = this.jwtService.sign(payload);
   estadoEspecial,
   mensaje,
   user: {
-    id: user.cod_user,
+    cod_user: user.cod_user,
     usuario: user.usuario,
     rol: user.rol.nombre_rol,
   },
@@ -309,6 +309,7 @@ const token = this.jwtService.sign(payload);
     userId: number,
     nuevaPassword: string,
   ) {
+
     const hash = await bcrypt.hash(nuevaPassword, 10);
 
     await this.prisma.persona.update({
