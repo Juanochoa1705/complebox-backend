@@ -4,6 +4,7 @@ import { MensajeroService } from './mensajero.service';
 import { JwtAuthGuard } from '../auth/jwt-auth.guard';
 import { Query } from '@nestjs/common';
 
+
 @Controller('mensajero')
 export class MensajeroController {
 
@@ -22,6 +23,7 @@ async crearPedido(@Body() dto: any, @Request() req) {
 
 return await this.mensajeroService.crearPedido(dto, req.user.id);
 }
+
 
 
 @Get('buscar-residente')
@@ -118,6 +120,33 @@ async validarEmpresa(@Request() req) {
 @Get('empresa/:nit')
 async buscarEmpresaPorNit(@Param('nit') nit: string) {
   return this.mensajeroService.buscarEmpresaPorNit(nit);
+}
+
+@Get("probar-ocr")
+async probarOCR() {
+  return await this.mensajeroService.pruebaOCR();
+}
+
+@Get("prueba123")
+prueba123() {
+  return {
+    ok: true
+  };
+}
+
+@Post('ocr-paquete')
+@UseGuards(JwtAuthGuard)
+async ocrPaquete(@Body() dto: any) {
+
+  if (!dto.foto) {
+    throw new BadRequestException(
+      'Debe enviar la foto'
+    );
+  }
+
+  return await this.mensajeroService.ocrPaquete(
+    dto.foto
+  );
 }
 
 }

@@ -701,7 +701,7 @@ async function iniciarCamara() {
     }
 }
 
-function tomarFoto() {
+async function tomarFoto() {
     const video = document.getElementById('video');
     const canvas = document.getElementById('canvas');
     const preview = document.getElementById('photo-preview');
@@ -716,6 +716,8 @@ function tomarFoto() {
     // Convertir a Base64
     imageBase64 = canvas.toDataURL('image/jpeg');
 
+    await procesarOCR();
+    
     // Detener cámara
     const stream = video.srcObject;
     stream.getTracks().forEach(track => track.stop());
@@ -726,6 +728,123 @@ function tomarFoto() {
     container.style.display = 'none';
     btnAbrir.innerText = "🔄 Cambiar Foto";
     btnAbrir.style.display = 'block';
+}
+
+
+
+async function procesarOCR() {
+
+    try {
+
+        const res = await fetch(
+            "http://localhost:3000/mensajero/ocr-paquete",
+            {
+                method: "POST",
+                headers: {
+                    "Content-Type": "application/json",
+                    "Authorization":
+                        "Bearer " +
+                        localStorage.getItem("token")
+                },
+                body: JSON.stringify({
+                    foto: imageBase64
+                })
+            }
+        );
+
+        if (!res.ok) {
+            throw new Error(
+                `Error HTTP ${res.status}`
+            );
+        }
+
+        const data = await res.json();
+
+        console.log("OCR:", data);
+
+        // ==========================
+        // Número de guía
+        // ==========================
+        if (data.numero_guia) {
+
+            document.getElementById(
+                "numero_guia"
+            ).value = data.numero_guia;
+
+        }
+
+        // ==========================
+        // Nombre del pedido
+        // ==========================
+        if (data.nombre_pedido) {
+
+            document.getElementById(
+                "nombre_pedido"
+            ).value = data.nombre_pedido;
+
+        }
+
+        // ==========================
+        // Descripción
+        // ==========================
+        if (data.descripcion_pedido) {
+
+            document.getElementById(
+                "descripcion_pedido"
+            ).value = data.descripcion_pedido;
+
+        }
+
+        // ==========================
+        // Residente encontrado
+        // ==========================
+        if (data.residente) {
+
+            const inputResidente =
+                document.getElementById(
+                    "buscar_residente"
+                );
+
+            inputResidente.value =
+                data.residente.nombre;
+
+            // guardar id para luego crear pedido
+            selectedResidentId =
+                data.residente.id;
+
+            console.log(
+                "Residente encontrado:",
+                data.residente.nombre
+            );
+
+        }
+
+        // ==========================
+        // Solo nombre detectado
+        // ==========================
+        else if (data.nombre_detectado) {
+
+            document.getElementById(
+                "buscar-residente"
+            ).value =
+                data.nombre_detectado;
+
+        }
+
+    } catch (error) {
+
+        console.error(
+            "Error OCR:",
+            error
+        );
+
+        alert(
+            "No fue posible procesar la imagen."
+        );
+
+    }
+
+
 }
 
 </script>

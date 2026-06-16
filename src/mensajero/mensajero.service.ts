@@ -2,11 +2,17 @@
 import { Injectable, BadRequestException } from '@nestjs/common';
 import { PrismaService } from '../prisma/prisma.service';
 import { NotFoundException } from '@nestjs/common';
+import * as tesseract from "node-tesseract-ocr";
+import { exec } from "child_process";
+import * as fs from 'fs';
+import * as path from 'path';
 
 @Injectable()
 export class MensajeroService {
 
   constructor(private prisma: PrismaService) {}
+
+  
 
 async crearPedido(dto: any, mensajeroId: number)
  {
@@ -368,4 +374,246 @@ async buscarEmpresaPorNit(nit: string) {
 
   return empresa || null;
 }
+
+
+async pruebaOCR() {
+  return new Promise((resolve, reject) => {
+
+    exec(
+      '"C:\\Program Files\\Tesseract-OCR\\tesseract.exe" uploads/prueba.jpg stdout -l eng',
+      (error, stdout, stderr) => {
+
+        if (error) {
+          console.log(error);
+          return reject(error);
+        }
+
+        resolve({
+          texto: stdout
+        });
+      }
+    );
+
+  });
+}
+
+async ocrPaquete(base64: string) {
+
+  const nombreArchivo =
+    `ocr_${Date.now()}.jpg`;
+
+  const rutaArchivo = path.join(
+    process.cwd(),
+    'uploads',
+    nombreArchivo
+  );
+
+  const imagen = base64.replace(
+    /^data:image\/\w+;base64,/,
+    ''
+  );
+
+  fs.writeFileSync(
+    rutaArchivo,
+    Buffer.from(imagen, 'base64')
+  );
+
+  return new Promise((resolve, reject) => {
+
+    exec(
+      `"C:\\Program Files\\Tesseract-OCR\\tesseract.exe" "${rutaArchivo}" stdout -l eng`,
+      async (error, stdout) => {
+
+        if (error) {
+          return reject(error);
+        }
+
+        try {
+
+          const texto = stdout;
+
+          const lineas = texto
+            .split('\n')
+            .map(x => x.trim())
+            .filter(x => x.length > 2);
+
+          let numero_guia: string | null = null;
+          let nombre_detectado: string | null = null;
+          let residente: any = null;
+          let residentesSugeridos: any[] = [];
+
+          // =====================================
+          // GUIA
+          // =====================================
+
+          const guiaMatch = texto.match(
+            /\b\d{8,15}\b/
+          );
+
+          if (guiaMatch) {
+            numero_guia = guiaMatch[0];
+          }
+
+          // =====================================
+          // NOMBRE DETECTADO
+          // =====================================
+
+          const posiblesNombres = lineas.filter(
+            linea =>
+              /^[A-ZÁÉÍÓÚÑ\s]+$/i.test(linea) &&
+              linea.length > 8 &&
+              !linea.toUpperCase().includes('DOCUMENTO') &&
+              !linea.toUpperCase().includes('DIRECCION') &&
+              !linea.toUpperCase().includes('CODIGO') &&
+              !linea.toUpperCase().includes('FECHA') &&
+              !linea.toUpperCase().includes('ELECTRONICO') &&
+              !linea.toUpperCase().includes('RECARGO')
+          );
+
+          if (posiblesNombres.length > 0) {
+
+            nombre_detectado =
+              posiblesNombres.reduce(
+                (a, b) =>
+                  a.length > b.length ? a : b
+              );
+
+          }
+
+          // =====================================
+          // BUSCAR POR CEDULA
+          // =====================================
+
+          const cedulaMatch = texto.match(
+            /\b\d{7,12}\b/
+          );
+
+          if (cedulaMatch) {
+
+            residente =
+              await this.prisma.persona.findFirst({
+                where: {
+                  cedula: cedulaMatch[0]
+                }
+              });
+
+          }
+
+          // =====================================
+          // BUSCAR POR NOMBRE
+          // =====================================
+
+          if (!residente && nombre_detectado) {
+
+            const palabras =
+              nombre_detectado
+                .replace(
+                  /[^A-ZÁÉÍÓÚÑ\s]/gi,
+                  ''
+                )
+                .split(' ')
+                .filter(
+                  x => x.length > 2
+                );
+
+            residentesSugeridos =
+              await this.prisma.persona.findMany({
+                where: {
+                  OR: palabras.map(
+                    palabra => ({
+                      OR: [
+                        {
+                          nombres: {
+                            contains: palabra
+                          }
+                        },
+                        {
+                          apellidos: {
+                            contains: palabra
+                          }
+                        }
+                      ]
+                    })
+                  )
+                },
+                take: 10
+              });
+
+            // =====================================
+            // INTENTAR COINCIDENCIA EXACTA
+            // =====================================
+
+            const nombreOCR =
+              nombre_detectado
+                .toUpperCase()
+                .trim();
+
+            residente =
+              residentesSugeridos.find(r => {
+
+                const nombreCompleto =
+                  `${r.nombres} ${r.apellidos}`
+                    .toUpperCase()
+                    .trim();
+
+                return (
+                  nombreCompleto === nombreOCR
+                );
+
+              }) || null;
+
+          }
+
+          resolve({
+
+            texto,
+
+            numero_guia,
+
+            nombre_detectado,
+
+            residente: residente
+              ? {
+                  id: residente.cod_user,
+                  nombre:
+                    residente.nombres +
+                    ' ' +
+                    residente.apellidos,
+                  cedula:
+                    residente.cedula
+                }
+              : null,
+
+            residentes_sugeridos:
+              residentesSugeridos.map(
+                r => ({
+                  id: r.cod_user,
+                  nombre:
+                    r.nombres +
+                    ' ' +
+                    r.apellidos,
+                  cedula:
+                    r.cedula
+                })
+              ),
+
+            nombre_pedido: '',
+            descripcion_pedido: ''
+
+          });
+
+        } catch (err) {
+
+          reject(err);
+
+        }
+
+      }
+    );
+
+  });
+
+}
+
+
 }
