@@ -284,18 +284,56 @@ async function eliminarTorre(id) {
 }
 
 async function agregarTorre() {
-    const numero = Number(nuevaTorre.value);
-    if (!numero) return alert('Número inválido');
-    await fetch(`${API_URL}/admin/torres`, {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json', "Authorization": `Bearer ${token}`,
-     "x-conjunto-id": conjuntoActivo
-    },
-        body: JSON.stringify({ numero_torre: numero })
-    });
-    nuevaTorre.value = '';
-    cargarCantidadTorres();
-    verTorres();
+    const numeroInput = document.getElementById("numero_torre").value;
+
+    if (!numeroInput.trim()) {
+        Swal.fire({ icon: "warning", title: "Advertencia", text: "Por favor, ingresa un número de torre." });
+        return; 
+    }
+
+    try {
+        const res = await fetch("http://localhost:3000/admin/torres", {
+            method: "POST",
+            headers: {
+                "Content-Type": "application/json",
+                "Authorization": "Bearer " + localStorage.getItem("token"),
+                "x-conjunto-id": conjuntoActivo // 👈 ¡ESTA ERA LA LÍNEA FALTANTE!
+            },
+            body: JSON.stringify({
+                numero_torre: Number(numeroInput) 
+            })
+        });
+
+        const data = await res.json();
+        console.log("Respuesta del servidor:", data);
+
+        if (!res.ok) {
+            Swal.fire({
+                icon: "error",
+                title: "No se pudo crear",
+                text: data.message || "La torre ya existe en este conjunto o la solicitud es inválida."
+            });
+            return; 
+        }
+
+        Swal.fire({
+            icon: "success",
+            title: "¡Éxito!",
+            text: "Torre creada correctamente"
+        });
+
+        // Ejecuta las funciones de refresco que ya tienes declaradas arriba
+        cargarCantidadTorres();
+        if (typeof verTorres === "function") verTorres();
+
+    } catch (error) {
+        console.error("Error capturado:", error);
+        Swal.fire({
+            icon: "error",
+            title: "Error de comunicación",
+            text: "No se pudo procesar la respuesta del servidor."
+        });
+    }
 }
 
 /* ==========================================

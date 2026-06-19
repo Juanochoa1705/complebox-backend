@@ -89,22 +89,52 @@ export class AdminService {
 
 }
 
-  async crearTorre(codAdmin: number, numero: number) {
-    const adminConjunto = await this.prisma.adminConjunto.findFirst({
-      where: { fk_cod_administrador: codAdmin },
+async crearTorre(
+  codAdmin: number,
+  numero: number
+) {
+
+  const adminConjunto =
+    await this.prisma.adminConjunto.findFirst({
+      where: {
+        fk_cod_administrador: codAdmin
+      }
     });
 
-    if (!adminConjunto) {
-      throw new NotFoundException('ADMIN_SIN_CONJUNTO');
-    }
-
-    return this.prisma.torre.create({
-      data: {
-        numero_torre: numero,
-        fk_cod_conjunto: adminConjunto.fk_cod_conjunto,
-      },
-    });
+  if (!adminConjunto) {
+    throw new NotFoundException(
+      'ADMIN_SIN_CONJUNTO'
+    );
   }
+
+  const torreExistente =
+    await this.prisma.torre.findFirst({
+      where: {
+        numero_torre: numero,
+        fk_cod_conjunto:
+          adminConjunto.fk_cod_conjunto
+      }
+    });
+
+  if (torreExistente) {
+
+    throw new BadRequestException(
+      'La torre ya existe en este conjunto'
+    );
+
+  }
+
+  // ✅ Crear torre si no existe
+
+  return await this.prisma.torre.create({
+    data: {
+      numero_torre: numero,
+      fk_cod_conjunto:
+        adminConjunto.fk_cod_conjunto
+    }
+  });
+
+}
 
   // ✅ MÉTODO CORREGIDO Y DENTRO DE LA CLASE
 async processExcel(file: Express.Multer.File) {

@@ -13,6 +13,7 @@ import {
   Delete,
   Res,
   HttpStatus,
+  BadRequestException,
   Headers,
 } from '@nestjs/common';
 import { AdminService } from './admin.service';
@@ -23,6 +24,7 @@ import { FileInterceptor } from '@nestjs/platform-express';
 import { CrearEmpresaDto } from './dto/crear-empresa.dto';
 import type { Response } from 'express';
 import { PrismaService } from '../prisma/prisma.service';
+
 
 
 
@@ -65,14 +67,38 @@ async obtenerTorres(
   );
 }
 
-  @Post('torres')
-  async crearTorre(
-    @Req() req: any,
-    @Body() body: { numero_torre: number },
-  ) {
-    const codAdmin = req.user.id;
-    return this.adminService.crearTorre(codAdmin, body.numero_torre);
+@Post('torres')
+@UseGuards(JwtAuthGuard)
+async crearTorre(
+  @Body() dto: any,
+  @Request() req
+) {
+  // 1. Imprimir TODO para saber si NestJS llega a este punto
+  console.log('=== ¡LLEGÓ LA PETICIÓN AL BACKEND! ===');
+  console.log('Body completo:', dto);
+  console.log('Usuario del Token (req.user):', req.user);
+
+  // 2. Validación ultra-segura del número
+  const numeroTorre = dto.numero ? Number(dto.numero) : Number(dto.numero_torre);
+  
+  console.log('Número procesado:', numeroTorre);
+
+  if (!numeroTorre || isNaN(numeroTorre)) {
+    throw new BadRequestException('El número de torre no llegó o no es un número válido.');
   }
+
+  // 3. Validación ultra-segura del usuario
+  const idUsuario = req.user?.id || req.user?.sub || req.user?.cod_usuario;
+  
+  if (!idUsuario) {
+    throw new BadRequestException('No se pudo encontrar el ID del usuario en el token JWT.');
+  }
+
+  return await this.adminService.crearTorre(
+    idUsuario,
+    numeroTorre
+  );
+}
 
   @Post('upload-propietarios')
 @UseInterceptors(
